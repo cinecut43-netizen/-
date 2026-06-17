@@ -20,11 +20,44 @@
 
   function getUser() {
     DEFAULT_USER.role = localStorage.getItem('shabashka_role') || 'worker';
+    const savedName = localStorage.getItem('shabashka_name');
+    if (savedName) {
+      DEFAULT_USER.name = savedName;
+      DEFAULT_USER.initials = initialsFromName(savedName);
+    }
+    const savedCompany = localStorage.getItem('shabashka_company');
+    if (savedCompany) DEFAULT_USER.company = savedCompany;
     return DEFAULT_USER;
+  }
+
+  function initialsFromName(name) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'Г';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   function setRole(role) {
     localStorage.setItem('shabashka_role', role);
+  }
+
+  // Является ли текущий посетитель «вошедшим» — пока это эмуляция без
+  // реального backend: становится true после прохождения формы регистрации
+  // в register.html. Реальная авторизация (сессии, токены) потребует сервер.
+  function isLoggedIn() {
+    return localStorage.getItem('shabashka_logged_in') === '1';
+  }
+
+  // Вызывается из register.html по завершении формы
+  function completeRegistration(data) {
+    localStorage.setItem('shabashka_logged_in', '1');
+    localStorage.setItem('shabashka_role', data.role || 'worker');
+    if (data.name) localStorage.setItem('shabashka_name', data.name);
+    if (data.company) localStorage.setItem('shabashka_company', data.company);
+  }
+
+  function logout() {
+    localStorage.removeItem('shabashka_logged_in');
   }
 
   /* ---------- ЗАКАЗЫ (общий список на весь сайт) ----------
@@ -163,6 +196,9 @@
   window.Shabashka = {
     getUser: getUser,
     setRole: setRole,
+    isLoggedIn: isLoggedIn,
+    completeRegistration: completeRegistration,
+    logout: logout,
     // Совместимость: код, написанный раньше, использует Shabashka.JOBS как массив.
     // Определяем getter, чтобы он всегда возвращал свежий список (включая
     // заказы, добавленные через employer.html) без необходимости менять

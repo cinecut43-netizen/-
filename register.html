@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Регистрация</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF;
+  --border: #E2E1DB; --white: #FFFFFF;
+  --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB;
+  --red: #B91C1C; --red-bg: #FEE2E2;
+  --radius: 10px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--gray-light); color: var(--dark); min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+/* NAV — минимальная, только логотип, без общей навигации сайта */
+nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; }
+.logo { font-size: 19px; font-weight: 700; color: var(--dark); text-decoration: none; }
+.logo span { color: var(--orange); }
+
+/* LAYOUT */
+.wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+.card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; width: 440px; max-width: 100%; padding: 32px; }
+
+/* STEP INDICATOR */
+.steps { display: flex; gap: 6px; margin-bottom: 24px; }
+.step-dot { flex: 1; height: 4px; border-radius: 4px; background: var(--border); transition: background 0.2s; }
+.step-dot.done, .step-dot.current { background: var(--orange); }
+
+.step-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px; }
+.step-sub { font-size: 13px; color: var(--gray); margin-bottom: 22px; line-height: 1.5; }
+
+/* ROLE SWITCH */
+.role-switch { display: flex; gap: 8px; margin-bottom: 22px; }
+.role-card {
+  flex: 1; border: 1.5px solid var(--border); border-radius: 12px; padding: 16px 12px;
+  text-align: center; cursor: pointer; transition: all 0.15s; background: var(--white);
+}
+.role-card:hover { border-color: #CCC; }
+.role-card.selected { border-color: var(--orange); background: var(--orange-light); }
+.role-icon { font-size: 26px; margin-bottom: 6px; }
+.role-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.role-desc { font-size: 11px; color: var(--gray); line-height: 1.3; }
+.role-card.selected .role-desc { color: var(--orange-dark); }
+
+/* FORM */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block; color: var(--dark); }
+.form-input {
+  width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+  font-size: 15px; font-family: inherit; color: var(--dark); background: var(--white); outline: none;
+  transition: border 0.15s;
+}
+.form-input:focus { border-color: var(--orange); }
+.form-hint { font-size: 12px; color: var(--gray); margin-top: 6px; }
+.form-error { font-size: 12px; color: var(--red); margin-top: 6px; display: none; }
+.form-error.show { display: block; }
+
+/* PHONE INPUT */
+.phone-row { display: flex; gap: 8px; }
+.phone-prefix {
+  flex-shrink: 0; width: 64px; padding: 12px 0; text-align: center; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 15px; color: var(--gray); background: var(--gray-light);
+}
+
+/* SMS CODE */
+.code-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.code-input {
+  width: 48px; height: 56px; text-align: center; font-size: 22px; font-weight: 700;
+  border: 1.5px solid var(--border); border-radius: 10px; outline: none; transition: border 0.15s;
+}
+.code-input:focus { border-color: var(--orange); }
+.resend-row { text-align: center; font-size: 13px; color: var(--gray); margin-top: 14px; }
+.resend-link { color: var(--orange); cursor: pointer; font-weight: 500; }
+.resend-link.disabled { color: var(--gray); cursor: default; }
+
+/* CONSENT CHECKBOXES — места под юридические тексты, вставляются позже */
+.consent-block { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
+.consent-row { display: flex; align-items: flex-start; gap: 10px; }
+.consent-row input[type="checkbox"] {
+  margin-top: 2px; width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--orange); cursor: pointer;
+}
+.consent-text { font-size: 13px; line-height: 1.5; color: var(--dark); }
+.consent-text a { color: var(--orange); text-decoration: underline; }
+.consent-required-mark { color: var(--red); margin-left: 2px; }
+
+/* BUTTONS */
+.btn-primary {
+  width: 100%; padding: 14px; background: var(--orange); color: #fff; border: none; border-radius: 11px;
+  font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--orange-dark); }
+.btn-primary:disabled { background: var(--border); color: var(--gray); cursor: not-allowed; }
+.btn-back {
+  background: none; border: none; color: var(--gray); font-size: 13px; cursor: pointer;
+  font-family: inherit; margin-bottom: 16px; display: flex; align-items: center; gap: 4px;
+}
+.btn-back:hover { color: var(--dark); }
+
+/* FOOTER NOTE */
+.legal-note { font-size: 11px; color: var(--gray); text-align: center; margin-top: 18px; line-height: 1.5; }
+.legal-note a { color: var(--gray); text-decoration: underline; }
+
+/* SUCCESS SCREEN */
+.success-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--green-bg); color: var(--green);
+  display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 18px; }
+
+@media (max-width: 480px) {
+  .card { padding: 24px 20px; }
+  .role-switch { flex-direction: column; }
+}
+</style>
+<script src="/data.js"></script>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">Шаба<span>шка</span></a>
+</nav>
+
+<div class="wrap">
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+/* ============================================================
+   РЕГИСТРАЦИЯ — техническая форма.
+   Реальная отправка SMS и проверка кода требуют backend-сервиса
+   (например, SMS-провайдер + serverless-функция, как /api/ai-chat
+   для AI-чата). Здесь это эмулируется на фронтенде, чтобы было
+   видно сценарий и было что подключать к реальному API позже.
+
+   ТЕКСТЫ ЮРИДИЧЕСКИХ ДОКУМЕНТОВ: ссылки ведут на /privacy и /terms —
+   страницы-заглушки, куда нужно вставить согласованные с юристом
+   формулировки (политика обработки персональных данных,
+   пользовательское соглашение, согласие на обработку ПД согласно 152-ФЗ).
+   ============================================================ */
+
+let state = {
+  step: 1,          // 1 = телефон, 2 = код, 3 = роль+анкета, 4 = успех
+  phone: '',
+  role: null,        // 'worker' | 'employer'
+  name: '',
+  company: '',
+};
+
+const STEP_COUNT = 3; // шагов в индикаторе (успех не считаем)
+
+function render() {
+  const card = document.getElementById('card');
+  if (state.step === 1) card.innerHTML = renderPhoneStep();
+  else if (state.step === 2) card.innerHTML = renderCodeStep();
+  else if (state.step === 3) card.innerHTML = renderProfileStep();
+  else card.innerHTML = renderSuccessStep();
+  attachHandlers();
+}
+
+function stepsHtml(current) {
+  let html = '<div class="steps">';
+  for (let i = 1; i <= STEP_COUNT; i++) {
+    const cls = i < current ? 'done' : (i === current ? 'current' : '');
+    html += `<div class="step-dot ${cls}"></div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ---------- ШАГ 1: телефон ---------- */
+function renderPhoneStep() {
+  return `
+    ${stepsHtml(1)}
+    <div class="step-title">Вход и регистрация</div>
+    <div class="step-sub">Введите номер телефона — пришлём код подтверждения по SMS. Если аккаунта ещё нет, мы создадим его автоматически.</div>
+
+    <div class="form-group">
+      <label class="form-label">Номер телефона</label>
+      <div class="phone-row">
+        <div class="phone-prefix">+7</div>
+        <input class="form-input" type="tel" id="phoneInput" placeholder="900 000-00-00" maxlength="12" inputmode="numeric">
+      </div>
+      <div class="form-error" id="phoneError">Введите номер в формате +7 900 000-00-00</div>
+    </div>
+
+    <button class="btn-primary" id="sendCodeBtn">Получить код</button>
+
+    <div class="legal-note">
+      Нажимая «Получить код», вы соглашаетесь с
+      <a href="/terms" target="_blank">Пользовательским соглашением</a>
+      и подтверждаете, что ознакомлены с
+      <a href="/privacy" target="_blank">Политикой обработки персональных данных</a>.
+    </div>
+  `;
+}
+
+/* ---------- ШАГ 2: код из SMS ---------- */
+function renderCodeStep() {
+  return `
+    ${stepsHtml(2)}
+    <button class="btn-back" id="backBtn">← Изменить номер</button>
+    <div class="step-title">Введите код из SMS</div>
+    <div class="step-sub">Отправили код на номер <strong>+7 ${formatPhoneDisplay(state.phone)}</strong></div>
+
+    <div class="code-row">
+      ${[0,1,2,3].map(i => `<input class="code-input" id="code${i}" maxlength="1" inputmode="numeric">`).join('')}
+    </div>
+    <div class="form-error" id="codeError" style="text-align:center">Неверный код, попробуйте ещё раз</div>
+
+    <div class="resend-row">
+      Не пришёл код? <span class="resend-link" id="resendLink">Отправить повторно</span>
+      <span id="resendTimer" style="display:none">через <span id="timerSec">30</span> сек</span>
+    </div>
+  `;
+}
+
+/* ---------- ШАГ 3: роль + анкета ---------- */
+function renderProfileStep() {
+  const isEmployer = state.role === 'employer';
+  return `
+    ${stepsHtml(3)}
+    <div class="step-title">Расскажите о себе</div>
+    <div class="step-sub">Это поможет показывать вам подходящие заказы или исполнителей.</div>
+
+    <div class="role-switch">
+      <div class="role-card ${state.role === 'worker' ? 'selected' : ''}" data-role="worker">
+        <div class="role-icon">🔍</div>
+        <div class="role-name">Я исполнитель</div>
+        <div class="role-desc">Ищу разовую работу</div>
+      </div>
+      <div class="role-card ${state.role === 'employer' ? 'selected' : ''}" data-role="employer">
+        <div class="role-icon">📋</div>
+        <div class="role-name">Я работодатель</div>
+        <div class="role-desc">Ищу работников</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Ваше имя</label>
+      <input class="form-input" type="text" id="nameInput" placeholder="Как вас зовут" value="${state.name}">
+    </div>
+
+    ${isEmployer ? `
+    <div class="form-group">
+      <label class="form-label">Название компании <span style="color:var(--gray);font-weight:400">(необязательно для частных лиц)</span></label>
+      <input class="form-input" type="text" id="companyInput" placeholder="ООО «Компания» или оставьте пустым" value="${state.company}">
+    </div>` : ''}
+
+    <div class="consent-block">
+      <div class="consent-row">
+        <input type="checkbox" id="consentPersonalData">
+        <div class="consent-text">
+          Даю согласие на обработку персональных данных в соответствии с
+          <a href="/privacy" target="_blank">Политикой обработки персональных данных</a>
+          (152-ФЗ «О персональных данных»)<span class="consent-required-mark">*</span>
+        </div>
+      </div>
+      <div class="consent-row">
+        <input type="checkbox" id="consentTerms">
+        <div class="consent-text">
+          Принимаю условия <a href="/terms" target="_blank">Пользовательского соглашения</a>
+          и <a href="/offer" target="_blank">Оферты на оказание услуг платформы</a><span class="consent-required-mark">*</span>
+        </div>
+      </div>
+      ${isEmployer ? `
+      <div class="consent-row">
+        <input type="checkbox" id="consentEmployer">
+        <div class="consent-text">
+          Подтверждаю, что размещаемые заказы не являются трудовыми отношениями
+          по смыслу ТК РФ и ознакомлен(а) с
+          <a href="/employer-rules" target="_blank">правилами размещения заказов</a><span class="consent-required-mark">*</span>
+        </div>
+      </div>` : `
+      <div class="consent-row">
+        <input type="checkbox" id="consentWorker">
+        <div class="consent-text">
+          Подтверждаю, что мне исполнилось 18 лет и у меня есть законное право
+          на трудовую деятельность на территории РФ<span class="consent-required-mark">*</span>
+        </div>
+      </div>`}
+      <div class="consent-row">
+        <input type="checkbox" id="consentMarketing">
+        <div class="consent-text">
+          Согласен(на) получать новости и предложения платформы по SMS/email
+          <span style="color:var(--gray)">(необязательно)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-error" id="profileError">Заполните имя, выберите роль и примите обязательные условия (отмечены *)</div>
+
+    <button class="btn-primary" id="finishBtn">Завершить регистрацию</button>
+  `;
+}
+
+/* ---------- ШАГ 4: успех ---------- */
+function renderSuccessStep() {
+  const dest = state.role === 'employer' ? '/employer' : '/';
+  return `
+    <div class="success-icon">✓</div>
+    <div class="step-title" style="text-align:center">Готово!</div>
+    <div class="step-sub" style="text-align:center">
+      Аккаунт создан. ${state.role === 'employer' ? 'Теперь вы можете размещать заказы.' : 'Теперь вы можете откликаться на заказы.'}
+    </div>
+    <button class="btn-primary" id="goBtn">Перейти на платформу</button>
+  `;
+}
+
+/* ---------- ВАЛИДАЦИЯ И ПЕРЕХОДЫ ---------- */
+function formatPhoneDisplay(digits) {
+  if (!digits) return '';
+  const d = digits.replace(/\D/g, '');
+  return d;
+}
+
+function attachHandlers() {
+  // Шаг 1
+  const sendBtn = document.getElementById('sendCodeBtn');
+  if (sendBtn) {
+    const input = document.getElementById('phoneInput');
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/[^\d\s-]/g, '');
+    });
+    sendBtn.addEventListener('click', () => {
+      const digits = input.value.replace(/\D/g, '');
+      if (digits.length < 10) {
+        document.getElementById('phoneError').classList.add('show');
+        input.style.borderColor = 'var(--red)';
+        return;
+      }
+      state.phone = digits;
+      state.step = 2;
+      render();
+      startResendTimer();
+    });
+  }
+
+  // Шаг 2
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => { state.step = 1; render(); });
+
+    const codeInputs = [0,1,2,3].map(i => document.getElementById('code' + i));
+    codeInputs.forEach((inp, idx) => {
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(0, 1);
+        if (inp.value && idx < 3) codeInputs[idx + 1].focus();
+        if (codeInputs.every(i => i.value)) checkCode(codeInputs);
+      });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !inp.value && idx > 0) codeInputs[idx - 1].focus();
+      });
+    });
+    codeInputs[0].focus();
+
+    const resendLink = document.getElementById('resendLink');
+    resendLink.addEventListener('click', () => {
+      if (resendLink.classList.contains('disabled')) return;
+      startResendTimer();
+      // здесь должен быть повторный вызов реального API отправки SMS
+    });
+  }
+
+  // Шаг 3
+  document.querySelectorAll('.role-card').forEach(card => {
+    card.addEventListener('click', () => {
+      state.role = card.getAttribute('data-role');
+      render();
+    });
+  });
+  const finishBtn = document.getElementById('finishBtn');
+  if (finishBtn) {
+    finishBtn.addEventListener('click', () => {
+      const nameInput = document.getElementById('nameInput');
+      const companyInput = document.getElementById('companyInput');
+      const requiredConsents = [
+        document.getElementById('consentPersonalData'),
+        document.getElementById('consentTerms'),
+        document.getElementById(state.role === 'employer' ? 'consentEmployer' : 'consentWorker'),
+      ];
+
+      const allChecked = requiredConsents.every(c => c && c.checked);
+      const nameOk = nameInput.value.trim().length >= 2;
+
+      if (!state.role || !nameOk || !allChecked) {
+        document.getElementById('profileError').classList.add('show');
+        return;
+      }
+
+      state.name = nameInput.value.trim();
+      if (companyInput) state.company = companyInput.value.trim();
+
+      // Сохраняем данные пользователя и статус «входа» через общий механизм сайта
+      if (window.Shabashka && Shabashka.completeRegistration) {
+        Shabashka.completeRegistration({
+          role: state.role,
+          name: state.name,
+          company: state.company,
+        });
+      }
+
+      state.step = 4;
+      render();
+    });
+  }
+
+  // Шаг 4
+  const goBtn = document.getElementById('goBtn');
+  if (goBtn) {
+    goBtn.addEventListener('click', () => {
+      window.location.href = state.role === 'employer' ? '/employer' : '/';
+    });
+  }
+}
+
+function checkCode(codeInputs) {
+  // ЗАГЛУШКА: в реальной интеграции здесь должен быть запрос к серверной
+  // функции (например /api/verify-sms), которая проверяет код через
+  // SMS-провайдера. Сейчас любой 4-значный код считается верным,
+  // кроме "0000" — это для демонстрации сценария ошибки.
+  const code = codeInputs.map(i => i.value).join('');
+  if (code === '0000') {
+    document.getElementById('codeError').classList.add('show');
+    codeInputs.forEach(i => { i.value = ''; i.style.borderColor = 'var(--red)'; });
+    codeInputs[0].focus();
+    return;
+  }
+  state.step = 3;
+  render();
+}
+
+let resendTimerInterval = null;
+function startResendTimer() {
+  const link = document.getElementById('resendLink');
+  const timerWrap = document.getElementById('resendTimer');
+  const timerSec = document.getElementById('timerSec');
+  if (!link) return;
+  let sec = 30;
+  link.classList.add('disabled');
+  timerWrap.style.display = 'inline';
+  link.style.display = 'none';
+  if (resendTimerInterval) clearInterval(resendTimerInterval);
+  resendTimerInterval = setInterval(() => {
+    sec -= 1;
+    timerSec.textContent = sec;
+    if (sec <= 0) {
+      clearInterval(resendTimerInterval);
+      link.classList.remove('disabled');
+      link.style.display = 'inline';
+      timerWrap.style.display = 'none';
+    }
+  }, 1000);
+}
+
+render();
+</script>
+</body>
+</html>

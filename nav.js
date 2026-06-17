@@ -71,6 +71,12 @@
         font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
         text-decoration: none;
       }
+      .sb-login-btn {
+        padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+        background: var(--orange, #E8510A); color: #fff; text-decoration: none;
+        white-space: nowrap; transition: background 0.12s;
+      }
+      .sb-login-btn:hover { background: #B33D06; }
       .sb-burger {
         display: none; border: none; background: none; font-size: 20px; cursor: pointer; color: #1A1A18;
       }
@@ -101,6 +107,7 @@
     }
 
     const user = Shabashka.getUser();
+    const loggedIn = Shabashka.isLoggedIn ? Shabashka.isLoggedIn() : true;
     const links = user.role === 'employer' ? EMPLOYER_LINKS : WORKER_LINKS;
     const compact = !!opts.compact;
 
@@ -109,6 +116,10 @@
       return '<a class="sb-link' + active + '" href="' + l.href + '">' +
         '<span>' + l.icon + '</span><span>' + l.label + '</span></a>';
     }).join('');
+
+    const accountHtml = loggedIn
+      ? '<a class="sb-avatar" href="/profile" title="' + user.name + '">' + user.initials + '</a>'
+      : '<a class="sb-login-btn" href="/register">Войти</a>';
 
     container.innerHTML =
       '<div class="sb-bar' + (compact ? ' sb-compact' : '') + '">' +
@@ -119,7 +130,7 @@
             '<button class="sb-role-btn' + (user.role === 'worker' ? ' sb-active' : '') + '" data-role="worker">Я исполнитель</button>' +
             '<button class="sb-role-btn' + (user.role === 'employer' ? ' sb-active' : '') + '" data-role="employer">Я работодатель</button>' +
           '</div>' +
-          '<a class="sb-avatar" href="/profile" title="' + user.name + '">' + user.initials + '</a>' +
+          accountHtml +
           '<button class="sb-burger" aria-label="Меню">☰</button>' +
         '</div>' +
       '</div>' +

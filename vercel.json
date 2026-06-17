@@ -9,8 +9,14 @@
     { "src": "/map", "dest": "/map.html" },
     { "src": "/wallet", "dest": "/wallet.html" },
     { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/register", "dest": "/register.html" },
+    { "src": "/privacy", "dest": "/privacy.html" },
+    { "src": "/terms", "dest": "/terms.html" },
+    { "src": "/offer", "dest": "/offer.html" },
+    { "src": "/employer-rules", "dest": "/employer-rules.html" },
     { "src": "/data.js", "dest": "/data.js" },
     { "src": "/nav.js", "dest": "/nav.js" }
   ]
 }
+
 
