@@ -81,6 +81,10 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .resend-row { text-align: center; font-size: 13px; color: var(--gray); margin-top: 14px; }
 .resend-link { color: var(--orange); cursor: pointer; font-weight: 500; }
 .resend-link.disabled { color: var(--gray); cursor: default; }
+.demo-note {
+  margin-top: 20px; background: var(--blue-bg); border: 1px solid #C5DCF5; border-radius: 10px;
+  padding: 12px 14px; font-size: 12px; color: var(--blue); line-height: 1.6; text-align: center;
+}
 
 /* CONSENT CHECKBOXES — места под юридические тексты, вставляются позже */
 .consent-block { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
@@ -216,6 +220,11 @@ function renderCodeStep() {
     <div class="resend-row">
       Не пришёл код? <span class="resend-link" id="resendLink">Отправить повторно</span>
       <span id="resendTimer" style="display:none">через <span id="timerSec">30</span> сек</span>
+    </div>
+
+    <div class="demo-note">
+      🧪 Демо-режим: SMS никуда не отправляется. Введите любые 4 цифры —
+      подойдёт что угодно, кроме «0000» (это код для проверки сценария ошибки).
     </div>
   `;
 }
