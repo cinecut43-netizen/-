@@ -27,17 +27,26 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .page { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
 
 .hero-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 16px; display: flex; gap: 24px; align-items: flex-start; }
-.avatar-wrap { position: relative; flex-shrink: 0; }
-.avatar { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #E8510A, #B33D06); display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 700; color: #fff; }
+.avatar-wrap { position: relative; flex-shrink: 0; cursor: pointer; }
+.avatar { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #E8510A, #B33D06); display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 700; color: #fff; overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-edit-hint {
+  position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px;
+  opacity: 0; transition: opacity 0.15s; text-align: center; padding: 4px;
+}
+.avatar-wrap:hover .avatar-edit-hint { opacity: 1; }
 .verified-badge { position: absolute; bottom: 2px; right: 2px; width: 22px; height: 22px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid #fff; color: #fff; }
 .hero-info { flex: 1; }
 .hero-name { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 2px; }
-.hero-sub { font-size: 14px; color: var(--gray); margin-bottom: 12px; }
+.hero-meta-row { display: flex; flex-wrap: wrap; gap: 10px; font-size: 14px; color: var(--gray); margin-bottom: 12px; }
+.hero-meta-item { display: flex; align-items: center; gap: 4px; }
 .hero-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .tag { font-size: 12px; padding: 4px 10px; border-radius: 20px; }
 .tag-cat { background: var(--orange-light); color: var(--orange-dark); font-weight: 500; }
 .tag-gray { background: var(--gray-light); color: var(--gray); }
 .tag-green { background: var(--green-bg); color: var(--green); }
+.tag-amber { background: var(--amber-bg); color: var(--amber); }
 .hero-stats { display: flex; gap: 20px; }
 .stat { text-align: center; }
 .stat-num { font-size: 20px; font-weight: 700; }
@@ -47,6 +56,15 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .action-btn { padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; }
 .btn-primary { background: var(--orange); color: #fff; }
 .btn-outline { background: none; border: 1px solid var(--border); color: var(--dark); }
+
+/* ВЕРИФИКАЦИЯ */
+.verify-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.verify-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; flex: 1; min-width: 160px; }
+.verify-item.done { background: var(--green-bg); color: var(--green); }
+.verify-item.pending { background: var(--gray-light); color: var(--gray); }
+.verify-icon { font-size: 15px; }
+.verify-action { margin-left: auto; font-size: 12px; color: var(--orange); cursor: pointer; background: none; border: none; font-family: inherit; font-weight: 600; }
+
 
 .card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 16px; }
 .section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
@@ -126,21 +144,22 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <div class="page">
 
   <div class="hero-card">
-    <div class="avatar-wrap">
-      <div class="avatar">ДК</div>
-      <div class="verified-badge">✓</div>
+    <div class="avatar-wrap" id="avatarWrap" onclick="document.getElementById('photoInput').click()">
+      <div class="avatar" id="avatarBox">ДК</div>
+      <div class="verified-badge" id="verifiedBadge">✓</div>
+      <div class="avatar-edit-hint">Изменить фото</div>
     </div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none">
     <div class="hero-info">
       <div class="hero-name" id="profileName">Дмитрий Козлов</div>
-      <div class="hero-sub" id="profileCity">📍 Москва · На платформе с марта 2024</div>
+      <div class="hero-meta-row" id="profileMetaRow"></div>
       <div class="hero-tags">
         <span class="tag tag-cat">📦 Грузчик</span>
         <span class="tag tag-cat">🔨 Разнорабочий</span>
         <span class="tag tag-gray">🧹 Уборка</span>
-        <span class="tag tag-green">✓ Паспорт проверен</span>
       </div>
       <div class="hero-stats">
-        <div class="stat"><div class="stat-num">47</div><div class="stat-label">заказов</div></div>
+        <div class="stat"><div class="stat-num" id="statOrders">47</div><div class="stat-label">заказов</div></div>
         <div class="stat-divider"></div>
         <div class="stat"><div class="stat-num">68 400 ₽</div><div class="stat-label">заработано</div></div>
         <div class="stat-divider"></div>
@@ -153,6 +172,11 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
       <button class="action-btn btn-primary" onclick="window.location.href='/chat'">💬 Написать</button>
       <button class="action-btn btn-outline">📋 Заказать</button>
     </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Верификация</div>
+    <div class="verify-row" id="verifyRow"></div>
   </div>
 
   <div class="card">
@@ -211,9 +235,13 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
         <input class="form-input" id="editName" value="Дмитрий Козлов">
       </div>
       <div class="form-group">
-        <label class="form-label">Город</label>
-        <input class="form-input" id="editCity" value="Москва">
+        <label class="form-label">Возраст</label>
+        <input class="form-input" type="number" id="editAge" min="18" max="80" value="32">
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Город</label>
+      <input class="form-input" id="editCity" value="Москва">
     </div>
     <div class="form-group">
       <label class="form-label">О себе</label>
@@ -304,16 +332,99 @@ function renderReviews() {
     </div>`).join('');
 }
 
-function openEdit() { document.getElementById('editModal').classList.add('open'); }
+// Главный блок профиля: фото/инициалы, имя, возраст, город, дата регистрации, рейтинг
+function renderHero() {
+  const u = Shabashka.getUser();
+
+  document.getElementById('profileName').textContent = u.name;
+  document.getElementById('statOrders').textContent = u.completedOrders;
+
+  const avatarBox = document.getElementById('avatarBox');
+  avatarBox.innerHTML = u.photo
+    ? `<img src="${u.photo}" alt="${u.name}">`
+    : u.initials;
+
+  const registeredLabel = Shabashka.formatRegisteredDate(u.registeredAt);
+  document.getElementById('profileMetaRow').innerHTML = `
+    <span class="hero-meta-item">📍 ${u.city}</span>
+    <span class="hero-meta-item">🎂 ${u.age} лет</span>
+    <span class="hero-meta-item">⭐ ${u.rating} (${u.reviewsCount} отзывов)</span>
+    <span class="hero-meta-item">📅 На платформе с ${registeredLabel}</span>
+  `;
+
+  const verifiedBadge = document.getElementById('verifiedBadge');
+  const fullyVerified = u.verified.phone && u.verified.passport;
+  verifiedBadge.style.display = fullyVerified ? 'flex' : 'none';
+}
+
+// Блок верификации — отдельные статусы телефона и паспорта,
+// чтобы было видно, что именно подтверждено, а что ещё нет
+function renderVerification() {
+  const u = Shabashka.getUser();
+  const items = [
+    { key: 'phone', label: 'Телефон подтверждён', done: u.verified.phone },
+    { key: 'passport', label: 'Паспорт проверен', done: u.verified.passport },
+  ];
+  document.getElementById('verifyRow').innerHTML = items.map(it => `
+    <div class="verify-item ${it.done ? 'done' : 'pending'}">
+      <span class="verify-icon">${it.done ? '✅' : '⏳'}</span>
+      <span>${it.label}</span>
+      ${!it.done ? `<button class="verify-action" onclick="alert('Загрузка документов появится в следующей версии')">Пройти</button>` : ''}
+    </div>`).join('');
+}
+
+function openEdit() {
+  const u = Shabashka.getUser();
+  document.getElementById('editName').value = u.name;
+  document.getElementById('editAge').value = u.age;
+  document.getElementById('editCity').value = u.city;
+  document.getElementById('editModal').classList.add('open');
+}
 function closeEdit() { document.getElementById('editModal').classList.remove('open'); }
+
 function saveProfile() {
-  document.getElementById('profileName').textContent = document.getElementById('editName').value;
-  document.getElementById('profileCity').textContent = '📍 ' + document.getElementById('editCity').value + ' · На платформе с марта 2024';
+  const name = document.getElementById('editName').value.trim();
+  const age = document.getElementById('editAge').value;
+  const city = document.getElementById('editCity').value.trim();
+
+  if (!name || !city) {
+    alert('Заполните имя и город');
+    return;
+  }
+
+  Shabashka.updateProfile({ name, age, city });
+  renderHero();
   closeEdit();
 }
+
 document.getElementById('editModal').addEventListener('click', e => { if(e.target===document.getElementById('editModal')) closeEdit(); });
 
-renderBars(); renderHistory(); renderReviews();
+// Загрузка фото профиля: читаем файл как base64 и сохраняем через Shabashka
+document.getElementById('photoInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Пожалуйста, выберите файл изображения');
+    return;
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    alert('Файл слишком большой. Максимум 3 МБ.');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    Shabashka.updateProfile({ photo: ev.target.result });
+    renderHero();
+  };
+  reader.onerror = function () {
+    alert('Не удалось загрузить фото, попробуйте другой файл');
+  };
+  reader.readAsDataURL(file);
+});
+
+renderHero(); renderVerification(); renderBars(); renderHistory(); renderReviews();
 </script>
 </body>
 </html>

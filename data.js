@@ -12,14 +12,32 @@
   const DEFAULT_USER = {
     name: 'Дмитрий Козлов',
     initials: 'ДК',
+    age: 32,
     city: 'Москва',
+    photo: null, // base64 data-URL, если пользователь загрузил фото
+    registeredAt: '2024-03-01', // ISO-дата для расчёта «на платформе с...»
     role: localStorage.getItem('shabashka_role') || 'worker',
     company: 'ООО ТрансЛогист', // используется в режиме работодателя
-    verified: true,
+    rating: 4.9,
+    reviewsCount: 43,
+    completedOrders: 47,
+    verified: {
+      phone: true,
+      passport: true,
+    },
   };
+
+  const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+  function formatRegisteredDate(isoDate) {
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return '';
+    return MONTHS_RU[d.getMonth()] + ' ' + d.getFullYear();
+  }
 
   function getUser() {
     DEFAULT_USER.role = localStorage.getItem('shabashka_role') || 'worker';
+
     const savedName = localStorage.getItem('shabashka_name');
     if (savedName) {
       DEFAULT_USER.name = savedName;
@@ -27,7 +45,35 @@
     }
     const savedCompany = localStorage.getItem('shabashka_company');
     if (savedCompany) DEFAULT_USER.company = savedCompany;
+
+    const savedAge = localStorage.getItem('shabashka_age');
+    if (savedAge) DEFAULT_USER.age = Number(savedAge);
+
+    const savedCity = localStorage.getItem('shabashka_city');
+    if (savedCity) DEFAULT_USER.city = savedCity;
+
+    const savedPhoto = localStorage.getItem('shabashka_photo');
+    DEFAULT_USER.photo = savedPhoto || null;
+
+    const savedRegisteredAt = localStorage.getItem('shabashka_registered_at');
+    if (savedRegisteredAt) DEFAULT_USER.registeredAt = savedRegisteredAt;
+
+    const savedVerified = localStorage.getItem('shabashka_verified');
+    if (savedVerified) {
+      try { DEFAULT_USER.verified = JSON.parse(savedVerified); } catch (e) { /* оставляем дефолт */ }
+    }
+
     return DEFAULT_USER;
+  }
+
+  // Сохранить отдельные поля профиля (вызывается из profile.html при сохранении формы)
+  function updateProfile(fields) {
+    if (fields.name) localStorage.setItem('shabashka_name', fields.name);
+    if (fields.city) localStorage.setItem('shabashka_city', fields.city);
+    if (fields.age !== undefined && fields.age !== null && fields.age !== '') {
+      localStorage.setItem('shabashka_age', String(fields.age));
+    }
+    if (fields.photo) localStorage.setItem('shabashka_photo', fields.photo);
   }
 
   function initialsFromName(name) {
@@ -331,6 +377,8 @@
     isLoggedIn: isLoggedIn,
     completeRegistration: completeRegistration,
     logout: logout,
+    updateProfile: updateProfile,
+    formatRegisteredDate: formatRegisteredDate,
     // Совместимость: код, написанный раньше, использует Shabashka.JOBS как массив.
     // Определяем getter, чтобы он всегда возвращал свежий список (включая
     // заказы, добавленные через employer.html) без необходимости менять
