@@ -389,27 +389,34 @@ async function askAI() {
 Отвечай кратко, по-русски, практично. Не более 2-3 предложений.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/ai-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: question }]
-      })
+      body: JSON.stringify({ question, systemPrompt })
     });
     const data = await res.json();
-    const text = data.content?.[0]?.text || 'Не удалось получить ответ.';
     hideTyping();
-    const now = new Date();
-    const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
-    MESSAGES_DB[currentConvo].push({ type:'ai', text: '💡 ' + text, time, isAI: true });
+
+    if (!res.ok) {
+      // Сервер вернул понятную ошибку (например, ключ не настроен)
+      MESSAGES_DB[currentConvo].push({ type:'ai', text: '⚠️ ' + (data.error || 'AI-помощник временно недоступен.'), time: nowTime(), isAI: true });
+      renderMessages();
+      return;
+    }
+
+    const text = data.text || 'Не удалось получить ответ.';
+    MESSAGES_DB[currentConvo].push({ type:'ai', text: '💡 ' + text, time: nowTime(), isAI: true });
     renderMessages();
   } catch(e) {
     hideTyping();
-    alert('Ошибка AI. Проверьте подключение.');
+    MESSAGES_DB[currentConvo].push({ type:'ai', text: '⚠️ Не удалось связаться с AI-помощником. Проверьте подключение.', time: nowTime(), isAI: true });
+    renderMessages();
   }
+}
+
+function nowTime() {
+  const now = new Date();
+  return now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
 }
 
 function acceptWorker() {

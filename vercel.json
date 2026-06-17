@@ -1,6 +1,7 @@
 {
   "version": 2,
   "routes": [
+    { "src": "/api/ai-chat", "dest": "/api/ai-chat.js" },
     { "src": "/", "dest": "/index.html" },
     { "src": "/chat", "dest": "/chat.html" },
     { "src": "/profile", "dest": "/profile.html" },
@@ -12,3 +13,4 @@
     { "src": "/nav.js", "dest": "/nav.js" }
   ]
 }
+
