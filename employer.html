@@ -76,10 +76,11 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 .order-date { font-size: 12px; color: var(--gray); flex-shrink: 0; width: 90px; text-align: right; }
 .order-pay { font-size: 14px; font-weight: 600; flex-shrink: 0; width: 80px; text-align: right; }
 .status-pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; }
-.s-open { background: var(--blue-bg); color: var(--blue); }
+.s-new { background: var(--blue-bg); color: var(--blue); }
+.s-has-responses { background: var(--orange-light); color: var(--orange-dark); }
+.s-selected { background: var(--amber-bg); color: var(--amber); }
 .s-inprog { background: var(--amber-bg); color: var(--amber); }
 .s-done { background: var(--green-bg); color: var(--green); }
-.s-draft { background: var(--gray-light); color: var(--gray); }
 .s-cancelled { background: var(--red-bg); color: var(--red); }
 
 /* RESPONSES */
@@ -265,6 +266,40 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
   </div>
 </div>
 
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="reviewModal">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <h2>Оставить отзыв</h2>
+      <button class="modal-close" onclick="closeModal('reviewModal')">×</button>
+    </div>
+    <div id="reviewJobTitle" style="font-size:13px;color:var(--gray);margin-bottom:18px"></div>
+
+    <div class="form-group">
+      <label class="form-label">Оценка</label>
+      <div id="starsPicker" style="display:flex;gap:6px;font-size:30px;cursor:pointer"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Текст отзыва</label>
+      <textarea class="form-textarea" id="reviewText" placeholder="Расскажите, как прошла работа..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Фото результата работы <span style="color:var(--gray);font-weight:400">(необязательно)</span></label>
+      <input type="file" id="reviewPhotoInput" accept="image/*" style="display:none">
+      <div id="reviewPhotoPreviewWrap" style="display:none;margin-bottom:8px">
+        <img id="reviewPhotoPreview" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px">
+      </div>
+      <button type="button" onclick="document.getElementById('reviewPhotoInput').click()" style="width:100%;padding:10px;border:1.5px dashed var(--border);border-radius:9px;background:none;cursor:pointer;font-size:13px;color:var(--gray)" id="reviewPhotoBtn">📷 Добавить фото</button>
+    </div>
+
+    <div class="form-error" id="reviewError" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px"></div>
+
+    <button class="modal-submit" onclick="submitReviewForm()">Отправить отзыв</button>
+  </div>
+</div>
+
 <script>
 Shabashka.setRole('employer'); // заход в кабинет работодателя переключает роль
 Shabashka.renderNav('employer');
@@ -309,13 +344,7 @@ const ACTIVITY = [
   { color:'#854F0B', text:'Заказ <b>«Уборка офиса»</b> сохранён как черновик', time:'Вчера' },
 ];
 
-const STATUS_MAP = {
-  open: { label:'Открыт', cls:'s-open' },
-  inprog: { label:'В работе', cls:'s-inprog' },
-  done: { label:'Завершён', cls:'s-done' },
-  draft: { label:'Черновик', cls:'s-draft' },
-  cancelled: { label:'Отменён', cls:'s-cancelled' },
-};
+const STATUS_MAP = Shabashka.STATUS_MAP;
 
 let currentFilter = 'all';
 let currentPage = 'dashboard';
@@ -339,8 +368,8 @@ function renderPage() {
 }
 
 function getDashboard() {
-  const openOrders = ORDERS.filter(o => o.status === 'open').length;
-  const inprog = ORDERS.filter(o => o.status === 'inprog').length;
+  const activeStatuses = ['new', 'has_responses', 'selected', 'in_progress'];
+  const activeOrders = ORDERS.filter(o => activeStatuses.includes(o.status)).length;
   const done = ORDERS.filter(o => o.status === 'done').length;
   const totalSpent = ORDERS.filter(o => o.status === 'done').reduce((s,o) => s + o.pay * o.people, 0);
   const pendingResp = RESPONSES.length;
@@ -349,7 +378,7 @@ function getDashboard() {
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-card-label">Активных заказов</div>
-      <div class="stat-card-num" style="color:var(--blue)">${openOrders + inprog}</div>
+      <div class="stat-card-num" style="color:var(--blue)">${activeOrders}</div>
       <div class="stat-card-sub up">↑ +2 за неделю</div>
     </div>
     <div class="stat-card">
@@ -402,10 +431,10 @@ function getOrdersPage() {
     <div class="orders-toolbar">
       <div class="filter-tabs">
         <button class="filter-tab active" onclick="filterOrders('all',this)">Все</button>
-        <button class="filter-tab" onclick="filterOrders('open',this)">Открытые</button>
-        <button class="filter-tab" onclick="filterOrders('inprog',this)">В работе</button>
+        <button class="filter-tab" onclick="filterOrders('new',this)">Новые</button>
+        <button class="filter-tab" onclick="filterOrders('has_responses',this)">Есть отклики</button>
+        <button class="filter-tab" onclick="filterOrders('in_progress',this)">В работе</button>
         <button class="filter-tab" onclick="filterOrders('done',this)">Завершённые</button>
-        <button class="filter-tab" onclick="filterOrders('draft',this)">Черновики</button>
       </div>
       <input class="search-small" placeholder="Поиск..." oninput="searchOrders(this.value)">
     </div>
@@ -430,7 +459,7 @@ function getResponsesPage() {
 function getPaymentsPage() {
   const balance = Shabashka.getEmployerBalance();
   const tx = Shabashka.getEmployerTx();
-  const reserved = ORDERS.filter(o => o.status === 'inprog').reduce((s, o) => s + o.pay * o.people, 0);
+  const reserved = ORDERS.filter(o => o.status === 'in_progress').reduce((s, o) => s + o.pay * o.people, 0);
   const spent = ORDERS.filter(o => o.status === 'done').reduce((s, o) => s + o.pay * o.people, 0);
 
   return `
@@ -513,18 +542,21 @@ function respItem(r) {
       <div class="resp-rating">${r.rating}</div>
     </div>
     <div class="resp-actions">
-      <button class="btn-sm btn-sm-green" onclick="event.stopPropagation();acceptResp(this,'${r.name}')">✓ Принять</button>
+      <button class="btn-sm btn-sm-green" onclick="event.stopPropagation();acceptResp(this,'${r.name}',${r.orderId})">✓ Принять</button>
       <button class="btn-sm btn-sm-gray" onclick="event.stopPropagation();window.location.href='/profile'">Профиль</button>
     </div>
   </div>`;
 }
 
-function acceptResp(btn, name) {
+function acceptResp(btn, name, orderId) {
   btn.textContent = '✅ Принят';
   btn.style.background = 'var(--green)';
   btn.style.color = '#fff';
   btn.disabled = true;
   btn.nextElementSibling.style.display = 'none';
+
+  Shabashka.updateJobStatus(orderId, 'selected');
+  ORDERS = loadOrders();
 }
 
 function openDetail(id) {
@@ -545,11 +577,43 @@ function openDetail(id) {
     </div>
     <div style="font-size:14px;font-weight:600;margin-bottom:10px">Отклики (${RESPONSES.filter(r=>r.orderId===o.id).length})</div>
     <div class="responses-card">${RESPONSES.filter(r=>r.orderId===o.id).map(r => respItem(r)).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Откликов пока нет</div>'}</div>
-    ${o.status !== 'done' ? `<div style="display:flex;gap:8px;margin-top:16px">
-      <button onclick="closeModal('detailModal')" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:9px;font-size:14px;cursor:pointer">Редактировать</button>
-      <button onclick="cancelOrder(${o.id})" style="padding:10px 16px;background:var(--red-bg);color:var(--red);border:none;border-radius:9px;font-size:14px;cursor:pointer">Закрыть заказ</button>
-    </div>` : ''}`;
+    ${renderDetailActions(o)}`;
   document.getElementById('detailModal').classList.add('open');
+}
+
+// Кнопки управления заказом зависят от текущего этапа: выбрать исполнителя
+// уже сделано на уровне откликов, дальше — старт работы, завершение, отзыв.
+function renderDetailActions(o) {
+  if (o.status === 'done') {
+    const review = Shabashka.getReviewForJob(o.id);
+    if (review) {
+      return `<div style="margin-top:16px;padding:14px;background:var(--green-bg);border-radius:10px;font-size:13px;color:var(--green)">
+        ✅ Отзыв оставлен: ${'⭐'.repeat(review.rating)}${'☆'.repeat(5-review.rating)} — «${review.text}»
+      </div>`;
+    }
+    return `<button onclick="closeModal('detailModal');openReviewModal(${o.id})" style="width:100%;padding:10px;background:var(--orange);color:#fff;border:none;border-radius:9px;font-size:14px;cursor:pointer;margin-top:16px">⭐ Оставить отзыв исполнителю</button>`;
+  }
+
+  if (o.status === 'cancelled') return '';
+
+  let progressBtn = '';
+  if (o.status === 'selected') {
+    progressBtn = `<button onclick="advanceOrder(${o.id},'in_progress')" style="flex:1;padding:10px;background:var(--amber-bg);color:var(--amber);border:none;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600">▶ Начать работу</button>`;
+  } else if (o.status === 'in_progress') {
+    progressBtn = `<button onclick="advanceOrder(${o.id},'done')" style="flex:1;padding:10px;background:var(--green-bg);color:var(--green);border:none;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600">✅ Завершить заказ</button>`;
+  }
+
+  return `<div style="display:flex;gap:8px;margin-top:16px">
+    ${progressBtn || `<button onclick="closeModal('detailModal')" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:9px;font-size:14px;cursor:pointer">Редактировать</button>`}
+    <button onclick="cancelOrder(${o.id})" style="padding:10px 16px;background:var(--red-bg);color:var(--red);border:none;border-radius:9px;font-size:14px;cursor:pointer">Закрыть заказ</button>
+  </div>`;
+}
+
+function advanceOrder(id, nextStatus) {
+  Shabashka.updateJobStatus(id, nextStatus);
+  ORDERS = loadOrders();
+  closeModal('detailModal');
+  renderPage();
 }
 
 function cancelOrder(id) {
@@ -618,9 +682,73 @@ function submitOrder() {
   renderPage();
 }
 
-['postModal','detailModal','topUpModal'].forEach(id => {
+['postModal','detailModal','topUpModal','reviewModal'].forEach(id => {
   document.getElementById(id).addEventListener('click', function(e) { if(e.target===this) closeModal(id); });
 });
+
+/* ---------- ОТЗЫВ ПОСЛЕ ЗАВЕРШЕНИЯ ЗАКАЗА ---------- */
+let reviewJobId = null;
+let reviewRating = 5;
+let reviewPhoto = null;
+
+function openReviewModal(jobId) {
+  reviewJobId = jobId;
+  reviewRating = 5;
+  reviewPhoto = null;
+
+  const job = Shabashka.getJob(jobId);
+  document.getElementById('reviewJobTitle').textContent = job ? job.title : '';
+  document.getElementById('reviewText').value = '';
+  document.getElementById('reviewError').style.display = 'none';
+  document.getElementById('reviewPhotoPreviewWrap').style.display = 'none';
+  document.getElementById('reviewPhotoInput').value = '';
+
+  renderStarsPicker();
+  document.getElementById('reviewModal').classList.add('open');
+}
+
+function renderStarsPicker() {
+  const wrap = document.getElementById('starsPicker');
+  wrap.innerHTML = [1,2,3,4,5].map(n => `
+    <span onclick="setReviewRating(${n})" style="color:${n <= reviewRating ? 'var(--orange)' : 'var(--border)'}">★</span>
+  `).join('');
+}
+
+function setReviewRating(n) {
+  reviewRating = n;
+  renderStarsPicker();
+}
+
+document.getElementById('reviewPhotoInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Выберите файл изображения'); return; }
+  if (file.size > 3 * 1024 * 1024) { alert('Файл слишком большой. Максимум 3 МБ.'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    reviewPhoto = ev.target.result;
+    document.getElementById('reviewPhotoPreview').src = reviewPhoto;
+    document.getElementById('reviewPhotoPreviewWrap').style.display = 'block';
+    document.getElementById('reviewPhotoBtn').textContent = '📷 Заменить фото';
+  };
+  reader.readAsDataURL(file);
+});
+
+function submitReviewForm() {
+  const text = document.getElementById('reviewText').value;
+  const result = Shabashka.submitReview(reviewJobId, reviewRating, text, reviewPhoto);
+
+  if (!result.ok) {
+    document.getElementById('reviewError').textContent = result.error;
+    document.getElementById('reviewError').style.display = 'block';
+    return;
+  }
+
+  closeModal('reviewModal');
+  alert('Спасибо за отзыв!');
+  renderPage();
+}
 
 renderPage();
 </script>

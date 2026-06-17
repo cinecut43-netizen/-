@@ -108,6 +108,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .review-job { font-size: 12px; color: var(--gray); }
 .review-stars { margin-left: auto; font-size: 13px; }
 .review-text { font-size: 14px; line-height: 1.6; margin-bottom: 6px; }
+.review-photo { width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; margin-bottom: 8px; display: block; }
 .review-date { font-size: 12px; color: var(--gray); }
 
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
@@ -317,7 +318,21 @@ function renderHistory() {
 }
 
 function renderReviews() {
-  document.getElementById('reviewsList').innerHTML = REVIEWS.map(r => `
+  // Реальные отзывы, оставленные через employer.html после завершения заказа,
+  // показываем первыми — они актуальнее статичных демо-данных.
+  const realReviews = Shabashka.getAllReviews().map(r => ({
+    name: 'Заказчик',
+    color: '#E8510A',
+    job: r.jobTitle,
+    stars: r.rating,
+    date: r.date,
+    text: r.text,
+    photo: r.photo,
+  }));
+
+  const allReviews = realReviews.concat(REVIEWS);
+
+  document.getElementById('reviewsList').innerHTML = allReviews.map(r => `
     <div class="review-item">
       <div class="review-header">
         <div class="review-avatar" style="background:${r.color}">${r.name[0]}</div>
@@ -327,9 +342,10 @@ function renderReviews() {
         </div>
         <div class="review-stars">${'⭐'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
       </div>
+      ${r.photo ? `<img class="review-photo" src="${r.photo}" alt="Результат работы">` : ''}
       <div class="review-text">${r.text}</div>
       <div class="review-date">${r.date}</div>
-    </div>`).join('');
+    </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Пока нет отзывов</div>';
 }
 
 // Главный блок профиля: фото/инициалы, имя, возраст, город, дата регистрации, рейтинг
