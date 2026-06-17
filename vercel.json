@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/chat", "dest": "/chat.html" },
-    { "src": "/profile", "dest": "/profile.html" },
-    { "src": "/employer", "dest": "/employer.html" }
-  ]
-}
