@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Кабинет работодателя</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF;
+  --border: #E2E1DB; --white: #FFFFFF;
+  --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB;
+  --amber: #854F0B; --amber-bg: #FAEEDA;
+  --red: #B91C1C; --red-bg: #FEE2E2;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; }
+
+/* NAV */
+nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 54px; position: sticky; top: 0; z-index: 100; }
+.logo { font-size: 18px; font-weight: 700; }
+.logo span { color: var(--orange); }
+.nav-company { font-size: 13px; color: var(--gray); border-left: 1px solid var(--border); padding-left: 16px; }
+.nav-company strong { color: var(--dark); }
+.nav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.notif-btn { position: relative; background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.notif-dot { position: absolute; top: 2px; right: 4px; width: 8px; height: 8px; background: var(--orange); border-radius: 50%; border: 2px solid var(--white); }
+.post-btn { background: var(--orange); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.post-btn:hover { background: var(--orange-dark); }
+
+/* LAYOUT */
+.layout { display: flex; min-height: calc(100vh - 54px); }
+
+/* SIDEBAR NAV */
+.sidenav { width: 220px; background: var(--white); border-right: 1px solid var(--border); padding: 16px 12px; flex-shrink: 0; }
+.sidenav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 14px; cursor: pointer; color: var(--gray); margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
+.sidenav-item:hover { background: var(--gray-light); color: var(--dark); }
+.sidenav-item.active { background: var(--orange-light); color: var(--orange-dark); font-weight: 500; }
+.sidenav-icon { font-size: 16px; width: 20px; text-align: center; }
+.sidenav-badge { margin-left: auto; background: var(--orange); color: #fff; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 1px 6px; }
+.sidenav-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); padding: 14px 12px 6px; }
+
+/* MAIN */
+main { flex: 1; padding: 24px; overflow-y: auto; }
+
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.stat-card-label { font-size: 12px; color: var(--gray); margin-bottom: 6px; }
+.stat-card-num { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+.stat-card-sub { font-size: 12px; margin-top: 4px; }
+.up { color: var(--green); }
+.down { color: var(--red); }
+
+/* SECTION HEADER */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: 15px; font-weight: 600; }
+.section-link { font-size: 13px; color: var(--orange); cursor: pointer; background: none; border: none; }
+
+/* ORDERS TABLE */
+.orders-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+.orders-toolbar { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+.filter-tabs { display: flex; gap: 2px; background: var(--gray-light); border-radius: 8px; padding: 3px; }
+.filter-tab { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--gray); }
+.filter-tab.active { background: var(--white); color: var(--dark); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.search-small { margin-left: auto; padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; color: var(--dark); width: 200px; }
+
+.order-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.order-row:last-child { border-bottom: none; }
+.order-row:hover { background: var(--gray-light); }
+.order-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--orange-light); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.order-info { flex: 1; min-width: 0; }
+.order-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.order-meta { font-size: 12px; color: var(--gray); margin-top: 2px; }
+.order-date { font-size: 12px; color: var(--gray); flex-shrink: 0; width: 90px; text-align: right; }
+.order-pay { font-size: 14px; font-weight: 600; flex-shrink: 0; width: 80px; text-align: right; }
+.status-pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; }
+.s-open { background: var(--blue-bg); color: var(--blue); }
+.s-inprog { background: var(--amber-bg); color: var(--amber); }
+.s-done { background: var(--green-bg); color: var(--green); }
+.s-draft { background: var(--gray-light); color: var(--gray); }
+.s-cancelled { background: var(--red-bg); color: var(--red); }
+
+/* RESPONSES */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.responses-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.resp-header { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.resp-count { font-size: 12px; color: var(--gray); font-weight: 400; }
+.resp-item { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.resp-item:last-child { border-bottom: none; }
+.resp-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.resp-name { font-size: 13px; font-weight: 500; }
+.resp-rating { font-size: 12px; color: var(--gray); }
+.resp-actions { margin-left: auto; display: flex; gap: 6px; }
+.btn-sm { padding: 5px 12px; border-radius: 7px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; }
+.btn-sm-green { background: var(--green-bg); color: var(--green); }
+.btn-sm-green:hover { background: #C8EDD8; }
+.btn-sm-gray { background: var(--gray-light); color: var(--gray); }
+
+/* ACTIVITY */
+.activity-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.activity-item { display: flex; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.activity-text { font-size: 13px; line-height: 1.5; flex: 1; }
+.activity-time { font-size: 11px; color: var(--gray); flex-shrink: 0; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 14px; width: 520px; max-width: 96vw; max-height: 88vh; overflow-y: auto; padding: 28px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h2 { font-size: 18px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--gray); }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; font-weight: 500; color: var(--gray); margin-bottom: 5px; display: block; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; color: var(--dark); outline: none; }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-submit { width: 100%; padding: 12px; background: var(--orange); color: #fff; border: none; border-radius: 9px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+.modal-submit:hover { background: var(--orange-dark); }
+.commission-hint { background: var(--orange-light); border: 1px solid #FFD0B0; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--orange-dark); margin-top: 12px; }
+
+@media (max-width: 900px) { .stats-row { grid-template-columns: 1fr 1fr; } .two-col { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .sidenav { display: none; } main { padding: 16px; } .stats-row { grid-template-columns: 1fr 1fr; } }
+</style>
+<script src="/data.js"></script>
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<div id="shabashka-nav"></div>
+<nav>
+  <div class="nav-company">Кабинет: <strong id="navCompany">ООО ТрансЛогист</strong></div>
+  <div class="nav-right">
+    <button class="notif-btn">🔔<span class="notif-dot"></span></button>
+    <button class="post-btn" onclick="openPostModal()">+ Новый заказ</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <nav class="sidenav">
+    <button class="sidenav-item active" onclick="setPage('dashboard', this)"><span class="sidenav-icon">📊</span> Дашборд</button>
+    <button class="sidenav-item" onclick="setPage('orders', this)"><span class="sidenav-icon">📋</span> Мои заказы <span class="sidenav-badge">6</span></button>
+    <button class="sidenav-item" onclick="setPage('responses', this)"><span class="sidenav-icon">👥</span> Отклики <span class="sidenav-badge">8</span></button>
+    <div class="sidenav-section">Финансы</div>
+    <button class="sidenav-item" onclick="setPage('payments', this)"><span class="sidenav-icon">💳</span> Платежи</button>
+    <button class="sidenav-item" onclick="setPage('analytics', this)"><span class="sidenav-icon">📈</span> Аналитика</button>
+    <div class="sidenav-section">Настройки</div>
+    <button class="sidenav-item" onclick="setPage('company', this)"><span class="sidenav-icon">🏢</span> Компания</button>
+    <button class="sidenav-item" onclick="setPage('billing', this)"><span class="sidenav-icon">⚙️</span> Реквизиты</button>
+  </nav>
+
+  <main id="mainContent"></main>
+</div>
+
+<!-- NEW ORDER MODAL -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Новый заказ</h2>
+      <button class="modal-close" onclick="closeModal('postModal')">×</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Категория</label>
+        <select class="form-select" id="newCat">
+          <option>📦 Грузчики / переезд</option>
+          <option>🔨 Строительство</option>
+          <option>🧹 Уборка</option>
+          <option>🎉 Ивент / промо</option>
+          <option>⚡ Прочее</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Дата</label>
+        <input type="date" class="form-input" id="newDate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Название задачи</label>
+      <input class="form-input" id="newTitle" placeholder="Например: Разгрузка фуры на складе">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Описание</label>
+      <textarea class="form-textarea" id="newDesc" placeholder="Подробно опишите что нужно сделать..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Оплата (₽/день)</label>
+        <input type="number" class="form-input" id="newPay" placeholder="3000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Кол-во человек</label>
+        <input type="number" class="form-input" id="newCount" placeholder="1" min="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Адрес</label>
+      <input class="form-input" id="newAddr" placeholder="Москва, ул. Ленина, 5">
+    </div>
+    <div class="commission-hint">
+      💡 Комиссия платформы — 10% от суммы заказа. Спишется только при подтверждении исполнителя.
+    </div>
+    <button class="modal-submit" onclick="submitOrder()">Разместить заказ</button>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="detailTitle">Заказ</h2>
+      <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+Shabashka.setRole('employer'); // заход в кабинет работодателя переключает роль
+Shabashka.renderNav('employer');
+document.getElementById('navCompany').textContent = Shabashka.getUser().company;
+
+const ORDERS = [
+  { id:1, icon:'📦', title:'Разгрузка фуры на складе', date:'17 июн', pay:3200, people:4, status:'inprog', responses:9, addr:'Солнцево, склад №3', desc:'Разгрузка фуры с бытовой техникой. ~4 часа работы.' },
+  { id:2, icon:'🎉', title:'Промоутеры на открытие', date:'16 июн', pay:2000, people:5, status:'open', responses:23, addr:'ТЦ Мега, Химки', desc:'Раздача листовок и приглашение покупателей.' },
+  { id:3, icon:'🔨', title:'Подсобный рабочий — стройка', date:'18 июн', pay:4000, people:2, status:'open', responses:12, addr:'Мытищи, стройплощадка', desc:'Подача материалов, уборка мусора, помощь бригаде.' },
+  { id:4, icon:'🧹', title:'Уборка офиса после ремонта', date:'20 июн', pay:2500, people:2, status:'draft', responses:0, addr:'м. Тимирязевская, офис 310', desc:'Генеральная уборка 200 кв.м.' },
+  { id:5, icon:'📦', title:'Грузчики на склад', date:'10 июн', pay:3000, people:3, status:'done', responses:7, addr:'Люберцы, склад', desc:'Расстановка товара на складе.' },
+  { id:6, icon:'🎉', title:'Официанты на корпоратив', date:'5 июн', pay:4500, people:4, status:'done', responses:18, addr:'Ресторан Панорама', desc:'Обслуживание банкета 150 человек.' },
+];
+
+const RESPONSES = [
+  { name:'Дмитрий К.', color:'#E8510A', rating:'4.9 ⭐ (47 заказов)', orderId:1, msg:'Готов выйти завтра, опыт 3 года.' },
+  { name:'Сергей М.', color:'#185FA5', rating:'4.7 ⭐ (31 заказ)', orderId:1, msg:'Физически крепкий, инструмент свой.' },
+  { name:'Алёна П.', color:'#1A7A4A', rating:'5.0 ⭐ (22 заказа)', orderId:2, msg:'Коммуникабельная, презентабельный вид.' },
+  { name:'Марина С.', color:'#9B59B6', rating:'4.8 ⭐ (19 заказов)', orderId:2, msg:'Работала промоутером 2 года.' },
+  { name:'Иван Г.', color:'#B33D06', rating:'4.6 ⭐ (55 заказов)', orderId:3, msg:'Строительный опыт, всё умею.' },
+  { name:'Олег Т.', color:'#185FA5', rating:'4.9 ⭐ (40 заказов)', orderId:3, msg:'Подсобные работы — моё.' },
+  { name:'Наталья В.', color:'#1A7A4A', rating:'5.0 ⭐ (28 заказов)', orderId:2, msg:'Доброжелательная, энергичная.' },
+  { name:'Роман Д.', color:'#854F0B', rating:'4.5 ⭐ (15 заказов)', orderId:1, msg:'Молодой, сильный, обучаемый.' },
+];
+
+const ACTIVITY = [
+  { color:'#E8510A', text:'<b>Дмитрий К.</b> откликнулся на «Разгрузка фуры»', time:'10 мин' },
+  { color:'#1A7A4A', text:'Заказ <b>«Официанты на корпоратив»</b> успешно завершён', time:'2 ч' },
+  { color:'#185FA5', text:'<b>Сергей М.</b> подтверждён на «Разгрузка фуры»', time:'3 ч' },
+  { color:'#9B59B6', text:'Новый отклик на <b>«Промоутеры на открытие»</b>', time:'5 ч' },
+  { color:'#854F0B', text:'Заказ <b>«Уборка офиса»</b> сохранён как черновик', time:'Вчера' },
+];
+
+const STATUS_MAP = {
+  open: { label:'Открыт', cls:'s-open' },
+  inprog: { label:'В работе', cls:'s-inprog' },
+  done: { label:'Завершён', cls:'s-done' },
+  draft: { label:'Черновик', cls:'s-draft' },
+  cancelled: { label:'Отменён', cls:'s-cancelled' },
+};
+
+let currentFilter = 'all';
+let currentPage = 'dashboard';
+
+function setPage(page, btn) {
+  currentPage = page;
+  document.querySelectorAll('.sidenav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPage();
+}
+
+function renderPage() {
+  const el = document.getElementById('mainContent');
+  if (currentPage === 'dashboard') el.innerHTML = getDashboard();
+  else if (currentPage === 'orders') { el.innerHTML = getOrdersPage(); }
+  else if (currentPage === 'responses') { el.innerHTML = getResponsesPage(); }
+  else if (currentPage === 'payments') { el.innerHTML = getPaymentsPage(); }
+  else {
+    el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--gray)"><div style="font-size:40px;margin-bottom:12px">🚧</div><div style="font-size:16px">Раздел «${currentPage}» в разработке</div></div>`;
+  }
+}
+
+function getDashboard() {
+  const openOrders = ORDERS.filter(o => o.status === 'open').length;
+  const inprog = ORDERS.filter(o => o.status === 'inprog').length;
+  const done = ORDERS.filter(o => o.status === 'done').length;
+  const totalSpent = ORDERS.filter(o => o.status === 'done').reduce((s,o) => s + o.pay * o.people, 0);
+  const pendingResp = RESPONSES.length;
+
+  return `
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-card-label">Активных заказов</div>
+      <div class="stat-card-num" style="color:var(--blue)">${openOrders + inprog}</div>
+      <div class="stat-card-sub up">↑ +2 за неделю</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Новых откликов</div>
+      <div class="stat-card-num" style="color:var(--orange)">${pendingResp}</div>
+      <div class="stat-card-sub up">↑ +3 сегодня</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Завершено заказов</div>
+      <div class="stat-card-num" style="color:var(--green)">${done}</div>
+      <div class="stat-card-sub" style="color:var(--gray)">Всего за месяц</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Потрачено (с комиссией)</div>
+      <div class="stat-card-num">${Math.round(totalSpent * 1.1).toLocaleString('ru')} ₽</div>
+      <div class="stat-card-sub" style="color:var(--gray)">Включая 10% сервис</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <span class="section-title">Активные заказы</span>
+    <button class="section-link" onclick="setPage('orders', document.querySelectorAll('.sidenav-item')[1])">Все заказы →</button>
+  </div>
+  <div class="orders-card" style="margin-bottom:20px">
+    ${ORDERS.filter(o => o.status !== 'done' && o.status !== 'cancelled').map(o => orderRow(o)).join('')}
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="section-header"><span class="section-title">Новые отклики</span><button class="section-link" onclick="setPage('responses', document.querySelectorAll('.sidenav-item')[2])">Все →</button></div>
+      <div class="responses-card">${RESPONSES.slice(0,4).map(r => respItem(r)).join('')}</div>
+    </div>
+    <div>
+      <div class="section-header"><span class="section-title">Активность</span></div>
+      <div class="activity-card">${ACTIVITY.map(a => `
+        <div class="activity-item">
+          <div class="activity-dot" style="background:${a.color}"></div>
+          <div class="activity-text">${a.text}</div>
+          <div class="activity-time">${a.time}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function getOrdersPage() {
+  return `
+  <div class="section-header"><span class="section-title">Мои заказы</span><button class="post-btn" style="font-size:13px;padding:7px 14px" onclick="openPostModal()">+ Новый</button></div>
+  <div class="orders-card">
+    <div class="orders-toolbar">
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterOrders('all',this)">Все</button>
+        <button class="filter-tab" onclick="filterOrders('open',this)">Открытые</button>
+        <button class="filter-tab" onclick="filterOrders('inprog',this)">В работе</button>
+        <button class="filter-tab" onclick="filterOrders('done',this)">Завершённые</button>
+        <button class="filter-tab" onclick="filterOrders('draft',this)">Черновики</button>
+      </div>
+      <input class="search-small" placeholder="Поиск..." oninput="searchOrders(this.value)">
+    </div>
+    <div id="ordersTableBody">${ORDERS.map(o => orderRow(o)).join('')}</div>
+  </div>`;
+}
+
+function getResponsesPage() {
+  const grouped = {};
+  RESPONSES.forEach(r => { if(!grouped[r.orderId]) grouped[r.orderId]=[]; grouped[r.orderId].push(r); });
+  return `
+  <div class="section-title" style="margin-bottom:16px">Отклики на ваши заказы</div>
+  ${Object.entries(grouped).map(([oid, resps]) => {
+    const order = ORDERS.find(o => o.id == oid);
+    return `<div class="responses-card" style="margin-bottom:16px">
+      <div class="resp-header">${order.icon} ${order.title} <span class="resp-count">${resps.length} откликов · ${order.date}</span></div>
+      ${resps.map(r => respItem(r)).join('')}
+    </div>`;
+  }).join('')}`;
+}
+
+function getPaymentsPage() {
+  const rows = [
+    { date:'12 июн', title:'Официанты на корпоратив', amount:19800, type:'Списание', status:'Выполнен' },
+    { date:'10 июн', title:'Грузчики на склад', amount:9900, type:'Списание', status:'Выполнен' },
+    { date:'8 июн', title:'Пополнение баланса', amount:30000, type:'Пополнение', status:'' },
+  ];
+  return `
+  <div class="section-header"><span class="section-title">Платежи и баланс</span></div>
+  <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+    <div class="stat-card"><div class="stat-card-label">Баланс</div><div class="stat-card-num" style="color:var(--green)">12 300 ₽</div></div>
+    <div class="stat-card"><div class="stat-card-label">Резерв (эскроу)</div><div class="stat-card-num" style="color:var(--amber)">29 700 ₽</div></div>
+    <div class="stat-card"><div class="stat-card-label">Всего потрачено</div><div class="stat-card-num">42 900 ₽</div></div>
+  </div>
+  <div class="orders-card">
+    ${rows.map(r => `
+      <div class="order-row">
+        <div class="order-icon">${r.type==='Пополнение' ? '💳' : '📤'}</div>
+        <div class="order-info"><div class="order-title">${r.title}</div><div class="order-meta">${r.type}</div></div>
+        <div class="order-date">${r.date}</div>
+        <div class="order-pay" style="color:${r.type==='Пополнение'?'var(--green)':'var(--red)'}">
+          ${r.type==='Пополнение' ? '+' : '−'}${r.amount.toLocaleString('ru')} ₽
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function orderRow(o) {
+  const s = STATUS_MAP[o.status];
+  return `<div class="order-row" onclick="openDetail(${o.id})">
+    <div class="order-icon">${o.icon}</div>
+    <div class="order-info">
+      <div class="order-title">${o.title}</div>
+      <div class="order-meta">👥 ${o.people} чел · 📍 ${o.addr} · ${o.responses} откликов</div>
+    </div>
+    <div class="order-date">${o.date}</div>
+    <div class="order-pay">${(o.pay * o.people).toLocaleString('ru')} ₽</div>
+    <span class="status-pill ${s.cls}">${s.label}</span>
+  </div>`;
+}
+
+function respItem(r) {
+  return `<div class="resp-item">
+    <div class="resp-avatar" style="background:${r.color}">${r.name[0]}</div>
+    <div>
+      <div class="resp-name">${r.name}</div>
+      <div class="resp-rating">${r.rating}</div>
+    </div>
+    <div class="resp-actions">
+      <button class="btn-sm btn-sm-green" onclick="event.stopPropagation();acceptResp(this,'${r.name}')">✓ Принять</button>
+      <button class="btn-sm btn-sm-gray" onclick="event.stopPropagation();window.location.href='/profile'">Профиль</button>
+    </div>
+  </div>`;
+}
+
+function acceptResp(btn, name) {
+  btn.textContent = '✅ Принят';
+  btn.style.background = 'var(--green)';
+  btn.style.color = '#fff';
+  btn.disabled = true;
+  btn.nextElementSibling.style.display = 'none';
+}
+
+function openDetail(id) {
+  const o = ORDERS.find(x => x.id === id);
+  const s = STATUS_MAP[o.status];
+  const commission = Math.round(o.pay * o.people * 0.1);
+  document.getElementById('detailTitle').textContent = o.title;
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="status-pill ${s.cls}">${s.label}</span>
+      <span style="font-size:12px;color:var(--gray)">📅 ${o.date} · 👥 ${o.people} чел · 📍 ${o.addr}</span>
+    </div>
+    <p style="font-size:14px;line-height:1.7;margin-bottom:16px;color:var(--dark)">${o.desc}</p>
+    <div style="background:var(--gray-light);border-radius:10px;padding:16px;display:flex;justify-content:space-between;margin-bottom:16px">
+      <div><div style="font-size:13px;color:var(--gray)">Оплата исполнителям</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people).toLocaleString('ru')} ₽</div></div>
+      <div style="text-align:center"><div style="font-size:13px;color:var(--gray)">Комиссия (10%)</div><div style="font-size:20px;font-weight:700;color:var(--orange)">${commission.toLocaleString('ru')} ₽</div></div>
+      <div style="text-align:right"><div style="font-size:13px;color:var(--gray)">Итого</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people+commission).toLocaleString('ru')} ₽</div></div>
+    </div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px">Отклики (${RESPONSES.filter(r=>r.orderId===o.id).length})</div>
+    <div class="responses-card">${RESPONSES.filter(r=>r.orderId===o.id).map(r => respItem(r)).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Откликов пока нет</div>'}</div>
+    ${o.status !== 'done' ? `<div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="closeModal('detailModal')" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:9px;font-size:14px;cursor:pointer">Редактировать</button>
+      <button onclick="alert('Заказ снят с публикации');closeModal('detailModal')" style="padding:10px 16px;background:var(--red-bg);color:var(--red);border:none;border-radius:9px;font-size:14px;cursor:pointer">Закрыть заказ</button>
+    </div>` : ''}`;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function filterOrders(status, btn) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const list = status === 'all' ? ORDERS : ORDERS.filter(o => o.status === status);
+  document.getElementById('ordersTableBody').innerHTML = list.map(o => orderRow(o)).join('');
+}
+
+function searchOrders(q) {
+  const list = ORDERS.filter(o => o.title.toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('ordersTableBody').innerHTML = list.map(o => orderRow(o)).join('');
+}
+
+function openPostModal() {
+  document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('postModal').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function submitOrder() {
+  const title = document.getElementById('newTitle').value;
+  const pay = document.getElementById('newPay').value;
+  if (!title || !pay) { alert('Заполните название и оплату'); return; }
+  const newOrder = {
+    id: ORDERS.length + 1,
+    icon: '⚡',
+    title,
+    date: 'Сегодня',
+    pay: parseInt(pay),
+    people: parseInt(document.getElementById('newCount').value) || 1,
+    status: 'open',
+    responses: 0,
+    addr: document.getElementById('newAddr').value || 'Адрес не указан',
+    desc: document.getElementById('newDesc').value,
+  };
+  ORDERS.unshift(newOrder);
+  closeModal('postModal');
+  alert('Заказ размещён! Первые отклики появятся в течение 15 минут.');
+  renderPage();
+}
+
+['postModal','detailModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) { if(e.target===this) closeModal(id); });
+});
+
+renderPage();
+</script>
+</body>
+</html>

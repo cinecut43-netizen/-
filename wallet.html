@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Шабашка — Мой кошелёк</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF;
+  --border: #E2E1DB; --white: #FFFFFF;
+  --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB;
+  --red: #B91C1C; --red-bg: #FEE2E2;
+  --purple: #6D28D9; --purple-bg: #EDE9FE;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; }
+
+/* NAV */
+nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 16px; height: 52px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+.logo { font-size: 18px; font-weight: 700; }
+.logo span { color: var(--orange); }
+.back-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray); }
+.nav-title { font-size: 15px; font-weight: 600; }
+.settings-btn { margin-left: auto; background: none; border: none; font-size: 20px; cursor: pointer; }
+
+/* HERO CARD */
+.hero { background: linear-gradient(135deg, #1A1A18 0%, #2D2D2A 100%); padding: 24px 16px 32px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(232,81,10,0.15); border-radius: 50%; }
+.hero::after { content: ''; position: absolute; bottom: -20px; left: -20px; width: 120px; height: 120px; background: rgba(232,81,10,0.08); border-radius: 50%; }
+.hero-top { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; position: relative; z-index: 1; }
+.hero-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-dark)); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; flex-shrink: 0; position: relative; }
+.hero-verified { position: absolute; bottom: 0; right: 0; width: 18px; height: 18px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; border: 2px solid #1A1A18; }
+.hero-name { font-size: 17px; font-weight: 700; color: #fff; }
+.hero-role { font-size: 12px; color: #888; margin-top: 2px; }
+.balance-label { font-size: 13px; color: #888; margin-bottom: 4px; position: relative; z-index: 1; }
+.balance-amount { font-size: 42px; font-weight: 700; color: #fff; letter-spacing: -1px; position: relative; z-index: 1; margin-bottom: 6px; }
+.balance-sub { font-size: 13px; color: #888; position: relative; z-index: 1; margin-bottom: 20px; }
+.hero-btns { display: flex; gap: 10px; position: relative; z-index: 1; }
+.hero-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s; }
+.hero-btn:hover { opacity: 0.9; }
+.btn-withdraw { background: var(--orange); color: #fff; }
+.btn-history { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px; margin-top: -16px; position: relative; z-index: 10; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.stat-icon { font-size: 18px; margin-bottom: 6px; }
+.stat-val { font-size: 19px; font-weight: 700; margin-bottom: 2px; }
+.stat-lbl { font-size: 11px; color: var(--gray); }
+
+/* SECTION */
+.section { padding: 0 16px 16px; }
+.section-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.section-title { font-size: 15px; font-weight: 600; }
+.section-link { font-size: 13px; color: var(--orange); background: none; border: none; cursor: pointer; font-family: inherit; }
+
+/* MINI CHART */
+.chart-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.chart-period { display: flex; gap: 4px; margin-bottom: 14px; }
+.period-btn { padding: 4px 12px; border-radius: 20px; border: none; font-size: 12px; cursor: pointer; font-family: inherit; background: none; color: var(--gray); }
+.period-btn.active { background: var(--orange-light); color: var(--orange-dark); font-weight: 500; }
+.mini-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+.mini-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.mini-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
+.mini-bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 3px; }
+.mini-bar-lbl { font-size: 10px; color: var(--gray); }
+.chart-total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.chart-total-item { text-align: center; }
+.chart-total-val { font-size: 16px; font-weight: 700; }
+.chart-total-lbl { font-size: 11px; color: var(--gray); }
+
+/* ACHIEVEMENTS */
+.achievements { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+.achievement { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; gap: 10px; align-items: center; }
+.ach-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.ach-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.ach-desc { font-size: 11px; color: var(--gray); }
+.ach-locked { opacity: 0.45; filter: grayscale(1); }
+
+/* TRANSACTIONS */
+.tx-list { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.tx-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.tx-item:last-child { border-bottom: none; }
+.tx-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.tx-info { flex: 1; }
+.tx-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+.tx-meta { font-size: 12px; color: var(--gray); }
+.tx-amount { font-size: 15px; font-weight: 700; flex-shrink: 0; }
+.tx-status { font-size: 10px; text-align: right; margin-top: 2px; }
+
+/* LEVELS */
+.level-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.level-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.level-badge { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.level-name { font-size: 15px; font-weight: 700; }
+.level-sub { font-size: 12px; color: var(--gray); }
+.progress-wrap { margin-bottom: 6px; }
+.progress-track { height: 8px; background: var(--gray-light); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--orange), #FF8C42); transition: width 0.8s ease; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); margin-top: 4px; }
+.next-level { background: var(--orange-light); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--orange-dark); }
+
+/* WITHDRAW MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; align-items: flex-end; }
+.modal-overlay.open { display: flex; }
+.modal-sheet { background: var(--white); border-radius: 20px 20px 0 0; width: 100%; padding: 20px 20px 40px; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--gray); margin-bottom: 20px; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; display: block; }
+.form-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 16px; font-family: inherit; outline: none; color: var(--dark); }
+.form-input:focus { border-color: var(--orange); }
+.bank-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.bank-opt { padding: 10px; border: 1.5px solid var(--border); border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.15s; }
+.bank-opt.selected { border-color: var(--orange); background: var(--orange-light); }
+.bank-opt-icon { font-size: 20px; margin-bottom: 4px; }
+.bank-opt-name { font-size: 11px; font-weight: 500; }
+.withdraw-btn { width: 100%; padding: 14px; background: var(--orange); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.fee-note { font-size: 12px; color: var(--gray); text-align: center; margin-top: 10px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--dark); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+<script src="/data.js"></script>
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<div id="shabashka-nav"></div>
+<nav>
+  <button class="back-btn" onclick="history.back()">←</button>
+  <div class="nav-title">Мой кошелёк</div>
+  <button class="settings-btn" onclick="showToast('⚙️ Настройки')">⚙️</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-top">
+    <div class="hero-avatar">ДК<div class="hero-verified">✓</div></div>
+    <div>
+      <div class="hero-name">Дмитрий Козлов</div>
+      <div class="hero-role">Исполнитель · Уровень «Профи» 🥈</div>
+    </div>
+  </div>
+  <div class="balance-label">Доступно для вывода</div>
+  <div class="balance-amount" id="balanceAmount">12 350 ₽</div>
+  <div class="balance-sub">Обновлено только что · В резерве: 3 200 ₽</div>
+  <div class="hero-btns">
+    <button class="hero-btn btn-withdraw" onclick="openWithdraw()">💳 Вывести деньги</button>
+    <button class="hero-btn btn-history" onclick="scrollToTx()">📋 История</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div class="stat-val" style="color:var(--green)">68 400 ₽</div>
+    <div class="stat-lbl">Всего заработано</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">📋</div>
+    <div class="stat-val" style="color:var(--blue)">47</div>
+    <div class="stat-lbl">Заказов выполнено</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">⭐</div>
+    <div class="stat-val" style="color:var(--orange)">4.9</div>
+    <div class="stat-lbl">Средний рейтинг</div>
+  </div>
+</div>
+
+<!-- CHART -->
+<div class="section">
+  <div class="chart-card">
+    <div class="section-hdr" style="margin-bottom:10px">
+      <span class="section-title">Заработок</span>
+      <div class="chart-period">
+        <button class="period-btn" onclick="setPeriod('week',this)">7д</button>
+        <button class="period-btn active" onclick="setPeriod('month',this)">Месяц</button>
+        <button class="period-btn" onclick="setPeriod('year',this)">Год</button>
+      </div>
+    </div>
+    <div class="mini-chart" id="miniChart"></div>
+    <div class="chart-total">
+      <div class="chart-total-item"><div class="chart-total-val" style="color:var(--green)" id="chartTotal">18 200 ₽</div><div class="chart-total-lbl">За период</div></div>
+      <div class="chart-total-item"><div class="chart-total-val" id="chartAvg">2 600 ₽</div><div class="chart-total-lbl">В среднем</div></div>
+      <div class="chart-total-item"><div class="chart-total-val" style="color:var(--orange)" id="chartBest">4 500 ₽</div><div class="chart-total-lbl">Лучший день</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LEVEL -->
+<div class="section">
+  <div class="level-card">
+    <div class="level-row">
+      <div class="level-badge" style="background:var(--gray-light)">🥈</div>
+      <div>
+        <div class="level-name">Уровень «Профи»</div>
+        <div class="level-sub">47 заказов · Следующий: «Эксперт» 🥇</div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="levelProgress" style="width:0%"></div></div>
+      <div class="progress-labels"><span>47 заказов</span><span>75 заказов</span></div>
+    </div>
+    <div class="next-level">🥇 До уровня «Эксперт» осталось <strong>28 заказов</strong>. Эксперты получают приоритетный показ в ленте и +5% к видимости.</div>
+  </div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div class="section">
+  <div class="section-hdr"><span class="section-title">Достижения</span><button class="section-link">Все →</button></div>
+  <div class="achievements">
+    <div class="achievement">
+      <div class="ach-icon" style="background:var(--amber-bg,#FAEEDA)">🏆</div>
+      <div><div class="ach-name">Топ исполнитель</div><div class="ach-desc">Рейтинг 4.8+</div></div>
+    </div>
+    <div class="achievement">
+      <div class="ach-icon" style="background:var(--green-bg)">⚡</div>
+      <div><div class="ach-name">Быстрый старт</div><div class="ach-desc">10 заказов за месяц</div></div>
+    </div>
+    <div class="achievement">
+      <div class="ach-icon" style="background:var(--blue-bg)">🔄</div>
+      <div><div class="ach-name">Постоянный клиент</div><div class="ach-desc">5 повторных заказов</div></div>
+    </div>
+    <div class="achievement ach-locked">
+      <div class="ach-icon" style="background:var(--purple-bg,#EDE9FE)">💎</div>
+      <div><div class="ach-name">Бриллиант</div><div class="ach-desc">100 заказов</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSACTIONS -->
+<div class="section" id="txSection">
+  <div class="section-hdr"><span class="section-title">История выплат</span><button class="section-link" onclick="showToast('Полная история')">Все →</button></div>
+  <div class="tx-list" id="txList"></div>
+</div>
+
+<!-- WITHDRAW MODAL -->
+<div class="modal-overlay" id="withdrawModal" onclick="closeWithdraw(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Вывод средств</div>
+    <div class="modal-sub">Доступно: <strong>12 350 ₽</strong> · Минимум вывода: 500 ₽</div>
+
+    <div class="form-group">
+      <label class="form-label">Сумма вывода</label>
+      <input class="form-input" type="number" id="withdrawAmount" placeholder="0 ₽" oninput="updateWithdrawFee(this.value)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Куда выводить</label>
+      <div class="bank-options">
+        <div class="bank-opt selected" onclick="selectBank(this)">
+          <div class="bank-opt-icon">🟡</div>
+          <div class="bank-opt-name">ЮMoney</div>
+        </div>
+        <div class="bank-opt" onclick="selectBank(this)">
+          <div class="bank-opt-icon">🟢</div>
+          <div class="bank-opt-name">Сбербанк</div>
+        </div>
+        <div class="bank-opt" onclick="selectBank(this)">
+          <div class="bank-opt-icon">🔵</div>
+          <div class="bank-opt-name">Тинькофф</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Номер карты / кошелька</label>
+      <input class="form-input" type="text" placeholder="0000 0000 0000 0000" id="cardNum">
+    </div>
+
+    <button class="withdraw-btn" onclick="submitWithdraw()">Вывести деньги</button>
+    <div class="fee-note" id="feeNote">Введите сумму для расчёта комиссии</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+Shabashka.renderNav('wallet');
+
+const PERIODS = {
+  week: {
+    bars: [{l:'Пн',v:0},{l:'Вт',v:2000},{l:'Ср',v:0},{l:'Чт',v:3500},{l:'Пт',v:0},{l:'Сб',v:4500},{l:'Вс',v:2200}],
+    total:'12 200 ₽', avg:'1 743 ₽', best:'4 500 ₽'
+  },
+  month: {
+    bars: [{l:'1н',v:4200},{l:'2н',v:6800},{l:'3н',v:3500},{l:'4н',v:3700}],
+    total:'18 200 ₽', avg:'2 600 ₽', best:'4 500 ₽'
+  },
+  year: {
+    bars: [{l:'Янв',v:0},{l:'Фев',v:4000},{l:'Мар',v:8000},{l:'Апр',v:12000},{l:'Май',v:9500},{l:'Июн',v:18200},{l:'Июл',v:0},{l:'Авг',v:0},{l:'Сен',v:0},{l:'Окт',v:0},{l:'Ноя',v:0},{l:'Дек',v:0}],
+    total:'51 700 ₽', avg:'7 386 ₽', best:'18 200 ₽'
+  }
+};
+
+const TRANSACTIONS = [
+  { icon:'💳', title:'Вывод на Сбербанк', meta:'17 июн · ****4521', amount:'-5 000 ₽', color:'var(--red)', status:'Выполнен' },
+  { icon:'📦', title:'Грузчики на переезд', meta:'12 июн · Семья Петровых', amount:'+3 150 ₽', color:'var(--green)', status:'Зачислено' },
+  { icon:'🔨', title:'Подсобный рабочий', meta:'8 июн · СК Горизонт', amount:'+3 600 ₽', color:'var(--green)', status:'Зачислено' },
+  { icon:'🧹', title:'Уборка офиса', meta:'3 июн · ООО Техносфера', amount:'+2 250 ₽', color:'var(--green)', status:'Зачислено' },
+  { icon:'💳', title:'Вывод на Тинькофф', meta:'1 июн · ****8834', amount:'-8 000 ₽', color:'var(--red)', status:'Выполнен' },
+  { icon:'🎉', title:'Промоутер на открытие', meta:'28 май · Магазин «Уют»', amount:'+1 800 ₽', color:'var(--green)', status:'Зачислено' },
+  { icon:'📦', title:'Разгрузка фуры', meta:'20 май · ООО ТрансЛогист', amount:'+2 880 ₽', color:'var(--green)', status:'Зачислено' },
+];
+
+function renderChart(period) {
+  const d = PERIODS[period];
+  const bars = d.bars;
+  const maxV = Math.max(...bars.map(b=>b.v), 1);
+  document.getElementById('miniChart').innerHTML = bars.map(b=>`
+    <div class="mini-bar-col">
+      <div class="mini-bar-wrap">
+        <div class="mini-bar" style="height:${b.v?Math.round(b.v/maxV*100):2}%;background:${b.v?'var(--orange)':'var(--border)'}"></div>
+      </div>
+      <div class="mini-bar-lbl">${b.l}</div>
+    </div>`).join('');
+  document.getElementById('chartTotal').textContent = d.total;
+  document.getElementById('chartAvg').textContent = d.avg;
+  document.getElementById('chartBest').textContent = d.best;
+}
+
+function setPeriod(p, btn) {
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChart(p);
+}
+
+function renderTx() {
+  document.getElementById('txList').innerHTML = TRANSACTIONS.map(t=>`
+    <div class="tx-item">
+      <div class="tx-icon" style="background:var(--gray-light)">${t.icon}</div>
+      <div class="tx-info">
+        <div class="tx-title">${t.title}</div>
+        <div class="tx-meta">${t.meta}</div>
+      </div>
+      <div>
+        <div class="tx-amount" style="color:${t.color}">${t.amount}</div>
+        <div class="tx-status" style="color:var(--gray)">${t.status}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openWithdraw() { document.getElementById('withdrawModal').classList.add('open'); }
+function closeWithdraw(e) { if(e.target===document.getElementById('withdrawModal')) document.getElementById('withdrawModal').classList.remove('open'); }
+
+function selectBank(el) {
+  document.querySelectorAll('.bank-opt').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function updateWithdrawFee(val) {
+  const amt = parseInt(val)||0;
+  const fee = Math.round(amt * 0.015);
+  const get = amt - fee;
+  document.getElementById('feeNote').textContent = amt >= 500
+    ? `Комиссия 1.5%: ${fee} ₽ · Вы получите: ${get.toLocaleString('ru')} ₽`
+    : amt > 0 ? 'Минимальная сумма вывода: 500 ₽' : 'Введите сумму';
+}
+
+function submitWithdraw() {
+  const amt = parseInt(document.getElementById('withdrawAmount').value)||0;
+  const card = document.getElementById('cardNum').value.trim();
+  if (amt < 500) { showToast('⚠️ Минимум 500 ₽'); return; }
+  if (!card) { showToast('⚠️ Введите номер карты'); return; }
+  if (amt > 12350) { showToast('⚠️ Недостаточно средств'); return; }
+  document.getElementById('withdrawModal').classList.remove('open');
+  showToast('✅ Заявка на вывод ' + amt.toLocaleString('ru') + ' ₽ принята!');
+}
+
+function scrollToTx() { document.getElementById('txSection').scrollIntoView({ behavior:'smooth' }); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// Animate progress bar
+setTimeout(() => {
+  document.getElementById('levelProgress').style.width = '63%';
+}, 300);
+
+renderChart('month');
+renderTx();
+</script>
+</body>
+</html>

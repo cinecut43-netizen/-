@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Админ-панель</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF;
+  --border: #E2E1DB; --white: #FFFFFF;
+  --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB;
+  --red: #B91C1C; --red-bg: #FEE2E2;
+  --amber: #854F0B; --amber-bg: #FAEEDA;
+  --purple: #6D28D9; --purple-bg: #EDE9FE;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0F0F0E; color: var(--dark); min-height: 100vh; display: flex; }
+
+/* SIDEBAR */
+.sidebar { width: 240px; background: #1A1A18; flex-shrink: 0; display: flex; flex-direction: column; min-height: 100vh; position: fixed; top: 0; left: 0; bottom: 0; }
+.sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid #2A2A28; }
+.sidebar-logo .logo { font-size: 18px; font-weight: 700; color: #fff; }
+.sidebar-logo .logo span { color: var(--orange); }
+.sidebar-logo .admin-tag { font-size: 10px; background: var(--orange); color: #fff; padding: 2px 8px; border-radius: 20px; font-weight: 600; margin-left: 6px; }
+.sidebar-logo .version { font-size: 11px; color: #555; margin-top: 4px; }
+.sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+.nav-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #555; padding: 12px 10px 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; color: #888; font-size: 13px; font-weight: 500; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; font-family: inherit; transition: all 0.15s; }
+.nav-item:hover { background: #252523; color: #ccc; }
+.nav-item.active { background: var(--orange-light); color: var(--orange-dark); }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--orange); color: #fff; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 1px 6px; }
+.sidebar-footer { padding: 16px; border-top: 1px solid #2A2A28; }
+.admin-user { display: flex; align-items: center; gap: 10px; }
+.admin-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.admin-name { font-size: 13px; font-weight: 500; color: #ccc; }
+.admin-role { font-size: 11px; color: #555; }
+
+/* MAIN */
+.main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; background: var(--gray-light); }
+.top-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 54px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.page-heading { font-size: 16px; font-weight: 600; }
+.top-bar-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.top-search { padding: 7px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; width: 220px; font-family: inherit; }
+.top-search:focus { border-color: var(--orange); }
+.alert-btn { position: relative; background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; }
+.alert-dot { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid #fff; }
+.content { padding: 24px; flex: 1; }
+
+/* STAT CARDS */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.stat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.stat-trend { font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 20px; }
+.trend-up { background: var(--green-bg); color: var(--green); }
+.trend-down { background: var(--red-bg); color: var(--red); }
+.stat-num { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+.stat-label { font-size: 13px; color: var(--gray); }
+
+/* CHARTS ROW */
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 24px; }
+.chart-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-action { font-size: 12px; color: var(--orange); cursor: pointer; background: none; border: none; font-family: inherit; }
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
+.bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.5s ease; }
+.bar-label { font-size: 10px; color: var(--gray); white-space: nowrap; }
+.donut-wrap { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.donut-item { display: flex; align-items: center; gap: 10px; }
+.donut-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.donut-name { font-size: 13px; flex: 1; }
+.donut-val { font-size: 13px; font-weight: 600; }
+.donut-pct { font-size: 11px; color: var(--gray); }
+
+/* TABLES */
+.table-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+.table-toolbar { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+.filter-tabs { display: flex; gap: 2px; background: var(--gray-light); border-radius: 8px; padding: 3px; }
+.ftab { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--gray); font-family: inherit; }
+.ftab.active { background: var(--white); color: var(--dark); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.tbl-search { padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; margin-left: auto; width: 180px; font-family: inherit; }
+.table { width: 100%; border-collapse: collapse; }
+.table th { padding: 10px 18px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gray); border-bottom: 1px solid var(--border); background: var(--gray-light); }
+.table td { padding: 12px 18px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: #FAFAF8; cursor: pointer; }
+.pill { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+.pill-green { background: var(--green-bg); color: var(--green); }
+.pill-orange { background: var(--orange-light); color: var(--orange-dark); }
+.pill-blue { background: var(--blue-bg); color: var(--blue); }
+.pill-gray { background: var(--gray-light); color: var(--gray); }
+.pill-red { background: var(--red-bg); color: var(--red); }
+.pill-amber { background: var(--amber-bg); color: var(--amber); }
+.user-cell { display: flex; align-items: center; gap: 8px; }
+.user-ava { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.tbl-action { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+.tbl-action:hover { background: var(--gray-light); color: var(--dark); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+/* ACTIVITY */
+.activity-item { display: flex; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+.activity-item:last-child { border-bottom: none; }
+.act-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.act-text { font-size: 13px; flex: 1; line-height: 1.5; }
+.act-time { font-size: 11px; color: var(--gray); flex-shrink: 0; }
+
+/* MODALS */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 14px; width: 480px; max-width: 95vw; max-height: 85vh; overflow-y: auto; padding: 28px; }
+.modal-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-hdr h2 { font-size: 17px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--gray); }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--gray); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.3px; }
+.form-input, .form-select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; color: var(--dark); outline: none; }
+.form-input:focus { border-color: var(--orange); }
+.modal-submit { width: 100%; padding: 11px; background: var(--orange); color: #fff; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 6px; font-family: inherit; }
+.danger-btn { background: var(--red-bg); color: var(--red); border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 500; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--dark); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; opacity: 0; transition: all 0.3s; z-index: 999; transform: translateY(10px); }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 1100px) { .stats-grid { grid-template-columns: 1fr 1fr; } .charts-row { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; } }
+</style>
+<script src="/data.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo">Шаба<span>шка</span><span class="admin-tag">ADMIN</span></div>
+    <div class="version">v1.0.0 · shabashka.ru</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Главное</div>
+    <button class="nav-item active" onclick="setPage('dashboard',this)"><span class="nav-icon">📊</span> Дашборд</button>
+    <button class="nav-item" onclick="setPage('orders',this)"><span class="nav-icon">📋</span> Заказы <span class="nav-badge">6</span></button>
+    <button class="nav-item" onclick="setPage('users',this)"><span class="nav-icon">👥</span> Пользователи</button>
+    <div class="nav-section">Финансы</div>
+    <button class="nav-item" onclick="setPage('finance',this)"><span class="nav-icon">💰</span> Выручка</button>
+    <button class="nav-item" onclick="setPage('payouts',this)"><span class="nav-icon">💳</span> Выплаты</button>
+    <div class="nav-section">Модерация</div>
+    <button class="nav-item" onclick="setPage('moderation',this)"><span class="nav-icon">🛡️</span> Жалобы <span class="nav-badge" style="background:var(--red)">3</span></button>
+    <button class="nav-item" onclick="setPage('reviews',this)"><span class="nav-icon">⭐</span> Отзывы</button>
+    <div class="nav-section">Система</div>
+    <button class="nav-item" onclick="setPage('settings',this)"><span class="nav-icon">⚙️</span> Настройки</button>
+    <button class="nav-item" onclick="setPage('logs',this)"><span class="nav-icon">📝</span> Логи</button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="admin-user">
+      <div class="admin-avatar">АД</div>
+      <div><div class="admin-name">Администратор</div><div class="admin-role">Суперадмин</div></div>
+    </div>
+    <a href="/" style="display:block;margin-top:12px;font-size:12px;color:#888;text-decoration:none">← На основной сайт</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="top-bar">
+    <div class="page-heading" id="pageHeading">Дашборд</div>
+    <div class="top-bar-right">
+      <input class="top-search" placeholder="🔍 Поиск по платформе...">
+      <button class="alert-btn">🔔<span class="alert-dot"></span></button>
+    </div>
+  </div>
+  <div class="content" id="mainContent"></div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-hdr"><h2 id="userModalTitle">Пользователь</h2><button class="modal-close" onclick="closeModal('userModal')">×</button></div>
+    <div id="userModalBody"></div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <div class="modal-hdr"><h2 id="orderModalTitle">Заказ</h2><button class="modal-close" onclick="closeModal('orderModal')">×</button></div>
+    <div id="orderModalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const USERS = [
+  { id:1, name:'Дмитрий Козлов', phone:'+7 916 555-01-23', role:'worker', rating:4.9, orders:47, earned:68400, status:'active', reg:'01.03.2024', color:'#E8510A' },
+  { id:2, name:'Семья Петровых', phone:'+7 903 211-45-67', role:'employer', rating:4.7, orders:12, earned:0, status:'active', reg:'15.03.2024', color:'#1A7A4A' },
+  { id:3, name:'Алёна Петрова', phone:'+7 926 344-88-12', role:'worker', rating:5.0, orders:22, earned:31200, status:'active', reg:'20.03.2024', color:'#185FA5' },
+  { id:4, name:'СК Горизонт', phone:'+7 495 123-45-67', role:'employer', rating:4.5, orders:8, earned:0, status:'active', reg:'05.04.2024', color:'#9B59B6' },
+  { id:5, name:'Иван Громов', phone:'+7 912 678-90-11', role:'worker', rating:3.2, orders:5, earned:8500, status:'blocked', reg:'10.04.2024', color:'#B33D06' },
+  { id:6, name:'Мария Лебедева', phone:'+7 917 456-78-90', role:'worker', rating:4.8, orders:31, earned:44100, status:'active', reg:'12.04.2024', color:'#6D28D9' },
+  { id:7, name:'ООО ТрансЛогист', phone:'+7 495 987-65-43', role:'employer', rating:4.6, orders:19, earned:0, status:'active', reg:'01.05.2024', color:'#854F0B' },
+];
+
+const ORDERS = [
+  { id:1, title:'Грузчики на переезд', employer:'Семья Петровых', worker:'Дмитрий К.', pay:3500, commission:350, date:'17 июн', status:'inprog', cat:'📦' },
+  { id:2, title:'Промоутер на открытие', employer:'Магазин «Уют»', worker:'-', pay:2000, commission:200, date:'17 июн', status:'open', cat:'🎉' },
+  { id:3, title:'Подсобный рабочий', employer:'СК Горизонт', worker:'Иван Г.', pay:4000, commission:400, date:'18 июн', status:'open', cat:'🔨' },
+  { id:4, title:'Официанты на свадьбу', employer:'Агентство «Праздник»', worker:'Алёна П.', pay:4500, commission:450, date:'20 июн', status:'done', cat:'🎉' },
+  { id:5, title:'Уборка офиса', employer:'ООО Техносфера', worker:'-', pay:2500, commission:250, date:'20 июн', status:'draft', cat:'🧹' },
+  { id:6, title:'Разгрузка фуры', employer:'ООО ТрансЛогист', worker:'Сергей М.', pay:3200, commission:320, date:'10 июн', status:'done', cat:'📦' },
+];
+
+const COMPLAINTS = [
+  { id:1, from:'Семья Петровых', about:'Иван Громов', type:'Не явился на работу', date:'16 июн', status:'new' },
+  { id:2, from:'Дмитрий К.', about:'ООО ТрансЛогист', type:'Не оплатил заказ', date:'15 июн', status:'review' },
+  { id:3, from:'Алёна П.', about:'Магазин «Уют»', type:'Грубое обращение', date:'14 июн', status:'new' },
+];
+
+const ACTIVITY = [
+  { color:'#E8510A', text:'Новый пользователь <b>Мария С.</b> зарегистрировалась как исполнитель', time:'5 мин' },
+  { color:'#1A7A4A', text:'Заказ <b>«Официанты на свадьбу»</b> успешно завершён. Комиссия: 450 ₽', time:'32 мин' },
+  { color:'#B91C1C', text:'Новая жалоба: <b>Семья Петровых</b> на исполнителя Иван Громов', time:'1 ч' },
+  { color:'#185FA5', text:'Пользователь <b>Иван Громов</b> заблокирован после 2 жалоб', time:'1 ч' },
+  { color:'#E8510A', text:'Размещён новый заказ: <b>«Подсобный рабочий»</b> — 4000 ₽', time:'2 ч' },
+  { color:'#1A7A4A', text:'Выплата исполнителю <b>Дмитрий К.</b>: 3150 ₽ (после комиссии)', time:'3 ч' },
+];
+
+const STATUS_MAP = {
+  open: { label:'Открыт', cls:'pill-blue' },
+  inprog: { label:'В работе', cls:'pill-amber' },
+  done: { label:'Завершён', cls:'pill-green' },
+  draft: { label:'Черновик', cls:'pill-gray' },
+  active: { label:'Активен', cls:'pill-green' },
+  blocked: { label:'Заблокирован', cls:'pill-red' },
+  new: { label:'Новая', cls:'pill-red' },
+  review: { label:'На рассмотрении', cls:'pill-amber' },
+};
+
+function setPage(page, btn) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const headings = { dashboard:'Дашборд', orders:'Заказы', users:'Пользователи', finance:'Выручка и финансы', payouts:'Выплаты исполнителям', moderation:'Жалобы и модерация', reviews:'Отзывы', settings:'Настройки', logs:'Системные логи' };
+  document.getElementById('pageHeading').textContent = headings[page] || page;
+  const el = document.getElementById('mainContent');
+  if (page === 'dashboard') el.innerHTML = getDashboard();
+  else if (page === 'orders') el.innerHTML = getOrders();
+  else if (page === 'users') el.innerHTML = getUsers();
+  else if (page === 'finance') el.innerHTML = getFinance();
+  else if (page === 'moderation') el.innerHTML = getModeration();
+  else el.innerHTML = `<div style="text-align:center;padding:80px 20px;color:var(--gray)"><div style="font-size:48px;margin-bottom:16px">🚧</div><div style="font-size:16px;font-weight:500">Раздел в разработке</div><div style="font-size:13px;margin-top:8px">Скоро появится</div></div>`;
+}
+
+function getDashboard() {
+  const revenue = ORDERS.filter(o=>o.status==='done').reduce((s,o)=>s+o.commission,0);
+  const pending = ORDERS.filter(o=>o.status==='inprog'||o.status==='open').reduce((s,o)=>s+o.commission,0);
+  const bars = [
+    {label:'Янв',v:12},{label:'Фев',v:18},{label:'Мар',v:24},{label:'Апр',v:31},
+    {label:'Май',v:28},{label:'Июн',v:42},{label:'Июл',v:38},{label:'Авг',v:0},
+  ];
+  const maxV = Math.max(...bars.map(b=>b.v));
+  const cats = [{name:'📦 Переезд',pct:38,color:'#E8510A'},{name:'🔨 Стройка',pct:25,color:'#185FA5'},{name:'🎉 Ивент',pct:20,color:'#9B59B6'},{name:'🧹 Уборка',pct:12,color:'#1A7A4A'},{name:'⚡ Прочее',pct:5,color:'#854F0B'}];
+  return `
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:#FFF0E8">💰</div><span class="stat-trend trend-up">↑ +23%</span></div><div class="stat-num" style="color:var(--orange)">${revenue.toLocaleString('ru')} ₽</div><div class="stat-label">Выручка (комиссии)</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--blue-bg)">📋</div><span class="stat-trend trend-up">↑ +8</span></div><div class="stat-num" style="color:var(--blue)">${ORDERS.length}</div><div class="stat-label">Всего заказов</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--green-bg)">👥</div><span class="stat-trend trend-up">↑ +3</span></div><div class="stat-num" style="color:var(--green)">${USERS.length}</div><div class="stat-label">Пользователей</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--red-bg)">🛡️</div><span class="stat-trend trend-down">↑ 3 новых</span></div><div class="stat-num" style="color:var(--red)">${COMPLAINTS.length}</div><div class="stat-label">Жалоб на рассмотрении</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="card-header"><span class="card-title">Выручка по месяцам (тыс. ₽)</span><button class="card-action">2024 ↓</button></div>
+      <div class="bar-chart">
+        ${bars.map(b=>`<div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:${b.v?Math.round(b.v/maxV*100):2}%;background:${b.v?'var(--orange)':'var(--border)'};min-height:4px"></div></div><div class="bar-label">${b.label}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header"><span class="card-title">По категориям</span></div>
+      <div class="donut-wrap">
+        ${cats.map(c=>`<div class="donut-item"><div class="donut-dot" style="background:${c.color}"></div><div class="donut-name">${c.name}</div><div class="donut-val">${c.pct}%</div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="table-card">
+      <div class="card-header" style="padding:14px 18px;border-bottom:1px solid var(--border)"><span class="card-title">Последние заказы</span><button class="card-action" onclick="setPage('orders',document.querySelectorAll('.nav-item')[1])">Все →</button></div>
+      ${ORDERS.slice(0,4).map(o=>{const s=STATUS_MAP[o.status];return`<div class="activity-item" style="cursor:pointer" onclick="openOrder(${o.id})"><div class="act-dot" style="background:var(--orange)"></div><div class="act-text"><b>${o.cat} ${o.title}</b><br><span style="color:var(--gray)">${o.employer}</span></div><div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:600">+${o.commission} ₽</div><span class="pill ${s.cls}">${s.label}</span></div></div>`;}).join('')}
+    </div>
+    <div class="table-card">
+      <div class="card-header" style="padding:14px 18px;border-bottom:1px solid var(--border)"><span class="card-title">Активность</span></div>
+      ${ACTIVITY.slice(0,5).map(a=>`<div class="activity-item"><div class="act-dot" style="background:${a.color}"></div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function getOrders() {
+  return `<div class="table-card">
+    <div class="table-toolbar">
+      <div class="filter-tabs">
+        <button class="ftab active" onclick="filterTbl('orders','all',this)">Все (${ORDERS.length})</button>
+        <button class="ftab" onclick="filterTbl('orders','open',this)">Открытые</button>
+        <button class="ftab" onclick="filterTbl('orders','inprog',this)">В работе</button>
+        <button class="ftab" onclick="filterTbl('orders','done',this)">Завершённые</button>
+      </div>
+      <input class="tbl-search" placeholder="Поиск...">
+    </div>
+    <table class="table" id="ordersTable">
+      <thead><tr><th>Заказ</th><th>Заказчик</th><th>Исполнитель</th><th>Дата</th><th>Сумма</th><th>Комиссия</th><th>Статус</th><th></th></tr></thead>
+      <tbody>${ORDERS.map(o=>{const s=STATUS_MAP[o.status];return`<tr onclick="openOrder(${o.id})"><td><b>${o.cat} ${o.title}</b></td><td>${o.employer}</td><td>${o.worker}</td><td>${o.date}</td><td>${o.pay.toLocaleString('ru')} ₽</td><td style="color:var(--green);font-weight:600">+${o.commission} ₽</td><td><span class="pill ${s.cls}">${s.label}</span></td><td><button class="tbl-action" onclick="event.stopPropagation();showToast('Действие')">⋯</button></td></tr>`;}).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function getUsers() {
+  return `<div class="table-card">
+    <div class="table-toolbar">
+      <div class="filter-tabs">
+        <button class="ftab active" onclick="filterTbl('users','all',this)">Все (${USERS.length})</button>
+        <button class="ftab" onclick="filterTbl('users','worker',this)">Исполнители</button>
+        <button class="ftab" onclick="filterTbl('users','employer',this)">Заказчики</button>
+        <button class="ftab" onclick="filterTbl('users','blocked',this)">Заблокированные</button>
+      </div>
+      <input class="tbl-search" placeholder="Поиск...">
+    </div>
+    <table class="table">
+      <thead><tr><th>Пользователь</th><th>Телефон</th><th>Роль</th><th>Рейтинг</th><th>Заказов</th><th>Заработано</th><th>Дата рег.</th><th>Статус</th><th></th></tr></thead>
+      <tbody>${USERS.map(u=>{const s=STATUS_MAP[u.status];return`<tr onclick="openUser(${u.id})"><td><div class="user-cell"><div class="user-ava" style="background:${u.color}">${u.name[0]}</div>${u.name}</div></td><td style="color:var(--gray)">${u.phone}</td><td><span class="pill ${u.role==='worker'?'pill-blue':'pill-orange'}">${u.role==='worker'?'Исполнитель':'Заказчик'}</span></td><td>${u.rating}⭐</td><td>${u.orders}</td><td>${u.earned?u.earned.toLocaleString('ru')+' ₽':'—'}</td><td style="color:var(--gray)">${u.reg}</td><td><span class="pill ${s.cls}">${s.label}</span></td><td><button class="tbl-action" onclick="event.stopPropagation();openUser(${u.id})">⋯</button></td></tr>`;}).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function getFinance() {
+  const total = ORDERS.filter(o=>o.status==='done').reduce((s,o)=>s+o.commission,0);
+  const pending = ORDERS.filter(o=>o.status==='inprog').reduce((s,o)=>s+o.commission,0);
+  return `
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--green-bg)">✅</div></div><div class="stat-num" style="color:var(--green)">${total.toLocaleString('ru')} ₽</div><div class="stat-label">Получено комиссий</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--amber-bg)">⏳</div></div><div class="stat-num" style="color:var(--amber)">${pending.toLocaleString('ru')} ₽</div><div class="stat-label">Ожидает завершения</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:var(--blue-bg)">📊</div></div><div class="stat-num" style="color:var(--blue)">${(total+pending).toLocaleString('ru')} ₽</div><div class="stat-label">Всего оборот</div></div>
+  </div>
+  <div class="table-card">
+    <div class="card-header" style="padding:14px 18px;border-bottom:1px solid var(--border)"><span class="card-title">Транзакции</span></div>
+    <table class="table">
+      <thead><tr><th>Заказ</th><th>Заказчик</th><th>Сумма заказа</th><th>Комиссия 10%</th><th>Дата</th><th>Статус</th></tr></thead>
+      <tbody>${ORDERS.map(o=>{const s=STATUS_MAP[o.status];return`<tr><td>${o.cat} ${o.title}</td><td>${o.employer}</td><td>${o.pay.toLocaleString('ru')} ₽</td><td style="color:var(--green);font-weight:700">+${o.commission} ₽</td><td>${o.date}</td><td><span class="pill ${s.cls}">${s.label}</span></td></tr>`;}).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function getModeration() {
+  return `
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${COMPLAINTS.filter(c=>c.status==='new').length}</div><div class="stat-label">Новых жалоб</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber)">${COMPLAINTS.filter(c=>c.status==='review').length}</div><div class="stat-label">На рассмотрении</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">12</div><div class="stat-label">Решено всего</div></div>
+  </div>
+  <div class="table-card">
+    <div class="card-header" style="padding:14px 18px;border-bottom:1px solid var(--border)"><span class="card-title">Жалобы пользователей</span></div>
+    <table class="table">
+      <thead><tr><th>От кого</th><th>На кого</th><th>Причина</th><th>Дата</th><th>Статус</th><th>Действия</th></tr></thead>
+      <tbody>${COMPLAINTS.map(c=>{const s=STATUS_MAP[c.status];return`<tr><td>${c.from}</td><td><b>${c.about}</b></td><td>${c.type}</td><td>${c.date}</td><td><span class="pill ${s.cls}">${s.label}</span></td><td style="display:flex;gap:6px;padding:12px 0"><button class="btn-sm" style="background:var(--green-bg);color:var(--green);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer" onclick="showToast('✅ Жалоба закрыта')">Закрыть</button><button class="btn-sm danger-btn" style="padding:5px 10px;font-size:12px" onclick="showToast('🚫 Пользователь заблокирован')">Блок</button></td></tr>`;}).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function openUser(id) {
+  const u = USERS.find(x=>x.id===id);
+  document.getElementById('userModalTitle').textContent = u.name;
+  document.getElementById('userModalBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div style="width:56px;height:56px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff">${u.name[0]}</div>
+      <div><div style="font-size:16px;font-weight:600">${u.name}</div><div style="font-size:13px;color:var(--gray)">${u.phone} · С ${u.reg}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--gray-light);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--gray)">Рейтинг</div><div style="font-size:18px;font-weight:700">${u.rating}⭐</div></div>
+      <div style="background:var(--gray-light);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--gray)">Заказов</div><div style="font-size:18px;font-weight:700">${u.orders}</div></div>
+      <div style="background:var(--gray-light);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--gray)">Роль</div><div style="font-size:14px;font-weight:600">${u.role==='worker'?'Исполнитель':'Заказчик'}</div></div>
+      <div style="background:var(--gray-light);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--gray)">Заработано</div><div style="font-size:14px;font-weight:700;color:var(--green)">${u.earned?u.earned.toLocaleString('ru')+' ₽':'—'}</div></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      ${u.status==='active'
+        ? `<button class="danger-btn" onclick="showToast('🚫 Пользователь заблокирован');closeModal('userModal')">Заблокировать</button>`
+        : `<button style="background:var(--green-bg);color:var(--green);border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:500" onclick="showToast('✅ Пользователь разблокирован');closeModal('userModal')">Разблокировать</button>`}
+      <button style="background:var(--blue-bg);color:var(--blue);border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:500" onclick="showToast('💬 Сообщение отправлено')">Написать</button>
+    </div>`;
+  document.getElementById('userModal').classList.add('open');
+}
+
+function openOrder(id) {
+  const o = ORDERS.find(x=>x.id===id);
+  const s = STATUS_MAP[o.status];
+  document.getElementById('orderModalTitle').textContent = o.cat + ' ' + o.title;
+  document.getElementById('orderModalBody').innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="pill ${s.cls}">${s.label}</span>
+      <span class="pill pill-gray">📅 ${o.date}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--gray-light);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--gray)">Заказчик</div><div style="font-size:14px;font-weight:600">${o.employer}</div></div>
+      <div style="background:var(--gray-light);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--gray)">Исполнитель</div><div style="font-size:14px;font-weight:600">${o.worker}</div></div>
+      <div style="background:var(--gray-light);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--gray)">Сумма заказа</div><div style="font-size:18px;font-weight:700">${o.pay.toLocaleString('ru')} ₽</div></div>
+      <div style="background:var(--green-bg);border-radius:9px;padding:12px"><div style="font-size:11px;color:var(--green)">Комиссия 10%</div><div style="font-size:18px;font-weight:700;color:var(--green)">+${o.commission} ₽</div></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      ${o.status!=='done'?`<button class="modal-submit" style="margin-top:0" onclick="showToast('✅ Заказ завершён');closeModal('orderModal')">Завершить заказ</button>`:''}
+      <button class="danger-btn" onclick="showToast('🗑️ Заказ удалён');closeModal('orderModal')">Удалить</button>
+    </div>`;
+  document.getElementById('orderModal').classList.add('open');
+}
+
+function filterTbl(type, filter, btn) {
+  btn.closest('.filter-tabs').querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  showToast('Фильтр: ' + filter);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+['userModal','orderModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', e=>{ if(e.target===document.getElementById(id)) closeModal(id); });
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+setPage('dashboard', document.querySelector('.nav-item.active'));
+</script>
+</body>
+</html>

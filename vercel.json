@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/chat", "dest": "/chat.html" },
+    { "src": "/profile", "dest": "/profile.html" },
+    { "src": "/employer", "dest": "/employer.html" },
+    { "src": "/map", "dest": "/map.html" },
+    { "src": "/wallet", "dest": "/wallet.html" },
+    { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/data.js", "dest": "/data.js" },
+    { "src": "/nav.js", "dest": "/nav.js" }
+  ]
+}
