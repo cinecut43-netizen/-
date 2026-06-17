@@ -38,9 +38,10 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .balance-amount { font-size: 42px; font-weight: 700; color: #fff; letter-spacing: -1px; position: relative; z-index: 1; margin-bottom: 6px; }
 .balance-sub { font-size: 13px; color: #888; position: relative; z-index: 1; margin-bottom: 20px; }
 .hero-btns { display: flex; gap: 10px; position: relative; z-index: 1; }
-.hero-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s; }
+.hero-btn { flex: 1; padding: 12px 8px; border-radius: 12px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 4px; transition: opacity 0.15s; white-space: nowrap; }
 .hero-btn:hover { opacity: 0.9; }
 .btn-withdraw { background: var(--orange); color: #fff; }
+.btn-topup { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
 .btn-history { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
 
 /* STATS ROW */
@@ -152,6 +153,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
   <div class="balance-sub">Обновлено только что · В резерве: 3 200 ₽</div>
   <div class="hero-btns">
     <button class="hero-btn btn-withdraw" onclick="openWithdraw()">💳 Вывести деньги</button>
+    <button class="hero-btn btn-topup" onclick="openTopUp()">➕ Пополнить</button>
     <button class="hero-btn btn-history" onclick="scrollToTx()">📋 История</button>
   </div>
 </div>
@@ -247,7 +249,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Вывод средств</div>
-    <div class="modal-sub">Доступно: <strong>12 350 ₽</strong> · Минимум вывода: 500 ₽</div>
+    <div class="modal-sub">Доступно: <strong id="withdrawCurrentBalance">12 350 ₽</strong> · Минимум вывода: 500 ₽</div>
 
     <div class="form-group">
       <label class="form-label">Сумма вывода</label>
@@ -282,6 +284,39 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
   </div>
 </div>
 
+<!-- TOP UP MODAL -->
+<div class="modal-overlay" id="topUpModal" onclick="closeTopUp(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Пополнить баланс</div>
+    <div class="modal-sub">Текущий баланс: <strong id="topUpCurrentBalance">12 350 ₽</strong></div>
+
+    <div class="form-group">
+      <label class="form-label">Сумма пополнения</label>
+      <input class="form-input" type="number" id="topUpAmount" placeholder="0 ₽" min="100">
+    </div>
+
+    <div class="bank-options">
+      <div class="bank-opt selected" onclick="selectTopUpMethod(this)" data-method="ЮMoney">
+        <div class="bank-opt-icon">🟡</div>
+        <div class="bank-opt-name">ЮMoney</div>
+      </div>
+      <div class="bank-opt" onclick="selectTopUpMethod(this)" data-method="Сбербанк">
+        <div class="bank-opt-icon">🟢</div>
+        <div class="bank-opt-name">Сбербанк</div>
+      </div>
+      <div class="bank-opt" onclick="selectTopUpMethod(this)" data-method="Тинькофф">
+        <div class="bank-opt-icon">🔵</div>
+        <div class="bank-opt-name">Тинькофф</div>
+      </div>
+    </div>
+
+    <button class="withdraw-btn" style="margin-top:16px" onclick="submitTopUp()">Пополнить</button>
+    <div class="fee-note" id="topUpError" style="display:none;color:var(--red)"></div>
+    <div class="fee-note">Демо-режим: реальное списание с карты не производится.</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -302,15 +337,12 @@ const PERIODS = {
   }
 };
 
-const TRANSACTIONS = [
-  { icon:'💳', title:'Вывод на Сбербанк', meta:'17 июн · ****4521', amount:'-5 000 ₽', color:'var(--red)', status:'Выполнен' },
-  { icon:'📦', title:'Грузчики на переезд', meta:'12 июн · Семья Петровых', amount:'+3 150 ₽', color:'var(--green)', status:'Зачислено' },
-  { icon:'🔨', title:'Подсобный рабочий', meta:'8 июн · СК Горизонт', amount:'+3 600 ₽', color:'var(--green)', status:'Зачислено' },
-  { icon:'🧹', title:'Уборка офиса', meta:'3 июн · ООО Техносфера', amount:'+2 250 ₽', color:'var(--green)', status:'Зачислено' },
-  { icon:'💳', title:'Вывод на Тинькофф', meta:'1 июн · ****8834', amount:'-8 000 ₽', color:'var(--red)', status:'Выполнен' },
-  { icon:'🎉', title:'Промоутер на открытие', meta:'28 май · Магазин «Уют»', amount:'+1 800 ₽', color:'var(--green)', status:'Зачислено' },
-  { icon:'📦', title:'Разгрузка фуры', meta:'20 май · ООО ТрансЛогист', amount:'+2 880 ₽', color:'var(--green)', status:'Зачислено' },
-];
+function renderBalance() {
+  const balance = Shabashka.getWorkerBalance();
+  document.getElementById('balanceAmount').textContent = balance.toLocaleString('ru') + ' ₽';
+  document.getElementById('withdrawCurrentBalance').textContent = balance.toLocaleString('ru') + ' ₽';
+  document.getElementById('topUpCurrentBalance').textContent = balance.toLocaleString('ru') + ' ₽';
+}
 
 function renderChart(period) {
   const d = PERIODS[period];
@@ -335,22 +367,58 @@ function setPeriod(p, btn) {
 }
 
 function renderTx() {
-  document.getElementById('txList').innerHTML = TRANSACTIONS.map(t=>`
+  const tx = Shabashka.getWorkerTx();
+  document.getElementById('txList').innerHTML = tx.map(t => {
+    const isCredit = t.type === 'credit';
+    return `
     <div class="tx-item">
-      <div class="tx-icon" style="background:var(--gray-light)">${t.icon}</div>
+      <div class="tx-icon" style="background:var(--gray-light)">${isCredit ? '📦' : '💳'}</div>
       <div class="tx-info">
         <div class="tx-title">${t.title}</div>
-        <div class="tx-meta">${t.meta}</div>
+        <div class="tx-meta">${t.date}</div>
       </div>
       <div>
-        <div class="tx-amount" style="color:${t.color}">${t.amount}</div>
+        <div class="tx-amount" style="color:${isCredit ? 'var(--green)' : 'var(--red)'}">${isCredit ? '+' : '−'}${t.amount.toLocaleString('ru')} ₽</div>
         <div class="tx-status" style="color:var(--gray)">${t.status}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Пока нет операций</div>';
 }
 
 function openWithdraw() { document.getElementById('withdrawModal').classList.add('open'); }
 function closeWithdraw(e) { if(e.target===document.getElementById('withdrawModal')) document.getElementById('withdrawModal').classList.remove('open'); }
+
+function openTopUp() { document.getElementById('topUpModal').classList.add('open'); }
+function closeTopUp(e) { if(e.target===document.getElementById('topUpModal')) document.getElementById('topUpModal').classList.remove('open'); }
+
+let selectedTopUpMethod = 'ЮMoney';
+function selectTopUpMethod(el) {
+  el.closest('.bank-options').querySelectorAll('.bank-opt').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTopUpMethod = el.getAttribute('data-method');
+}
+
+function submitTopUp() {
+  const amt = parseInt(document.getElementById('topUpAmount').value) || 0;
+  const errorEl = document.getElementById('topUpError');
+  if (amt < 100) {
+    errorEl.textContent = 'Минимальная сумма пополнения — 100 ₽';
+    errorEl.style.display = 'block';
+    return;
+  }
+  const result = Shabashka.topUpWorkerBalance(amt, 'Пополнение (' + selectedTopUpMethod + ')');
+  if (!result.ok) {
+    errorEl.textContent = result.error;
+    errorEl.style.display = 'block';
+    return;
+  }
+  errorEl.style.display = 'none';
+  document.getElementById('topUpAmount').value = '';
+  document.getElementById('topUpModal').classList.remove('open');
+  showToast('✅ Баланс пополнен на ' + amt.toLocaleString('ru') + ' ₽');
+  renderBalance();
+  renderTx();
+}
 
 function selectBank(el) {
   document.querySelectorAll('.bank-opt').forEach(b=>b.classList.remove('selected'));
@@ -371,9 +439,15 @@ function submitWithdraw() {
   const card = document.getElementById('cardNum').value.trim();
   if (amt < 500) { showToast('⚠️ Минимум 500 ₽'); return; }
   if (!card) { showToast('⚠️ Введите номер карты'); return; }
-  if (amt > 12350) { showToast('⚠️ Недостаточно средств'); return; }
+
+  const result = Shabashka.debitWorkerBalance(amt, 'Вывод средств');
+  if (!result.ok) { showToast('⚠️ ' + result.error); return; }
+
   document.getElementById('withdrawModal').classList.remove('open');
+  document.getElementById('withdrawAmount').value = '';
   showToast('✅ Заявка на вывод ' + amt.toLocaleString('ru') + ' ₽ принята!');
+  renderBalance();
+  renderTx();
 }
 
 function scrollToTx() { document.getElementById('txSection').scrollIntoView({ behavior:'smooth' }); }
@@ -390,6 +464,7 @@ setTimeout(() => {
   document.getElementById('levelProgress').style.width = '63%';
 }, 300);
 
+renderBalance();
 renderChart('month');
 renderTx();
 </script>

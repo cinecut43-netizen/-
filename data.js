@@ -193,6 +193,138 @@
     return params.get('job');
   }
 
+  /* ---------- БАЛАНС И ТРАНЗАКЦИИ ----------
+     Отдельные кошельки для роли работодателя (откуда списывается оплата
+     заказов) и роли исполнителя (куда поступает заработок и откуда
+     можно вывести деньги). Состояние хранится в localStorage, как и
+     заказы — это эмуляция без настоящего платёжного backend. Реальное
+     пополнение требует интеграции с платёжным провайдером (например,
+     ЮKassa, CloudPayments) через отдельную serverless-функцию, как
+     /api/ai-chat для AI — здесь деньги «начисляются» сразу после
+     заполнения формы, без настоящего списания с карты. */
+
+  const EMPLOYER_BALANCE_KEY = 'shabashka_employer_balance';
+  const EMPLOYER_TX_KEY = 'shabashka_employer_tx';
+  const WORKER_BALANCE_KEY = 'shabashka_worker_balance';
+  const WORKER_TX_KEY = 'shabashka_worker_tx';
+
+  const DEFAULT_EMPLOYER_BALANCE = 12300;
+  const DEFAULT_EMPLOYER_TX = [
+    { date: '12 июн', title: 'Официанты на корпоратив', amount: 19800, type: 'debit', status: 'Выполнен' },
+    { date: '10 июн', title: 'Грузчики на склад', amount: 9900, type: 'debit', status: 'Выполнен' },
+    { date: '8 июн', title: 'Пополнение баланса', amount: 30000, type: 'credit', status: 'Выполнен' },
+  ];
+
+  const DEFAULT_WORKER_BALANCE = 12350;
+  const DEFAULT_WORKER_TX = [
+    { date: '17 июн', title: 'Вывод на Сбербанк', amount: 5000, type: 'debit', status: 'Выполнен' },
+    { date: '12 июн', title: 'Грузчики на переезд', amount: 3150, type: 'credit', status: 'Зачислено' },
+  ];
+
+  function readNumber(key, fallback) {
+    const raw = localStorage.getItem(key);
+    const n = raw === null ? fallback : Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function readList(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function getEmployerBalance() {
+    return readNumber(EMPLOYER_BALANCE_KEY, DEFAULT_EMPLOYER_BALANCE);
+  }
+
+  function getEmployerTx() {
+    return readList(EMPLOYER_TX_KEY, DEFAULT_EMPLOYER_TX);
+  }
+
+  function getWorkerBalance() {
+    return readNumber(WORKER_BALANCE_KEY, DEFAULT_WORKER_BALANCE);
+  }
+
+  function getWorkerTx() {
+    return readList(WORKER_TX_KEY, DEFAULT_WORKER_TX);
+  }
+
+  function todayLabel() {
+    const d = new Date();
+    const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    return d.getDate() + ' ' + months[d.getMonth()];
+  }
+
+  // Пополнение баланса работодателя — для оплаты заказов через эскроу
+  function topUpEmployerBalance(amount, method) {
+    amount = Math.round(Number(amount));
+    if (!amount || amount <= 0) return { ok: false, error: 'Сумма должна быть больше нуля' };
+
+    const balance = getEmployerBalance() + amount;
+    localStorage.setItem(EMPLOYER_BALANCE_KEY, String(balance));
+
+    const tx = getEmployerTx();
+    tx.unshift({
+      date: todayLabel(),
+      title: 'Пополнение баланса (' + (method || 'карта') + ')',
+      amount: amount,
+      type: 'credit',
+      status: 'Выполнен',
+    });
+    localStorage.setItem(EMPLOYER_TX_KEY, JSON.stringify(tx));
+
+    return { ok: true, balance: balance };
+  }
+
+  // Списание с баланса работодателя (например, при подтверждении заказа)
+  function debitEmployerBalance(amount, title) {
+    amount = Math.round(Number(amount));
+    const current = getEmployerBalance();
+    if (amount > current) return { ok: false, error: 'Недостаточно средств на балансе' };
+
+    const balance = current - amount;
+    localStorage.setItem(EMPLOYER_BALANCE_KEY, String(balance));
+
+    const tx = getEmployerTx();
+    tx.unshift({ date: todayLabel(), title: title || 'Списание', amount: amount, type: 'debit', status: 'Выполнен' });
+    localStorage.setItem(EMPLOYER_TX_KEY, JSON.stringify(tx));
+
+    return { ok: true, balance: balance };
+  }
+
+  // Пополнение баланса исполнителя (например, бонус, возврат, тестовое начисление)
+  function topUpWorkerBalance(amount, title) {
+    amount = Math.round(Number(amount));
+    if (!amount || amount <= 0) return { ok: false, error: 'Сумма должна быть больше нуля' };
+
+    const balance = getWorkerBalance() + amount;
+    localStorage.setItem(WORKER_BALANCE_KEY, String(balance));
+
+    const tx = getWorkerTx();
+    tx.unshift({ date: todayLabel(), title: title || 'Пополнение баланса', amount: amount, type: 'credit', status: 'Зачислено' });
+    localStorage.setItem(WORKER_TX_KEY, JSON.stringify(tx));
+
+    return { ok: true, balance: balance };
+  }
+
+  function debitWorkerBalance(amount, title) {
+    amount = Math.round(Number(amount));
+    const current = getWorkerBalance();
+    if (amount > current) return { ok: false, error: 'Недостаточно средств на балансе' };
+
+    const balance = current - amount;
+    localStorage.setItem(WORKER_BALANCE_KEY, String(balance));
+
+    const tx = getWorkerTx();
+    tx.unshift({ date: todayLabel(), title: title || 'Списание', amount: amount, type: 'debit', status: 'Выполнен' });
+    localStorage.setItem(WORKER_TX_KEY, JSON.stringify(tx));
+
+    return { ok: true, balance: balance };
+  }
+
   window.Shabashka = {
     getUser: getUser,
     setRole: setRole,
@@ -214,5 +346,14 @@
     rub: rub,
     commission: commission,
     jobIdFromQuery: jobIdFromQuery,
+    // Баланс и платежи
+    getEmployerBalance: getEmployerBalance,
+    getEmployerTx: getEmployerTx,
+    topUpEmployerBalance: topUpEmployerBalance,
+    debitEmployerBalance: debitEmployerBalance,
+    getWorkerBalance: getWorkerBalance,
+    getWorkerTx: getWorkerTx,
+    topUpWorkerBalance: topUpWorkerBalance,
+    debitWorkerBalance: debitWorkerBalance,
   };
 })();

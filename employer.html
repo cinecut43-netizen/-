@@ -121,6 +121,10 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 .modal-submit { width: 100%; padding: 12px; background: var(--orange); color: #fff; border: none; border-radius: 9px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; }
 .modal-submit:hover { background: var(--orange-dark); }
 .commission-hint { background: var(--orange-light); border: 1px solid #FFD0B0; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--orange-dark); margin-top: 12px; }
+.amount-chip { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: 9px; background: var(--white); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.amount-chip:hover { border-color: var(--orange); }
+.amount-chip.selected { border-color: var(--orange); background: var(--orange-light); color: var(--orange-dark); }
+.form-error.show { display: block !important; }
 
 @media (max-width: 900px) { .stats-row { grid-template-columns: 1fr 1fr; } .two-col { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .sidenav { display: none; } main { padding: 16px; } .stats-row { grid-template-columns: 1fr 1fr; } }
@@ -215,6 +219,49 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
       <button class="modal-close" onclick="closeModal('detailModal')">×</button>
     </div>
     <div id="detailBody"></div>
+  </div>
+</div>
+
+<!-- TOP UP BALANCE MODAL -->
+<div class="modal-overlay" id="topUpModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h2>Пополнить баланс</h2>
+      <button class="modal-close" onclick="closeModal('topUpModal')">×</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Сумма пополнения</label>
+      <input type="number" class="form-input" id="topUpAmount" placeholder="0 ₽" min="100">
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button type="button" class="amount-chip" onclick="selectTopUpAmount(5000, this)">5 000 ₽</button>
+      <button type="button" class="amount-chip" onclick="selectTopUpAmount(15000, this)">15 000 ₽</button>
+      <button type="button" class="amount-chip" onclick="selectTopUpAmount(50000, this)">50 000 ₽</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Способ оплаты</label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:14px">
+          <input type="radio" name="topUpMethod" value="банковская карта" checked> 💳 Банковская карта
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:14px">
+          <input type="radio" name="topUpMethod" value="СБП"> 📱 СБП (по номеру телефона)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:14px">
+          <input type="radio" name="topUpMethod" value="счёт юрлица"> 🏢 Счёт юридического лица
+        </label>
+      </div>
+    </div>
+
+    <div class="form-error" id="topUpError" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px"></div>
+
+    <button class="modal-submit" onclick="submitTopUp()">Пополнить</button>
+    <div style="font-size:11px;color:var(--gray);text-align:center;margin-top:10px">
+      Демо-режим: реальное списание с карты не производится. Для настоящих платежей нужна интеграция с платёжным провайдером.
+    </div>
   </div>
 </div>
 
@@ -381,29 +428,67 @@ function getResponsesPage() {
 }
 
 function getPaymentsPage() {
-  const rows = [
-    { date:'12 июн', title:'Официанты на корпоратив', amount:19800, type:'Списание', status:'Выполнен' },
-    { date:'10 июн', title:'Грузчики на склад', amount:9900, type:'Списание', status:'Выполнен' },
-    { date:'8 июн', title:'Пополнение баланса', amount:30000, type:'Пополнение', status:'' },
-  ];
+  const balance = Shabashka.getEmployerBalance();
+  const tx = Shabashka.getEmployerTx();
+  const reserved = ORDERS.filter(o => o.status === 'inprog').reduce((s, o) => s + o.pay * o.people, 0);
+  const spent = ORDERS.filter(o => o.status === 'done').reduce((s, o) => s + o.pay * o.people, 0);
+
   return `
-  <div class="section-header"><span class="section-title">Платежи и баланс</span></div>
-  <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
-    <div class="stat-card"><div class="stat-card-label">Баланс</div><div class="stat-card-num" style="color:var(--green)">12 300 ₽</div></div>
-    <div class="stat-card"><div class="stat-card-label">Резерв (эскроу)</div><div class="stat-card-num" style="color:var(--amber)">29 700 ₽</div></div>
-    <div class="stat-card"><div class="stat-card-label">Всего потрачено</div><div class="stat-card-num">42 900 ₽</div></div>
+  <div class="section-header">
+    <span class="section-title">Платежи и баланс</span>
+    <button class="post-btn" style="font-size:13px;padding:7px 14px" onclick="openTopUpModal()">+ Пополнить баланс</button>
   </div>
-  <div class="orders-card">
-    ${rows.map(r => `
+  <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+    <div class="stat-card"><div class="stat-card-label">Баланс</div><div class="stat-card-num" style="color:var(--green)" id="employerBalanceNum">${balance.toLocaleString('ru')} ₽</div></div>
+    <div class="stat-card"><div class="stat-card-label">Резерв (эскроу)</div><div class="stat-card-num" style="color:var(--amber)">${reserved.toLocaleString('ru')} ₽</div></div>
+    <div class="stat-card"><div class="stat-card-label">Всего потрачено</div><div class="stat-card-num">${spent.toLocaleString('ru')} ₽</div></div>
+  </div>
+  <div class="orders-card" id="employerTxList">
+    ${tx.map(r => `
       <div class="order-row">
-        <div class="order-icon">${r.type==='Пополнение' ? '💳' : '📤'}</div>
-        <div class="order-info"><div class="order-title">${r.title}</div><div class="order-meta">${r.type}</div></div>
+        <div class="order-icon">${r.type==='credit' ? '💳' : '📤'}</div>
+        <div class="order-info"><div class="order-title">${r.title}</div><div class="order-meta">${r.type==='credit' ? 'Пополнение' : 'Списание'} · ${r.status}</div></div>
         <div class="order-date">${r.date}</div>
-        <div class="order-pay" style="color:${r.type==='Пополнение'?'var(--green)':'var(--red)'}">
-          ${r.type==='Пополнение' ? '+' : '−'}${r.amount.toLocaleString('ru')} ₽
+        <div class="order-pay" style="color:${r.type==='credit'?'var(--green)':'var(--red)'}">
+          ${r.type==='credit' ? '+' : '−'}${r.amount.toLocaleString('ru')} ₽
         </div>
-      </div>`).join('')}
+      </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Пока нет операций</div>'}
   </div>`;
+}
+
+function openTopUpModal() {
+  document.getElementById('topUpModal').classList.add('open');
+}
+
+function selectTopUpAmount(amount, btn) {
+  document.querySelectorAll('.amount-chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('topUpAmount').value = amount;
+}
+
+function submitTopUp() {
+  const amount = parseInt(document.getElementById('topUpAmount').value) || 0;
+  const methodEl = document.querySelector('input[name="topUpMethod"]:checked');
+  const method = methodEl ? methodEl.value : 'карта';
+
+  if (amount < 100) {
+    document.getElementById('topUpError').textContent = 'Минимальная сумма пополнения — 100 ₽';
+    document.getElementById('topUpError').classList.add('show');
+    return;
+  }
+
+  const result = Shabashka.topUpEmployerBalance(amount, method);
+  if (!result.ok) {
+    document.getElementById('topUpError').textContent = result.error;
+    document.getElementById('topUpError').classList.add('show');
+    return;
+  }
+
+  closeModal('topUpModal');
+  document.getElementById('topUpAmount').value = '';
+  document.getElementById('topUpError').classList.remove('show');
+  alert('Баланс пополнен на ' + amount.toLocaleString('ru') + ' ₽');
+  renderPage();
 }
 
 function orderRow(o) {
@@ -533,7 +618,7 @@ function submitOrder() {
   renderPage();
 }
 
-['postModal','detailModal'].forEach(id => {
+['postModal','detailModal','topUpModal'].forEach(id => {
   document.getElementById(id).addEventListener('click', function(e) { if(e.target===this) closeModal(id); });
 });
 
