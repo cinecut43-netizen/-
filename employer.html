@@ -219,6 +219,16 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
       <label class="form-label">Адрес</label>
       <input class="form-input" id="newAddr" placeholder="Москва, ул. Ленина, 5">
     </div>
+    <div class="form-row">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 0">
+        <input type="checkbox" id="newUrgent" style="width:16px;height:16px;cursor:pointer">
+        🔥 Срочный заказ <span style="color:var(--gray);font-size:11.5px">(выше в списке, заметнее для исполнителей)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 0">
+        <input type="checkbox" id="newAllowBargain" style="width:16px;height:16px;cursor:pointer">
+        💬 Принимать предложения по цене <span style="color:var(--gray);font-size:11.5px">(исполнители смогут предложить свою ставку)</span>
+      </label>
+    </div>
     <div class="commission-hint">
       💡 Комиссия платформы — 10% от суммы заказа. Спишется только при подтверждении исполнителя.
     </div>
@@ -372,17 +382,6 @@ function loadOrders() {
 
 let ORDERS = loadOrders();
 
-const RESPONSES = [
-  { name:'Дмитрий К.', color:'#E8510A', rating:'4.9 ⭐ (47 заказов)', orderId:9, msg:'Готов выйти завтра, опыт 3 года.' },
-  { name:'Сергей М.', color:'#185FA5', rating:'4.7 ⭐ (31 заказ)', orderId:9, msg:'Физически крепкий, инструмент свой.' },
-  { name:'Алёна П.', color:'#1A7A4A', rating:'5.0 ⭐ (22 заказа)', orderId:13, msg:'Коммуникабельная, презентабельный вид.' },
-  { name:'Марина С.', color:'#9B59B6', rating:'4.8 ⭐ (19 заказов)', orderId:13, msg:'Работала промоутером 2 года.' },
-  { name:'Иван Г.', color:'#B33D06', rating:'4.6 ⭐ (55 заказов)', orderId:14, msg:'Строительный опыт, всё умею.' },
-  { name:'Олег Т.', color:'#185FA5', rating:'4.9 ⭐ (40 заказов)', orderId:14, msg:'Подсобные работы — моё.' },
-  { name:'Наталья В.', color:'#1A7A4A', rating:'5.0 ⭐ (28 заказов)', orderId:13, msg:'Доброжелательная, энергичная.' },
-  { name:'Роман Д.', color:'#854F0B', rating:'4.5 ⭐ (15 заказов)', orderId:9, msg:'Молодой, сильный, обучаемый.' },
-];
-
 const ACTIVITY = [
   { color:'#E8510A', text:'<b>Дмитрий К.</b> откликнулся на «Разгрузка фуры»', time:'10 мин' },
   { color:'#1A7A4A', text:'Заказ <b>«Официанты на корпоратив»</b> успешно завершён', time:'2 ч' },
@@ -419,7 +418,7 @@ function getDashboard() {
   const activeOrders = ORDERS.filter(o => activeStatuses.includes(o.status)).length;
   const done = ORDERS.filter(o => o.status === 'done').length;
   const totalSpent = ORDERS.filter(o => o.status === 'done').reduce((s,o) => s + o.pay * o.people, 0);
-  const pendingResp = RESPONSES.length;
+  const pendingResp = Shabashka.getPendingResponsesCount();
 
   return `
   <div class="stats-row">
@@ -456,7 +455,7 @@ function getDashboard() {
   <div class="two-col">
     <div>
       <div class="section-header"><span class="section-title">Новые отклики</span><button class="section-link" onclick="setPage('responses', document.querySelectorAll('.sidenav-item')[2])">Все →</button></div>
-      <div class="responses-card">${RESPONSES.slice(0,4).map(r => respItem(r)).join('')}</div>
+      <div class="responses-card">${Shabashka.getAllResponses().filter(r=>r.status==='pending').slice(0,4).map(r => respItem(r)).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Новых откликов нет</div>'}</div>
     </div>
     <div>
       <div class="section-header"><span class="section-title">Активность</span></div>
@@ -491,13 +490,19 @@ function getOrdersPage() {
 
 function getResponsesPage() {
   const grouped = {};
-  RESPONSES.forEach(r => { if(!grouped[r.orderId]) grouped[r.orderId]=[]; grouped[r.orderId].push(r); });
+  Shabashka.getAllResponses().filter(r => r.status === 'pending').forEach(r => { if(!grouped[r.jobId]) grouped[r.jobId]=[]; grouped[r.jobId].push(r); });
+  const groupedEntries = Object.entries(grouped);
+  if (!groupedEntries.length) {
+    return `<div class="section-title" style="margin-bottom:16px">Отклики на ваши заказы</div>
+    <div class="responses-card"><div style="padding:24px;text-align:center;color:var(--gray);font-size:13px">Новых откликов нет</div></div>`;
+  }
   return `
   <div class="section-title" style="margin-bottom:16px">Отклики на ваши заказы</div>
-  ${Object.entries(grouped).map(([oid, resps]) => {
+  ${groupedEntries.map(([oid, resps]) => {
     const order = ORDERS.find(o => o.id == oid);
+    if (!order) return '';
     return `<div class="responses-card" style="margin-bottom:16px">
-      <div class="resp-header">${order.icon} ${order.title} <span class="resp-count">${resps.length} откликов · ${order.date}</span></div>
+      <div class="resp-header">${order.emoji} ${order.title} <span class="resp-count">${resps.length} откликов · ${order.date}</span></div>
       ${resps.map(r => respItem(r)).join('')}
     </div>`;
   }).join('')}`;
@@ -582,28 +587,33 @@ function orderRow(o) {
 }
 
 function respItem(r) {
+  const bargainBadge = r.proposedPay
+    ? `<div style="font-size:12.5px;font-weight:700;color:var(--orange-dark);margin-top:2px">Предлагает: ${r.proposedPay.toLocaleString('ru')} ₽</div>`
+    : '';
   return `<div class="resp-item">
-    <div class="resp-avatar" style="background:${r.color}">${r.name[0]}</div>
-    <div>
-      <div class="resp-name">${r.name}</div>
-      <div class="resp-rating">${r.rating}</div>
+    <div class="resp-avatar" style="background:${r.workerColor}">${r.workerName[0]}</div>
+    <div style="flex:1">
+      <div class="resp-name">${r.workerName}</div>
+      <div class="resp-rating">${r.workerRating}</div>
+      ${bargainBadge}
     </div>
     <div class="resp-actions">
-      <button class="btn-sm btn-sm-green" onclick="event.stopPropagation();acceptResp(this,'${r.name}',${r.orderId})">✓ Принять</button>
-      <button class="btn-sm btn-sm-gray" onclick="event.stopPropagation();window.location.href='/profile'">Профиль</button>
+      <button class="btn-sm btn-sm-green" onclick="event.stopPropagation();acceptResp(${r.id})">✓ Принять</button>
+      <button class="btn-sm btn-sm-gray" onclick="event.stopPropagation();declineResp(${r.id})">Отклонить</button>
     </div>
   </div>`;
 }
 
-function acceptResp(btn, name, orderId) {
-  btn.textContent = '✅ Принят';
-  btn.style.background = 'var(--green)';
-  btn.style.color = '#fff';
-  btn.disabled = true;
-  btn.nextElementSibling.style.display = 'none';
-
-  Shabashka.updateJobStatus(orderId, 'selected');
+function acceptResp(responseId) {
+  const result = Shabashka.acceptResponse(responseId);
+  if (!result.ok) { alert(result.error); return; }
   ORDERS = loadOrders();
+  renderPage();
+}
+
+function declineResp(responseId) {
+  Shabashka.declineResponse(responseId);
+  renderPage();
 }
 
 function openDetail(id) {
@@ -622,8 +632,8 @@ function openDetail(id) {
       <div style="text-align:center"><div style="font-size:13px;color:var(--gray)">Комиссия (10%)</div><div style="font-size:20px;font-weight:700;color:var(--orange)">${commission.toLocaleString('ru')} ₽</div></div>
       <div style="text-align:right"><div style="font-size:13px;color:var(--gray)">Итого</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people+commission).toLocaleString('ru')} ₽</div></div>
     </div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:10px">Отклики (${RESPONSES.filter(r=>r.orderId===o.id).length})</div>
-    <div class="responses-card">${RESPONSES.filter(r=>r.orderId===o.id).map(r => respItem(r)).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Откликов пока нет</div>'}</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px">Отклики (${Shabashka.getResponsesForJob(o.id).filter(r=>r.status==='pending').length})</div>
+    <div class="responses-card">${Shabashka.getResponsesForJob(o.id).filter(r=>r.status==='pending').map(r => respItem(r)).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Откликов пока нет</div>'}</div>
     ${renderDetailActions(o)}`;
   document.getElementById('detailModal').classList.add('open');
 }
@@ -697,6 +707,8 @@ function searchOrders(q) {
 
 function openPostModal() {
   document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('newUrgent').checked = false;
+  document.getElementById('newAllowBargain').checked = false;
   document.getElementById('postModal').classList.add('open');
 }
 
@@ -729,7 +741,8 @@ function submitOrder() {
     people: parseInt(document.getElementById('newCount').value) || 1,
     payLabel: 'за день',
     date: 'Сегодня',
-    urgent: false,
+    urgent: document.getElementById('newUrgent').checked,
+    allowBargain: document.getElementById('newAllowBargain').checked,
     location: document.getElementById('newAddr').value || 'Адрес не указан',
     desc: document.getElementById('newDesc').value,
     requirements: '—',

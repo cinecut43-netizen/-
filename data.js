@@ -228,6 +228,126 @@
     return false;
   }
 
+  /* ---------- ОТКЛИКИ НА ЗАКАЗ ----------
+     Исполнитель откликается на заказ и может предложить свою цену вместо
+     исходной (если работодатель разрешил торг через allowBargain). Работодатель
+     видит все отклики по заказу и выбирает один — это переводит заказ в
+     статус selected и автоматически отклоняет остальные отклики по нему. */
+  const RESPONSES_KEY = 'shabashka_responses';
+
+  // Демо-отклики на старые заказы, чтобы интерфейс работодателя не был
+  // пустым при первом входе — та же роль, что у BASE_JOBS для заказов.
+  const BASE_RESPONSES = [
+    { id: 1, jobId: 9, workerName: 'Дмитрий К.', workerColor: '#E8510A', workerRating: '4.9 ⭐ (47 заказов)', proposedPay: null, message: 'Готов выйти завтра, опыт 3 года.', status: 'pending', date: '17 июн' },
+    { id: 2, jobId: 9, workerName: 'Сергей М.', workerColor: '#185FA5', workerRating: '4.7 ⭐ (31 заказ)', proposedPay: null, message: 'Физически крепкий, инструмент свой.', status: 'pending', date: '17 июн' },
+    { id: 3, jobId: 13, workerName: 'Алёна П.', workerColor: '#1A7A4A', workerRating: '5.0 ⭐ (22 заказа)', proposedPay: null, message: 'Коммуникабельная, презентабельный вид.', status: 'pending', date: '16 июн' },
+    { id: 4, jobId: 13, workerName: 'Марина С.', workerColor: '#9B59B6', workerRating: '4.8 ⭐ (19 заказов)', proposedPay: null, message: 'Работала промоутером 2 года.', status: 'pending', date: '16 июн' },
+    { id: 5, jobId: 14, workerName: 'Иван Г.', workerColor: '#B33D06', workerRating: '4.6 ⭐ (55 заказов)', proposedPay: 4500, message: 'Готов за 4500, есть свой инструмент и опыт именно с такими объектами.', status: 'pending', date: '15 июн' },
+    { id: 6, jobId: 14, workerName: 'Олег Т.', workerColor: '#185FA5', workerRating: '4.9 ⭐ (40 заказов)', proposedPay: null, message: 'Подсобные работы — моё.', status: 'pending', date: '15 июн' },
+    { id: 7, jobId: 13, workerName: 'Наталья В.', workerColor: '#1A7A4A', workerRating: '5.0 ⭐ (28 заказов)', proposedPay: null, message: 'Доброжелательная, энергичная.', status: 'pending', date: '14 июн' },
+    { id: 8, jobId: 9, workerName: 'Роман Д.', workerColor: '#854F0B', workerRating: '4.5 ⭐ (15 заказов)', proposedPay: 3000, message: 'Могу за 3000, если нужно — выйду уже сегодня вечером.', status: 'pending', date: '17 июн' },
+  ];
+
+  function readResponses() {
+    try {
+      const raw = localStorage.getItem(RESPONSES_KEY);
+      return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(BASE_RESPONSES));
+    } catch (e) {
+      return JSON.parse(JSON.stringify(BASE_RESPONSES));
+    }
+  }
+
+  function saveResponses(responses) {
+    localStorage.setItem(RESPONSES_KEY, JSON.stringify(responses));
+  }
+
+  function getAllResponses() {
+    return readResponses();
+  }
+
+  function getResponsesForJob(jobId) {
+    return getAllResponses().filter(function (r) { return r.jobId === Number(jobId); });
+  }
+
+  function getPendingResponsesCount() {
+    return getAllResponses().filter(function (r) { return r.status === 'pending'; }).length;
+  }
+
+  function nextResponseId() {
+    const all = getAllResponses();
+    return all.length ? Math.max.apply(null, all.map(function (r) { return r.id; })) + 1 : 1;
+  }
+
+  // proposedPay — число, если исполнитель предлагает свою цену, или null,
+  // если согласен на исходную ставку заказа.
+  function submitResponse(jobId, proposedPay, message) {
+    const job = getJob(jobId);
+    if (!job) return { ok: false, error: 'Заказ не найден' };
+    if (proposedPay != null && !job.allowBargain) {
+      return { ok: false, error: 'Работодатель не принимает предложения по цене для этого заказа' };
+    }
+
+    const user = getUser();
+    const responses = getAllResponses();
+    responses.unshift({
+      id: nextResponseId(),
+      jobId: Number(jobId),
+      workerName: user.name || 'Исполнитель',
+      workerColor: '#E8510A',
+      workerRating: user.rating ? user.rating + ' ⭐' : 'Новый исполнитель',
+      proposedPay: proposedPay || null,
+      message: (message || '').trim() || 'Готов выполнить эту работу.',
+      status: 'pending',
+      date: todayLabel(),
+    });
+    saveResponses(responses);
+
+    // Заказ переходит в "есть отклики", если был совсем новым
+    if (job.status === 'new') {
+      updateJobStatus(jobId, 'has_responses');
+    }
+
+    return { ok: true };
+  }
+
+  // Работодатель принимает один отклик — заказ переходит в selected,
+  // если в отклике была своя цена, она становится новой ценой заказа,
+  // остальные открытые отклики по этому же заказу автоматически отклоняются.
+  function acceptResponse(responseId) {
+    const responses = getAllResponses();
+    const response = responses.find(function (r) { return r.id === Number(responseId); });
+    if (!response) return { ok: false, error: 'Отклик не найден' };
+
+    response.status = 'accepted';
+    responses.forEach(function (r) {
+      if (r.jobId === response.jobId && r.id !== response.id && r.status === 'pending') {
+        r.status = 'declined';
+      }
+    });
+    saveResponses(responses);
+
+    updateJobStatus(response.jobId, 'selected');
+    if (response.proposedPay) {
+      const userJobs = getUserJobs();
+      const idx = userJobs.findIndex(function (j) { return j.id === response.jobId; });
+      if (idx !== -1) {
+        userJobs[idx].pay = response.proposedPay;
+        saveUserJobs(userJobs);
+      }
+    }
+
+    return { ok: true };
+  }
+
+  function declineResponse(responseId) {
+    const responses = getAllResponses();
+    const response = responses.find(function (r) { return r.id === Number(responseId); });
+    if (!response) return { ok: false, error: 'Отклик не найден' };
+    response.status = 'declined';
+    saveResponses(responses);
+    return { ok: true };
+  }
+
   /* ---------- ОТЗЫВЫ ----------
      Отзыв привязан к конкретному заказу (jobId) и оставляется после того,
      как заказ переходит в статус done. Хранится оценка 1-5, текст и
@@ -552,6 +672,13 @@
     STATUS_ORDER: STATUS_ORDER,
     canCancelJob: canCancelJob,
     canDisputeJob: canDisputeJob,
+    // Отклики на заказ (с торгом по цене)
+    getAllResponses: getAllResponses,
+    getResponsesForJob: getResponsesForJob,
+    getPendingResponsesCount: getPendingResponsesCount,
+    submitResponse: submitResponse,
+    acceptResponse: acceptResponse,
+    declineResponse: declineResponse,
     // Отзывы
     getAllReviews: getAllReviews,
     getReviewForJob: getReviewForJob,

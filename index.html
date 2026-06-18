@@ -525,7 +525,7 @@
 <script>
 Shabashka.renderNav('index');
 
-const JOBS = Shabashka.JOBS;
+let JOBS = Shabashka.JOBS;
 
 let filtered = [...JOBS];
 let currentCat = 'all';
@@ -556,6 +556,7 @@ function renderJobs() {
       </div>
       <div class="job-tags">
         ${j.urgent ? '<span class="tag urgent">🔥 Срочно</span>' : ''}
+        ${j.allowBargain ? '<span class="tag" style="background:#E6F1FB;color:#185FA5">💬 Торг</span>' : ''}
         <span class="tag date">📅 ${j.date}</span>
         <span class="tag">📍 ${j.location}</span>
       </div>
@@ -575,6 +576,8 @@ function renderJobs() {
 function openDetail(id) {
   const j = JOBS.find(x => x.id === id);
   const commission = Math.round(j.pay * 0.1);
+  const alreadyApplied = Shabashka.getResponsesForJob(j.id).some(r => r.workerName === Shabashka.getUser().name);
+
   document.getElementById('modalContent').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
       <div class="job-emoji" style="width:48px;height:48px;font-size:24px">${j.emoji}</div>
@@ -585,6 +588,7 @@ function openDetail(id) {
     </div>
     <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
       ${j.urgent ? '<span class="tag urgent">🔥 Срочно</span>' : ''}
+      ${j.allowBargain ? '<span class="tag" style="background:#E6F1FB;color:#185FA5">💬 Торг возможен</span>' : ''}
       <span class="tag date">📅 ${j.date}</span>
     </div>
     <div style="background:var(--gray-light);border-radius:10px;padding:16px;display:flex;justify-content:space-between;margin-bottom:20px">
@@ -594,10 +598,25 @@ function openDetail(id) {
     <div class="modal-section"><h3>Задача</h3><p>${j.desc}</p></div>
     <div class="modal-section"><h3>Требования</h3><p>${j.requirements}</p></div>
     <div class="commission-note">Сервисный сбор платформы — 10% (${commission.toLocaleString('ru')} ₽). Удерживается при подтверждении заказа.</div>
+    ${alreadyApplied ? `
+    <div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:14px;font-size:13px;margin-top:16px">✅ Вы уже откликнулись на этот заказ</div>
+    ` : `
+    ${j.allowBargain ? `
+    <div class="modal-section">
+      <h3>Ваше предложение</h3>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:10px">
+        <input type="checkbox" id="bargainToggle" onchange="document.getElementById('bargainPayWrap').style.display=this.checked?'block':'none'" style="width:16px;height:16px;cursor:pointer">
+        Предложить свою цену вместо ${j.pay.toLocaleString('ru')} ₽
+      </label>
+      <div id="bargainPayWrap" style="display:none">
+        <input type="number" id="bargainPay" class="form-input" placeholder="Например: 4000" style="margin-bottom:10px">
+      </div>
+    </div>` : ''}
     <div class="modal-apply">
       <button class="msg-btn" onclick="goToChat(${j.id})">💬 Задать вопрос</button>
       <button class="apply-btn" onclick="applyAndChat(${j.id})">Откликнуться</button>
     </div>
+    `}
   `;
   document.getElementById('detailModal').classList.add('open');
 }
@@ -607,6 +626,26 @@ function goToChat(jobId) {
 }
 
 function applyAndChat(jobId) {
+  const bargainChecked = document.getElementById('bargainToggle');
+  let proposedPay = null;
+  if (bargainChecked && bargainChecked.checked) {
+    proposedPay = parseInt(document.getElementById('bargainPay').value);
+    if (!proposedPay || proposedPay <= 0) {
+      alert('Укажите сумму предложения');
+      return;
+    }
+  }
+
+  const result = Shabashka.submitResponse(jobId, proposedPay, '');
+  if (!result.ok) {
+    alert(result.error);
+    return;
+  }
+
+  JOBS = Shabashka.getOpenJobs();
+  filtered = filtered.map(j => JOBS.find(x => x.id === j.id) || j);
+  closeModal('detailModal');
+  renderJobs();
   alert('Отклик отправлен! Работодатель свяжется с вами в течение часа.');
   goToChat(jobId);
 }
