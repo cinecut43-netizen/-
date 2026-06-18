@@ -75,6 +75,7 @@
   };
 
   const ADMIN_ROLE_KEY = 'shabashka_admin_role';
+  const ADMIN_TOKEN_KEY = 'shabashka_admin_token';
 
   function getAdminRole() {
     return localStorage.getItem(ADMIN_ROLE_KEY) || null;
@@ -86,8 +87,41 @@
     return true;
   }
 
+  function setAdminToken(token) {
+    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+  }
+
+  // УСТАРЕЛО: токен теперь подписан секретом, который знает только сервер,
+  // поэтому окончательное решение о валидности должен принимать сервер
+  // (см. verifyTokenWithServer). Эта функция оставлена только как быстрая
+  // проверка "есть ли вообще что проверять" перед сетевым запросом.
+  function isTokenValid() {
+    const role = getAdminRole();
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    return !!(role && token);
+  }
+
+  // Спрашивает сервер, действителен ли токен для данной роли. Возвращает
+  // Promise<boolean>. Сервер проверяет HMAC-подпись секретом, который
+  // никогда не передаётся в браузер — подделать токен без него
+  // математически нереалистично.
+  function verifyTokenWithServer(role) {
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (!token) return Promise.resolve(false);
+
+    return fetch('/api/admin-verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token, role: role }),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) { return !!data.valid; })
+      .catch(function () { return false; });
+  }
+
   function adminLogout() {
     localStorage.removeItem(ADMIN_ROLE_KEY);
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
   }
 
   function canAccessSection(section) {
@@ -487,6 +521,9 @@
     ADMIN_ROLES: ADMIN_ROLES,
     getAdminRole: getAdminRole,
     setAdminRole: setAdminRole,
+    setAdminToken: setAdminToken,
+    isTokenValid: isTokenValid,
+    verifyTokenWithServer: verifyTokenWithServer,
     adminLogout: adminLogout,
     canAccessSection: canAccessSection,
     canDo: canDo,

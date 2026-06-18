@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — Безопасность</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -38,8 +39,7 @@ tr:last-child td { border-bottom: none; }
 </head>
 <body>
 <script>
-const rendered = ShabashkaAdminNav.renderAdminShell('security', 'Безопасность');
-
+ShabashkaAdminNav.renderAdminShell('security', 'Безопасность').then(function (rendered) {
 if (rendered) {
   const A = ShabashkaAdmin;
 
@@ -99,6 +99,7 @@ if (rendered) {
     window.location.reload();
   });
 }
+});
 </script>
 </body>
 </html>

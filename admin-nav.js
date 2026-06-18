@@ -84,35 +84,53 @@
 
   // Рисует сайдбар + топбар, оборачивая существующий контент страницы.
   // pageTitle — заголовок в топбаре, activeSection — id текущего раздела.
+  // Возвращает Promise<boolean> — true, если контент страницы можно
+  // рисовать дальше; вызывающая HTML-страница должна делать:
+  //   ShabashkaAdminNav.renderAdminShell('section', 'Заголовок').then(rendered => { ... });
   function renderAdminShell(activeSection, pageTitle) {
     injectStyle();
 
     const role = A.getAdminRole();
 
-    // Без выбранной роли — показываем экран выбора роли вместо контента
+    // Нет роли вообще — сразу экран входа, без обращения к серверу
     if (!role) {
       document.body.innerHTML = renderRoleGate();
       attachRoleGateHandlers();
-      return false;
+      return Promise.resolve(false);
     }
 
-    // Роль выбрана, но у неё нет доступа к этому разделу
-    if (!A.canAccessSection(activeSection)) {
+    // Роль есть локально, но реальную валидность токена решает только
+    // сервер — он единственный, кто знает секрет подписи. Пока идёт
+    // проверка, показываем простой экран загрузки.
+    document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,sans-serif;color:#8A8F9C">Проверяем доступ…</div>';
+
+    return A.verifyTokenWithServer(role).then(function (valid) {
+      if (!valid) {
+        A.adminLogout();
+        document.body.innerHTML = renderRoleGate();
+        attachRoleGateHandlers();
+        return false;
+      }
+
+      // Роль выбрана, токен подтверждён сервером, но у роли нет доступа
+      // к этому разделу
+      if (!A.canAccessSection(activeSection)) {
+        const bodyHtml = renderShellSkeleton(activeSection, pageTitle);
+        document.body.innerHTML = bodyHtml;
+        document.getElementById('admContentRoot').innerHTML = `
+          <div class="adm-denied">
+            <div class="adm-denied-title">Доступ ограничен</div>
+            <div>Роль «${A.ADMIN_ROLES[role].label}» не имеет доступа к разделу «${pageTitle}».</div>
+          </div>`;
+        attachShellHandlers();
+        return false;
+      }
+
       const bodyHtml = renderShellSkeleton(activeSection, pageTitle);
       document.body.innerHTML = bodyHtml;
-      document.getElementById('admContentRoot').innerHTML = `
-        <div class="adm-denied">
-          <div class="adm-denied-title">Доступ ограничен</div>
-          <div>Роль «${A.ADMIN_ROLES[role].label}» не имеет доступа к разделу «${pageTitle}».</div>
-        </div>`;
       attachShellHandlers();
-      return false;
-    }
-
-    const bodyHtml = renderShellSkeleton(activeSection, pageTitle);
-    document.body.innerHTML = bodyHtml;
-    attachShellHandlers();
-    return true;
+      return true;
+    });
   }
 
   function renderShellSkeleton(activeSection, pageTitle) {
@@ -182,20 +200,89 @@
       .role-gate-dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 10px; }
       .role-gate-name { color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
       .role-gate-desc { color: #8A8F9C; font-size: 12.5px; line-height: 1.5; }
+      .role-gate-back { color: #8A8F9C; font-size: 12.5px; cursor: pointer; margin-bottom: 16px; display: inline-block; }
+      .role-gate-back:hover { color: #fff; }
+      .role-gate-input {
+        width: 100%; padding: 11px 14px; background: #161922; border: 1px solid #232733; border-radius: 9px;
+        color: #fff; font-size: 14px; font-family: inherit; outline: none; margin-bottom: 12px; box-sizing: border-box;
+      }
+      .role-gate-input:focus { border-color: #E8510A; }
+      .role-gate-submit {
+        width: 100%; padding: 11px; background: #E8510A; color: #fff; border: none; border-radius: 9px;
+        font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+      }
+      .role-gate-submit:disabled { background: #3A3F4D; cursor: not-allowed; }
+      .role-gate-error { color: #FF8552; font-size: 12.5px; margin-bottom: 12px; min-height: 16px; }
     </style>
-    <div class="role-gate">
+    <div class="role-gate" id="roleGateRoot">
       <div class="role-gate-title">Шаба<span style="color:#E8510A">шка</span> Admin</div>
-      <div class="role-gate-sub">Выберите роль администратора, чтобы продолжить</div>
-      ${cards}
+      <div class="role-gate-sub" id="roleGateSub">Выберите роль администратора, чтобы продолжить</div>
+      <div id="roleGateCards">${cards}</div>
     </div>`;
+  }
+
+  function renderPasswordStep(roleKey) {
+    const r = A.ADMIN_ROLES[roleKey];
+    document.getElementById('roleGateSub').textContent = 'Введите пароль для роли «' + r.label + '»';
+    document.getElementById('roleGateCards').innerHTML = `
+      <span class="role-gate-back" id="roleGateBack">← Выбрать другую роль</span>
+      <input type="password" class="role-gate-input" id="roleGatePassword" placeholder="Пароль" autofocus>
+      <div class="role-gate-error" id="roleGateError"></div>
+      <button class="role-gate-submit" id="roleGateSubmit">Войти</button>
+    `;
+
+    document.getElementById('roleGateBack').addEventListener('click', function () {
+      document.body.innerHTML = renderRoleGate();
+      attachRoleGateHandlers();
+    });
+
+    const passwordInput = document.getElementById('roleGatePassword');
+    const submitBtn = document.getElementById('roleGateSubmit');
+    const errorBox = document.getElementById('roleGateError');
+
+    function doLogin() {
+      const password = passwordInput.value;
+      if (!password) {
+        errorBox.textContent = 'Введите пароль';
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Проверяем…';
+      errorBox.textContent = '';
+
+      fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: roleKey, password: password }),
+      })
+        .then(function (res) { return res.json().then(function (data) { return { status: res.status, data: data }; }); })
+        .then(function (result) {
+          if (result.data.ok) {
+            A.setAdminRole(roleKey);
+            A.setAdminToken(result.data.token);
+            A.logAction('Вошёл в админ-панель');
+            window.location.reload();
+          } else {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Войти';
+            errorBox.textContent = result.data.error || 'Не удалось войти';
+          }
+        })
+        .catch(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Войти';
+          errorBox.textContent = 'Не удалось связаться с сервером, попробуйте ещё раз';
+        });
+    }
+
+    submitBtn.addEventListener('click', doLogin);
+    passwordInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
   }
 
   function attachRoleGateHandlers() {
     document.querySelectorAll('.role-gate-card').forEach(function (card) {
       card.addEventListener('click', function () {
-        A.setAdminRole(card.getAttribute('data-role'));
-        A.logAction('Вошёл в админ-панель');
-        window.location.reload();
+        renderPasswordStep(card.getAttribute('data-role'));
       });
     });
   }

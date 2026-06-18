@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — Настройки</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -42,8 +43,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; c
 </head>
 <body>
 <script>
-const rendered = ShabashkaAdminNav.renderAdminShell('settings', 'Настройки');
-
+ShabashkaAdminNav.renderAdminShell('settings', 'Настройки').then(function (rendered) {
 if (rendered) {
   const A = ShabashkaAdmin;
   const canEdit = A.canDo('settings.edit');
@@ -135,6 +135,7 @@ if (rendered) {
     setTimeout(() => toast.classList.remove('show'), 2000);
   });
 }
+});
 </script>
 </body>
 </html>

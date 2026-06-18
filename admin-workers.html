@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — Исполнители</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -49,8 +50,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; c
 </head>
 <body>
 <script>
-const rendered = ShabashkaAdminNav.renderAdminShell('workers', 'Исполнители');
-
+ShabashkaAdminNav.renderAdminShell('workers', 'Исполнители').then(function (rendered) {
 if (rendered) {
   const A = ShabashkaAdmin;
   let filter = 'all';
@@ -131,6 +131,7 @@ if (rendered) {
 
   render();
 }
+});
 </script>
 </body>
 </html>
