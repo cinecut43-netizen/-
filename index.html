@@ -382,6 +382,112 @@
     aside { display: none; }
     main { padding: 16px; }
   }
+
+  /* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
+  @media (max-width: 600px) {
+    body { padding-bottom: 70px; }
+
+    /* Верхняя навигация */
+    #shabashka-nav .sb-bar { padding: 0 12px; height: 50px; }
+    #shabashka-nav .sb-logo { font-size: 16px; }
+
+    nav {
+      padding: 0 12px;
+      height: 50px;
+    }
+    .nav-tabs { gap: 2px; }
+    .nav-tab { padding: 5px 10px; font-size: 12px; }
+    .nav-post { padding: 7px 12px; font-size: 12px; }
+
+    /* Основной layout */
+    .app { flex-direction: column; }
+    aside { display: none; }
+    main { padding: 12px; max-width: 100%; }
+
+    /* Горизонтальные категории вместо сайдбара */
+    .mobile-cats {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 0 0 10px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .mobile-cats::-webkit-scrollbar { display: none; }
+    .mobile-cat-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      padding: 7px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+      color: var(--gray);
+    }
+    .mobile-cat-btn.active {
+      background: var(--orange-light);
+      border-color: var(--orange);
+      color: var(--orange-dark);
+    }
+
+    /* Поиск */
+    .search-bar { flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .search-input { font-size: 15px; }
+    .sort-select { width: 100%; }
+
+    /* Карточки заказов */
+    .job-card { padding: 14px 16px; border-radius: 12px; }
+    .job-top { gap: 10px; }
+    .job-emoji { width: 40px; height: 40px; font-size: 20px; }
+    .job-title { font-size: 15px; }
+    .job-company { font-size: 12px; }
+    .pay-amount { font-size: 17px; }
+    .pay-label { font-size: 11px; }
+    .job-tags { gap: 5px; flex-wrap: wrap; }
+    .tag { font-size: 11px; padding: 3px 8px; }
+    .job-footer { margin-top: 10px; }
+    .apply-btn { padding: 8px 16px; font-size: 13px; }
+
+    /* Модалка на весь экран */
+    .modal { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; margin: 0; overflow-y: auto; }
+    .modal-overlay { align-items: flex-end; }
+
+    /* Нижняя навигация */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 200;
+    }
+    .mobile-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      color: var(--gray);
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 8px 12px;
+      font-family: inherit;
+    }
+    .mobile-nav-btn.active { color: var(--orange); }
+    .mobile-nav-icon { font-size: 20px; }
+  }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
@@ -444,6 +550,15 @@
   </aside>
 
   <main>
+    <!-- Горизонтальные категории только для мобильных -->
+    <div class="mobile-cats" id="mobileCats" style="display:none">
+      <button class="mobile-cat-btn active" onclick="filterCat('all',this);syncMobileCat(this)">🏠 Все</button>
+      <button class="mobile-cat-btn" onclick="filterCat('move',this);syncMobileCat(this)">📦 Переезд</button>
+      <button class="mobile-cat-btn" onclick="filterCat('build',this);syncMobileCat(this)">🔨 Стройка</button>
+      <button class="mobile-cat-btn" onclick="filterCat('clean',this);syncMobileCat(this)">🧹 Уборка</button>
+      <button class="mobile-cat-btn" onclick="filterCat('event',this);syncMobileCat(this)">🎉 Ивент</button>
+      <button class="mobile-cat-btn" onclick="filterCat('other',this);syncMobileCat(this)">⚡ Прочее</button>
+    </div>
     <div class="search-bar">
       <input type="text" class="search-input" placeholder="Поиск по заказам..." id="searchInput" oninput="filterSearch()">
       <select class="sort-select" onchange="sortJobs(this.value)">
@@ -731,6 +846,38 @@ if (Shabashka.getUser().role === 'employer') {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab')[1].classList.add('active');
 }
+
+// Показываем мобильные элементы на узких экранах
+function checkMobile() {
+  const isMobile = window.innerWidth <= 600;
+  const mobileCats = document.getElementById('mobileCats');
+  const mobileNav = document.getElementById('mobileBottomNav');
+  if (mobileCats) mobileCats.style.display = isMobile ? 'flex' : 'none';
+  if (mobileNav) mobileNav.style.display = isMobile ? 'flex' : 'none';
+}
+checkMobile();
+window.addEventListener('resize', checkMobile);
+
+function syncMobileCat(btn) {
+  document.querySelectorAll('.mobile-cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
 </script>
+
+<!-- Нижняя навигация для мобильных -->
+<div class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
+  <button class="mobile-nav-btn active" onclick="window.location.href='/'">
+    <span class="mobile-nav-icon">🏠</span>Главная
+  </button>
+  <button class="mobile-nav-btn" onclick="window.location.href='/map'">
+    <span class="mobile-nav-icon">🗺</span>Карта
+  </button>
+  <button class="mobile-nav-btn" onclick="window.location.href='/chat'">
+    <span class="mobile-nav-icon">💬</span>Чат
+  </button>
+  <button class="mobile-nav-btn" onclick="window.location.href='/profile'">
+    <span class="mobile-nav-icon">👤</span>Профиль
+  </button>
+</div>
 </body>
 </html>

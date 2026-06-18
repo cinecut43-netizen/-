@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — Чат</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -111,7 +112,22 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .btn-accept { background: var(--green); color: var(--white); border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btn-decline { background: none; border: 1px solid #A8DDB8; border-radius: 8px; padding: 7px 14px; font-size: 13px; color: var(--green); cursor: pointer; }
 
-@media (max-width: 600px) { .sidebar { display: none; } }
+@media (max-width: 600px) {
+  .sidebar { display: none; }
+  body { padding-bottom: 70px; }
+  nav { padding: 0 12px; height: 50px; }
+  .chat-layout { height: calc(100vh - 50px - 60px); }
+  .chat-header { padding: 10px 14px; }
+  .chat-messages { padding: 12px; }
+  .bubble { max-width: 85%; font-size: 14px; padding: 8px 12px; }
+  .chat-input-bar { padding: 8px 12px; gap: 8px; }
+  .chat-input { font-size: 15px; }
+  .send-btn { width: 40px; height: 40px; font-size: 18px; }
+  .ai-btn { padding: 8px 12px; font-size: 12px; }
+}
+.mobile-bottom-nav { position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #E5E4E0;display:none;align-items:center;justify-content:space-around;z-index:200; }
+.mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 12px;color:#6B6B67;font-family:inherit; }
+.mobile-nav-btn.active { color:#E8510A; }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
@@ -467,5 +483,12 @@ renderSidebar();
 
 renderQuickReplies();
 </script>
+<div class="mobile-bottom-nav" id="mobileNav">
+  <button class="mobile-nav-btn" onclick="location.href='/'"><span style="font-size:20px">🏠</span><span style="font-size:10px">Главная</span></button>
+  <button class="mobile-nav-btn" onclick="location.href='/map'"><span style="font-size:20px">🗺</span><span style="font-size:10px">Карта</span></button>
+  <button class="mobile-nav-btn active" onclick="location.href='/chat'"><span style="font-size:20px">💬</span><span style="font-size:10px">Чат</span></button>
+  <button class="mobile-nav-btn" onclick="location.href='/profile'"><span style="font-size:20px">👤</span><span style="font-size:10px">Профиль</span></button>
+</div>
+<script>(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
 </body>
 </html>

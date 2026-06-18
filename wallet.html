@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Шабашка — Мой кошелёк</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -126,6 +127,27 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 /* TOAST */
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--dark); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* МОБИЛЬНАЯ ВЕРСИЯ */
+@media (max-width: 600px) {
+  body { padding-bottom: 70px; }
+  nav { padding: 0 12px; height: 50px; }
+  .wallet-wrap { padding: 12px; }
+  .balance-card { padding: 20px 16px; border-radius: 16px; }
+  .balance-amount { font-size: 32px; }
+  .balance-label { font-size: 12px; }
+  .balance-actions { gap: 8px; }
+  .balance-btn { padding: 10px; font-size: 13px; border-radius: 10px; }
+  .tx-card { padding: 14px 16px; border-radius: 12px; }
+  .tx-row { padding: 10px 0; gap: 10px; }
+  .tx-icon { width: 32px; height: 32px; font-size: 14px; }
+  .tx-amount { font-size: 14px; }
+  .topup-modal .modal { width: 100vw; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; left: 0; right: 0; margin: 0; }
+  .topup-modal { align-items: flex-end; }
+}
+.mobile-bottom-nav { position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #E5E4E0;display:none;align-items:center;justify-content:space-around;z-index:200; }
+.mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 12px;color:#6B6B67;font-family:inherit; }
+.mobile-nav-btn.active { color:#E8510A; }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
@@ -468,5 +490,12 @@ renderBalance();
 renderChart('month');
 renderTx();
 </script>
+<div class="mobile-bottom-nav" id="mobileNav">
+  <button class="mobile-nav-btn" onclick="location.href='/'"><span style="font-size:20px">🏠</span><span style="font-size:10px">Главная</span></button>
+  <button class="mobile-nav-btn active" onclick="location.href='/wallet'"><span style="font-size:20px">💳</span><span style="font-size:10px">Кошелёк</span></button>
+  <button class="mobile-nav-btn" onclick="location.href='/chat'"><span style="font-size:20px">💬</span><span style="font-size:10px">Чат</span></button>
+  <button class="mobile-nav-btn" onclick="location.href='/profile'"><span style="font-size:20px">👤</span><span style="font-size:10px">Профиль</span></button>
+</div>
+<script>(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
 </body>
 </html>
