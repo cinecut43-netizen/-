@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Исполнители</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
+  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB; --amber: #854F0B; --amber-bg: #FAEEDA;
+  --red: #B91C1C; --red-bg: #FEE2E2;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
+
+.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.worker-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.worker-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.worker-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#E8510A,#B33D06); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.worker-name { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+.worker-city { font-size: 11.5px; color: var(--gray); }
+.trusted-badge { font-size: 10px; background: var(--green-bg); color: var(--green); padding: 1px 6px; border-radius: 10px; }
+
+.worker-stats { display: flex; gap: 14px; margin-bottom: 14px; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.wstat { flex: 1; text-align: center; }
+.wstat-num { font-size: 16px; font-weight: 700; }
+.wstat-label { font-size: 10.5px; color: var(--gray); }
+
+.pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+.pill-active { background: var(--green-bg); color: var(--green); }
+.pill-blocked { background: var(--red-bg); color: var(--red); }
+.pill-pending { background: var(--amber-bg); color: var(--amber); }
+
+.worker-actions { display: flex; gap: 6px; margin-top: 12px; }
+.btn-sm { flex: 1; padding: 7px; border-radius: 8px; font-size: 11.5px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; }
+.btn-sm-green { background: var(--green-bg); color: var(--green); }
+.btn-sm-red { background: var(--red-bg); color: var(--red); }
+.btn-sm-gray { background: var(--gray-light); color: var(--gray); }
+.btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.toolbar { display: flex; gap: 10px; margin-bottom: 18px; }
+.toolbar select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px; font-size: 13px; font-family: inherit; background: var(--white); }
+</style>
+<script src="/data.js"></script>
+<script src="/admin-data.js"></script>
+<script src="/admin-nav.js"></script>
+</head>
+<body>
+<script>
+const rendered = ShabashkaAdminNav.renderAdminShell('workers', 'Исполнители');
+
+if (rendered) {
+  const A = ShabashkaAdmin;
+  let filter = 'all';
+
+  document.getElementById('admContentRoot').innerHTML = `
+    <div class="toolbar">
+      <select id="filterSelect">
+        <option value="all">Все исполнители</option>
+        <option value="verified">Проверенные</option>
+        <option value="unverified">Не проверенные</option>
+        <option value="blocked">Заблокированные</option>
+      </select>
+    </div>
+    <div class="cards-grid" id="workersGrid"></div>
+  `;
+
+  function initials(name) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  const STATUS_PILL = {
+    active: { label: 'Активен', cls: 'pill-active' },
+    blocked: { label: 'Блокирован', cls: 'pill-blocked' },
+    pending_review: { label: 'На проверке', cls: 'pill-pending' },
+  };
+
+  function render() {
+    let workers = A.getAllUsers().filter(u => u.role === 'worker' && u.status !== 'deleted');
+
+    if (filter === 'verified') workers = workers.filter(w => w.verifiedPassport);
+    if (filter === 'unverified') workers = workers.filter(w => !w.verifiedPassport);
+    if (filter === 'blocked') workers = workers.filter(w => w.status === 'blocked');
+
+    if (!workers.length) {
+      document.getElementById('workersGrid').innerHTML = '<div style="padding:40px;color:var(--gray);text-align:center">Нет исполнителей по этому фильтру</div>';
+      return;
+    }
+
+    const canVerify = A.canDo('worker.verify');
+    const canBlock = A.canDo('worker.block');
+
+    document.getElementById('workersGrid').innerHTML = workers.map(w => {
+      const s = STATUS_PILL[w.status] || STATUS_PILL.active;
+      return `
+      <div class="worker-card">
+        <div class="worker-head">
+          <div class="worker-avatar">${initials(w.name)}</div>
+          <div>
+            <div class="worker-name">${w.name} ${w.verifiedPassport ? '<span class="trusted-badge">✓ Проверен</span>' : ''}</div>
+            <div class="worker-city">${w.city}</div>
+          </div>
+        </div>
+        <div class="worker-stats">
+          <div class="wstat"><div class="wstat-num">${w.completedOrders}</div><div class="wstat-label">заказов</div></div>
+          <div class="wstat"><div class="wstat-num">${w.rating || '—'}</div><div class="wstat-label">рейтинг</div></div>
+        </div>
+        <span class="pill ${s.cls}">${s.label}</span>
+        <div class="worker-actions">
+          ${w.verifiedPassport
+            ? `<button class="btn-sm btn-sm-gray" ${canVerify?'':'disabled'} onclick="toggleVerify(${w.id}, false)">Снять подтверждение</button>`
+            : `<button class="btn-sm btn-sm-green" ${canVerify?'':'disabled'} onclick="toggleVerify(${w.id}, true)">Подтвердить</button>`}
+          ${w.status === 'blocked'
+            ? `<button class="btn-sm btn-sm-green" ${canBlock?'':'disabled'} onclick="unblock(${w.id})">Разблокировать</button>`
+            : `<button class="btn-sm btn-sm-red" ${canBlock?'':'disabled'} onclick="block(${w.id})">Блокировать</button>`}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.toggleVerify = function (id, verified) { A.setWorkerVerified(id, verified); render(); };
+  window.block = function (id) { A.blockUser(id); render(); };
+  window.unblock = function (id) { A.unblockUser(id); render(); };
+
+  document.getElementById('filterSelect').addEventListener('change', e => { filter = e.target.value; render(); });
+
+  render();
+}
+</script>
+</body>
+</html>

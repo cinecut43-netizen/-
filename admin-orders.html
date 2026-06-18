@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Заказы</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
+  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB; --amber: #854F0B; --amber-bg: #FAEEDA;
+  --red: #B91C1C; --red-bg: #FEE2E2; --purple: #9B59B6;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
+
+.toolbar { display: flex; gap: 10px; margin-bottom: 18px; align-items: center; }
+.toolbar input { flex: 1; max-width: 360px; padding: 9px 14px; border: 1px solid var(--border); border-radius: 9px; font-size: 13.5px; font-family: inherit; outline: none; }
+.toolbar input:focus { border-color: var(--orange); }
+.toolbar select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px; font-size: 13px; font-family: inherit; background: var(--white); }
+.toolbar-count { margin-left: auto; font-size: 13px; color: var(--gray); }
+
+.table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 12px 16px; background: var(--gray-light); font-weight: 600; color: var(--gray); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.3px; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: var(--gray-light); }
+
+.job-cell { display: flex; align-items: center; gap: 10px; }
+.job-emoji { font-size: 20px; }
+.job-title { font-weight: 600; }
+.job-sub { font-size: 11.5px; color: var(--gray); }
+
+.pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; display: inline-block; white-space: nowrap; }
+.s-new { background: var(--blue-bg); color: var(--blue); }
+.s-has-responses { background: var(--orange-light); color: var(--orange-dark); }
+.s-selected { background: var(--amber-bg); color: var(--amber); }
+.s-inprog { background: var(--amber-bg); color: var(--amber); }
+.s-done { background: var(--green-bg); color: var(--green); }
+.s-cancelled { background: var(--red-bg); color: var(--red); }
+
+.row-actions { display: flex; gap: 6px; }
+.btn-sm { padding: 5px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; }
+.btn-sm-red { background: var(--red-bg); color: var(--red); }
+.btn-sm-gray { background: var(--gray-light); color: var(--gray); }
+.btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.empty-state { padding: 60px 20px; text-align: center; color: var(--gray); font-size: 13.5px; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: 14px; width: 560px; max-width: 92vw; max-height: 86vh; overflow-y: auto; padding: 24px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.modal-header h2 { font-size: 17px; font-weight: 700; }
+.modal-close { border: none; background: none; font-size: 20px; cursor: pointer; color: var(--gray); }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12.5px; font-weight: 600; margin-bottom: 5px; display: block; color: var(--gray); }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13.5px; font-family: inherit; outline: none; }
+.form-textarea { resize: vertical; min-height: 70px; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--orange); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+.btn-main { flex: 1; padding: 10px; border-radius: 9px; border: none; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-save { background: var(--orange); color: #fff; }
+.btn-cancel { background: var(--gray-light); color: var(--dark); }
+.modal-section-title { font-size: 13px; font-weight: 700; margin: 18px 0 10px; }
+.resp-item { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.resp-item:last-child { border-bottom: none; }
+</style>
+<script src="/data.js"></script>
+<script src="/admin-data.js"></script>
+<script src="/admin-nav.js"></script>
+</head>
+<body>
+<script>
+const rendered = ShabashkaAdminNav.renderAdminShell('orders', 'Заказы');
+
+if (rendered) {
+  const A = ShabashkaAdmin;
+  let currentQuery = '';
+  let currentStatusFilter = 'all';
+
+  document.getElementById('admContentRoot').innerHTML = `
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Поиск по названию или компании…">
+      <select id="statusFilter">
+        <option value="all">Все статусы</option>
+        <option value="new">Новые</option>
+        <option value="has_responses">Есть отклики</option>
+        <option value="selected">Исполнитель выбран</option>
+        <option value="in_progress">В работе</option>
+        <option value="done">Завершённые</option>
+        <option value="cancelled">Отменённые</option>
+      </select>
+      <div class="toolbar-count" id="resultCount"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Заказ</th><th>Компания</th><th>Оплата</th><th>Откликов</th><th>Статус</th><th>Действия</th></tr></thead>
+        <tbody id="ordersTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="modal-overlay" id="jobModal">
+      <div class="modal">
+        <div class="modal-header"><h2 id="jobModalTitle">Заказ</h2><button class="modal-close" onclick="closeJobModal()">×</button></div>
+        <div id="jobModalBody"></div>
+      </div>
+    </div>
+  `;
+
+  function renderTable() {
+    let jobs = Shabashka.getAllJobs();
+
+    if (currentQuery) {
+      const q = currentQuery.toLowerCase();
+      jobs = jobs.filter(j => j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q));
+    }
+    if (currentStatusFilter !== 'all') jobs = jobs.filter(j => j.status === currentStatusFilter);
+
+    document.getElementById('resultCount').textContent = jobs.length + ' из ' + Shabashka.getAllJobs().length;
+
+    if (!jobs.length) {
+      document.getElementById('ordersTbody').innerHTML = `<tr><td colspan="6"><div class="empty-state">Заказов по этому запросу не нашли</div></td></tr>`;
+      return;
+    }
+
+    document.getElementById('ordersTbody').innerHTML = jobs.map(j => {
+      const s = Shabashka.STATUS_MAP[j.status] || { label: j.status, cls: 's-new' };
+      const canForceClose = A.canDo('order.forceClose') && j.status !== 'done' && j.status !== 'cancelled';
+      const canDelete = A.canDo('order.delete');
+      return `
+      <tr class="clickable" onclick="openJobModal(${j.id})">
+        <td>
+          <div class="job-cell">
+            <span class="job-emoji">${j.emoji}</span>
+            <div><div class="job-title">${j.title}</div><div class="job-sub">#${j.id} · ${j.date}</div></div>
+          </div>
+        </td>
+        <td>${j.company}</td>
+        <td>${Shabashka.rub(j.pay)} ${j.payLabel || ''}</td>
+        <td>${j.responses || 0}</td>
+        <td><span class="pill ${s.cls}">${s.label}</span></td>
+        <td onclick="event.stopPropagation()">
+          <div class="row-actions">
+            <button class="btn-sm btn-sm-red" ${canForceClose?'':'disabled'} onclick="forceClose(${j.id})">Закрыть</button>
+            <button class="btn-sm btn-sm-gray" ${canDelete?'':'disabled'} onclick="deleteJob(${j.id})">Удалить</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.forceClose = function (id) {
+    if (!confirm('Принудительно закрыть заказ? Статус станет «Отменён».')) return;
+    Shabashka.updateJobStatus(id, 'cancelled');
+    A.logAction('Принудительно закрыл заказ #' + id);
+    renderTable();
+  };
+
+  window.deleteJob = function (id) {
+    if (!confirm('Удалить заказ безвозвратно?')) return;
+    Shabashka.updateJobStatus(id, 'cancelled');
+    A.logAction('Удалил заказ #' + id);
+    renderTable();
+  };
+
+  window.openJobModal = function (id) {
+    const j = Shabashka.getJob(id);
+    if (!j) return;
+    document.getElementById('jobModalTitle').textContent = j.title;
+    const canEdit = A.canDo('order.edit');
+    const canChangeStatus = A.canDo('order.changeStatus');
+
+    document.getElementById('jobModalBody').innerHTML = `
+      <div class="form-group">
+        <label class="form-label">Название</label>
+        <input class="form-input" id="editJobTitle" value="${j.title}" ${canEdit?'':'disabled'}>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Оплата (₽)</label>
+          <input class="form-input" type="number" id="editJobPay" value="${j.pay}" ${canEdit?'':'disabled'}>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Статус</label>
+          <select class="form-select" id="editJobStatus" ${canChangeStatus?'':'disabled'}>
+            ${Object.keys(Shabashka.STATUS_MAP).map(key => `<option value="${key}" ${j.status===key?'selected':''}>${Shabashka.STATUS_MAP[key].label}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Описание</label>
+        <textarea class="form-textarea" id="editJobDesc" ${canEdit?'':'disabled'}>${j.desc}</textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-main btn-cancel" onclick="closeJobModal()">Закрыть</button>
+        <button class="btn-main btn-save" ${(canEdit||canChangeStatus)?'':'disabled'} onclick="saveJob(${j.id})">Сохранить</button>
+      </div>
+
+      <div class="modal-section-title">Отклики (${j.responses || 0})</div>
+      <div id="jobResponses">${renderFakeResponses(j)}</div>
+    `;
+    document.getElementById('jobModal').classList.add('open');
+  };
+
+  function renderFakeResponses(j) {
+    if (!j.responses) return '<div class="resp-item" style="color:var(--gray)">Откликов пока нет</div>';
+    return `<div class="resp-item" style="color:var(--gray)">${j.responses} исполнителей откликнулись на этот заказ. Подробный список откликов с именами доступен в кабинете работодателя.</div>`;
+  }
+
+  window.saveJob = function (id) {
+    const title = document.getElementById('editJobTitle').value;
+    const pay = parseInt(document.getElementById('editJobPay').value) || 0;
+    const desc = document.getElementById('editJobDesc').value;
+    const status = document.getElementById('editJobStatus').value;
+
+    if (A.canDo('order.edit')) {
+      Shabashka.updateJobStatus(id, status);
+      const userJobsRaw = localStorage.getItem('shabashka_user_jobs');
+      const userJobs = userJobsRaw ? JSON.parse(userJobsRaw) : [];
+      const idx = userJobs.findIndex(x => x.id === id);
+      if (idx !== -1) {
+        userJobs[idx].title = title;
+        userJobs[idx].pay = pay;
+        userJobs[idx].desc = desc;
+        localStorage.setItem('shabashka_user_jobs', JSON.stringify(userJobs));
+      }
+    } else if (A.canDo('order.changeStatus')) {
+      Shabashka.updateJobStatus(id, status);
+    }
+
+    A.logAction('Отредактировал заказ #' + id);
+    closeJobModal();
+    renderTable();
+  };
+
+  window.closeJobModal = function () { document.getElementById('jobModal').classList.remove('open'); };
+  document.getElementById('jobModal').addEventListener('click', e => { if (e.target === document.getElementById('jobModal')) closeJobModal(); });
+
+  document.getElementById('searchInput').addEventListener('input', e => { currentQuery = e.target.value; renderTable(); });
+  document.getElementById('statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderTable(); });
+
+  renderTable();
+}
+</script>
+</body>
+</html>

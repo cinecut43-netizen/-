@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Финансы</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
+  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB; --red: #B91C1C; --red-bg: #FEE2E2;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
+
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.stat-card-label { font-size: 12.5px; color: var(--gray); margin-bottom: 8px; font-weight: 500; }
+.stat-card-num { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+
+.panel { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.panel-title { font-size: 14px; font-weight: 700; }
+.btn-export { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-export:hover { background: var(--gray-light); }
+.btn-export:disabled { opacity: 0.4; cursor: not-allowed; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 14px; background: var(--gray-light); font-weight: 600; color: var(--gray); font-size: 11px; text-transform: uppercase; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+.amount-pos { color: var(--green); font-weight: 600; }
+</style>
+<script src="/data.js"></script>
+<script src="/admin-data.js"></script>
+<script src="/admin-nav.js"></script>
+</head>
+<body>
+<script>
+const rendered = ShabashkaAdminNav.renderAdminShell('finance', 'Финансы');
+
+if (rendered) {
+  const A = ShabashkaAdmin;
+  const stats = A.getDashboardStats();
+  const settings = A.getSettings();
+
+  const jobs = Shabashka.getAllJobs();
+  const doneJobs = jobs.filter(j => j.status === 'done');
+  const commissionRows = doneJobs.map(j => ({
+    title: j.title, company: j.company,
+    sum: j.pay * (j.people || 1),
+    commission: Math.round(j.pay * (j.people || 1) * settings.commissionPercent / 100),
+    date: j.date,
+  }));
+
+  const totalSum = commissionRows.reduce((s, r) => s + r.sum, 0);
+  const totalCommission = commissionRows.reduce((s, r) => s + r.commission, 0);
+
+  document.getElementById('admContentRoot').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Выручка платформы</div>
+        <div class="stat-card-num" style="color:var(--orange)">${totalCommission.toLocaleString('ru')} ₽</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Оборот через платформу</div>
+        <div class="stat-card-num">${totalSum.toLocaleString('ru')} ₽</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Текущая комиссия</div>
+        <div class="stat-card-num" style="color:var(--blue)">${settings.commissionPercent}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Завершённых заказов</div>
+        <div class="stat-card-num" style="color:var(--green)">${stats.doneOrders}</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Комиссии с завершённых заказов</div>
+        <button class="btn-export" id="exportBtn">⬇ Экспортировать CSV</button>
+      </div>
+      <table>
+        <thead><tr><th>Заказ</th><th>Компания</th><th>Сумма</th><th>Комиссия</th><th>Дата</th></tr></thead>
+        <tbody id="commissionTbody"></tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('commissionTbody').innerHTML = commissionRows.length
+    ? commissionRows.map(r => `
+      <tr>
+        <td>${r.title}</td>
+        <td>${r.company}</td>
+        <td>${r.sum.toLocaleString('ru')} ₽</td>
+        <td class="amount-pos">+${r.commission.toLocaleString('ru')} ₽</td>
+        <td>${r.date}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--gray);padding:30px">Завершённых заказов пока нет</td></tr>';
+
+  const exportBtn = document.getElementById('exportBtn');
+  const canExport = A.canDo('finance.export');
+  if (!canExport) exportBtn.disabled = true;
+  exportBtn.addEventListener('click', () => {
+    if (!canExport) return;
+    let csv = 'Заказ,Компания,Сумма,Комиссия,Дата\n';
+    commissionRows.forEach(r => {
+      csv += `"${r.title}","${r.company}",${r.sum},${r.commission},"${r.date}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'shabashka-finance-report.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    A.logAction('Экспортировал финансовый отчёт');
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Пользователи</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
+  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB; --amber: #854F0B; --amber-bg: #FAEEDA;
+  --red: #B91C1C; --red-bg: #FEE2E2; --purple: #9B59B6;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
+
+.toolbar { display: flex; gap: 10px; margin-bottom: 18px; align-items: center; }
+.toolbar input { flex: 1; max-width: 360px; padding: 9px 14px; border: 1px solid var(--border); border-radius: 9px; font-size: 13.5px; font-family: inherit; outline: none; }
+.toolbar input:focus { border-color: var(--orange); }
+.toolbar select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px; font-size: 13px; font-family: inherit; background: var(--white); }
+.toolbar-count { margin-left: auto; font-size: 13px; color: var(--gray); }
+
+.table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 12px 16px; background: var(--gray-light); font-weight: 600; color: var(--gray); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.3px; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: var(--gray-light); }
+
+.user-cell { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#E8510A,#B33D06); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.user-name { font-weight: 600; }
+.user-sub { font-size: 11.5px; color: var(--gray); }
+
+.pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; display: inline-block; white-space: nowrap; }
+.pill-worker { background: var(--blue-bg); color: var(--blue); }
+.pill-employer { background: var(--orange-light); color: var(--orange-dark); }
+.pill-active { background: var(--green-bg); color: var(--green); }
+.pill-blocked { background: var(--red-bg); color: var(--red); }
+.pill-pending { background: var(--amber-bg); color: var(--amber); }
+
+.row-actions { display: flex; gap: 6px; }
+.btn-sm { padding: 5px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; }
+.btn-sm-red { background: var(--red-bg); color: var(--red); }
+.btn-sm-green { background: var(--green-bg); color: var(--green); }
+.btn-sm-gray { background: var(--gray-light); color: var(--gray); }
+.btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.empty-state { padding: 60px 20px; text-align: center; color: var(--gray); font-size: 13.5px; }
+
+/* USER DETAIL MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: 14px; width: 560px; max-width: 92vw; max-height: 86vh; overflow-y: auto; padding: 24px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.modal-header h2 { font-size: 17px; font-weight: 700; }
+.modal-close { border: none; background: none; font-size: 20px; cursor: pointer; color: var(--gray); }
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.detail-row:last-child { border-bottom: none; }
+.detail-label { color: var(--gray); }
+.detail-value { font-weight: 600; }
+.modal-section-title { font-size: 13px; font-weight: 700; margin: 18px 0 10px; }
+.history-item, .review-item { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.history-item:last-child, .review-item:last-child { border-bottom: none; }
+.role-select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 12.5px; font-family: inherit; }
+</style>
+<script src="/data.js"></script>
+<script src="/admin-data.js"></script>
+<script src="/admin-nav.js"></script>
+</head>
+<body>
+<script>
+const rendered = ShabashkaAdminNav.renderAdminShell('users', 'Пользователи');
+
+if (rendered) {
+  const A = ShabashkaAdmin;
+  let currentQuery = new URLSearchParams(window.location.search).get('q') || '';
+  let currentRoleFilter = 'all';
+  let currentStatusFilter = 'all';
+
+  document.getElementById('admContentRoot').innerHTML = `
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Поиск по имени, email или телефону…" value="${currentQuery}">
+      <select id="roleFilter">
+        <option value="all">Все роли</option>
+        <option value="worker">Исполнители</option>
+        <option value="employer">Работодатели</option>
+      </select>
+      <select id="statusFilter">
+        <option value="all">Все статусы</option>
+        <option value="active">Активные</option>
+        <option value="blocked">Заблокированные</option>
+        <option value="pending_review">На проверке</option>
+      </select>
+      <div class="toolbar-count" id="resultCount"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Пользователь</th><th>Роль</th><th>Город</th><th>Заказов</th><th>Рейтинг</th><th>Статус</th><th>Действия</th></tr>
+        </thead>
+        <tbody id="usersTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="modal-overlay" id="userModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="userModalName">Пользователь</h2>
+          <button class="modal-close" onclick="closeUserModal()">×</button>
+        </div>
+        <div id="userModalBody"></div>
+      </div>
+    </div>
+  `;
+
+  function initials(name) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  const STATUS_PILL = {
+    active: { label: 'Активен', cls: 'pill-active' },
+    blocked: { label: 'Блокирован', cls: 'pill-blocked' },
+    pending_review: { label: 'На проверке', cls: 'pill-pending' },
+  };
+
+  function renderTable() {
+    let users = A.getAllUsers().filter(u => u.status !== 'deleted');
+
+    if (currentQuery) {
+      const q = currentQuery.toLowerCase();
+      users = users.filter(u =>
+        u.name.toLowerCase().includes(q) ||
+        (u.email && u.email.toLowerCase().includes(q)) ||
+        (u.phone && u.phone.toLowerCase().includes(q))
+      );
+    }
+    if (currentRoleFilter !== 'all') users = users.filter(u => u.role === currentRoleFilter);
+    if (currentStatusFilter !== 'all') users = users.filter(u => u.status === currentStatusFilter);
+
+    document.getElementById('resultCount').textContent = users.length + ' из ' + A.getAllUsers().filter(u=>u.status!=='deleted').length;
+
+    if (!users.length) {
+      document.getElementById('usersTbody').innerHTML = `<tr><td colspan="7"><div class="empty-state">Никого не нашли по этому запросу</div></td></tr>`;
+      return;
+    }
+
+    document.getElementById('usersTbody').innerHTML = users.map(u => {
+      const statusInfo = STATUS_PILL[u.status] || STATUS_PILL.active;
+      const canBlock = A.canDo('user.block');
+      const canDelete = A.canDo('user.delete');
+      return `
+      <tr class="clickable" onclick="openUserModal(${u.id})">
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar">${initials(u.name)}</div>
+            <div><div class="user-name">${u.name}</div><div class="user-sub">${u.email}</div></div>
+          </div>
+        </td>
+        <td><span class="pill ${u.role === 'worker' ? 'pill-worker' : 'pill-employer'}">${u.role === 'worker' ? 'Исполнитель' : 'Работодатель'}</span></td>
+        <td>${u.city}</td>
+        <td>${u.completedOrders}</td>
+        <td>${u.rating ? '⭐ ' + u.rating : '—'}</td>
+        <td><span class="pill ${statusInfo.cls}">${statusInfo.label}</span></td>
+        <td onclick="event.stopPropagation()">
+          <div class="row-actions">
+            ${u.status === 'blocked'
+              ? `<button class="btn-sm btn-sm-green" ${canBlock?'':'disabled'} onclick="doUnblock(${u.id})">Разблокировать</button>`
+              : `<button class="btn-sm btn-sm-red" ${canBlock?'':'disabled'} onclick="doBlock(${u.id})">Блокировать</button>`}
+            <button class="btn-sm btn-sm-gray" ${canDelete?'':'disabled'} onclick="doDelete(${u.id})">Удалить</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.doBlock = function (id) { A.blockUser(id); renderTable(); };
+  window.doUnblock = function (id) { A.unblockUser(id); renderTable(); };
+  window.doDelete = function (id) {
+    if (!confirm('Удалить пользователя? Это действие нельзя отменить.')) return;
+    A.deleteUser(id);
+    renderTable();
+  };
+
+  window.openUserModal = function (id) {
+    const u = A.getUserById(id);
+    if (!u) return;
+    document.getElementById('userModalName').textContent = u.name;
+
+    const jobs = Shabashka.getAllJobs().filter(j => j.company === u.name);
+    const reviews = Shabashka.getAllReviews().slice(0, 3);
+    const canChangeRole = A.canDo('user.changeRole');
+
+    document.getElementById('userModalBody').innerHTML = `
+      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${u.email}</span></div>
+      <div class="detail-row"><span class="detail-label">Телефон</span><span class="detail-value">${u.phone}</span></div>
+      <div class="detail-row"><span class="detail-label">Город</span><span class="detail-value">${u.city}</span></div>
+      <div class="detail-row"><span class="detail-label">Зарегистрирован</span><span class="detail-value">${u.registeredAt}</span></div>
+      <div class="detail-row"><span class="detail-label">Паспорт проверен</span><span class="detail-value">${u.verifiedPassport ? '✅ Да' : '⏳ Нет'}</span></div>
+      <div class="detail-row">
+        <span class="detail-label">Роль</span>
+        <select class="role-select" id="roleSelectModal" ${canChangeRole ? '' : 'disabled'} onchange="changeRole(${u.id}, this.value)">
+          <option value="worker" ${u.role==='worker'?'selected':''}>Исполнитель</option>
+          <option value="employer" ${u.role==='employer'?'selected':''}>Работодатель</option>
+        </select>
+      </div>
+
+      <div class="modal-section-title">История заказов ${u.role==='employer' ? '(размещённых)' : ''}</div>
+      ${jobs.length ? jobs.map(j => `<div class="history-item">${j.emoji} ${j.title} — ${Shabashka.rub(j.pay)} · ${Shabashka.STATUS_MAP[j.status].label}</div>`).join('') : '<div class="history-item" style="color:var(--gray)">Заказов пока нет</div>'}
+
+      <div class="modal-section-title">Отзывы о пользователе</div>
+      ${reviews.length ? reviews.map(r => `<div class="review-item">${'⭐'.repeat(r.rating)} «${r.text}»</div>`).join('') : '<div class="review-item" style="color:var(--gray)">Отзывов пока нет</div>'}
+    `;
+    document.getElementById('userModal').classList.add('open');
+  };
+
+  window.changeRole = function (id, role) {
+    A.changeUserRole(id, role);
+    renderTable();
+  };
+
+  window.closeUserModal = function () {
+    document.getElementById('userModal').classList.remove('open');
+  };
+
+  document.getElementById('userModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('userModal')) closeUserModal();
+  });
+
+  document.getElementById('searchInput').addEventListener('input', e => { currentQuery = e.target.value; renderTable(); });
+  document.getElementById('roleFilter').addEventListener('change', e => { currentRoleFilter = e.target.value; renderTable(); });
+  document.getElementById('statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderTable(); });
+
+  renderTable();
+}
+</script>
+</body>
+</html>

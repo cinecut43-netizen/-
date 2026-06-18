@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Контент</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
+  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--gray-light); padding: 4px; border-radius: 10px; width: fit-content; }
+.tab-btn { padding: 8px 16px; border-radius: 7px; border: none; background: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--gray); }
+.tab-btn.active { background: var(--white); color: var(--dark); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+.panel { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px; max-width: 680px; }
+.list-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.list-item:last-child { border-bottom: none; }
+.item-label { font-size: 13.5px; font-weight: 500; }
+.item-emoji { margin-right: 6px; }
+
+.toggle { width: 38px; height: 21px; border-radius: 12px; background: var(--border); position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.15s; }
+.toggle.on { background: var(--green); }
+.toggle-knob { width: 17px; height: 17px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: left 0.15s; }
+.toggle.on .toggle-knob { left: 19px; }
+.toggle.disabled { opacity: 0.5; cursor: not-allowed; }
+
+.faq-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.faq-item:last-child { border-bottom: none; }
+.faq-q { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+.faq-a { font-size: 12.5px; color: var(--gray); line-height: 1.5; }
+</style>
+<script src="/data.js"></script>
+<script src="/admin-data.js"></script>
+<script src="/admin-nav.js"></script>
+</head>
+<body>
+<script>
+const rendered = ShabashkaAdminNav.renderAdminShell('content', 'Контент');
+
+if (rendered) {
+  const A = ShabashkaAdmin;
+  const canEdit = A.canDo('content.edit');
+  let activeTab = 'categories';
+
+  document.getElementById('admContentRoot').innerHTML = `
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="categories">Категории</button>
+      <button class="tab-btn" data-tab="cities">Города</button>
+      <button class="tab-btn" data-tab="banners">Баннеры</button>
+      <button class="tab-btn" data-tab="faq">FAQ</button>
+    </div>
+    <div class="panel" id="panelBody"></div>
+  `;
+
+  function render() {
+    const content = A.getContent();
+    const panel = document.getElementById('panelBody');
+
+    if (activeTab === 'categories') {
+      panel.innerHTML = content.categories.map(c => `
+        <div class="list-item">
+          <div class="item-label"><span class="item-emoji">${c.icon || ''}</span>${c.label}</div>
+        </div>`).join('') + '<div style="font-size:11.5px;color:var(--gray);margin-top:10px">Категории определены в основной структуре сайта. Добавление новых категорий потребует обновления формы размещения заказа.</div>';
+    }
+
+    if (activeTab === 'cities') {
+      panel.innerHTML = content.cities.map(city => `
+        <div class="list-item">
+          <div class="item-label">${city.name}</div>
+          <div class="toggle ${city.active ? 'on' : ''} ${canEdit?'':'disabled'}" data-id="${city.id}" data-type="city"><div class="toggle-knob"></div></div>
+        </div>`).join('');
+    }
+
+    if (activeTab === 'banners') {
+      panel.innerHTML = content.banners.map(b => `
+        <div class="list-item">
+          <div class="item-label">${b.title}</div>
+          <div class="toggle ${b.active ? 'on' : ''} ${canEdit?'':'disabled'}" data-id="${b.id}" data-type="banner"><div class="toggle-knob"></div></div>
+        </div>`).join('');
+    }
+
+    if (activeTab === 'faq') {
+      panel.innerHTML = content.faq.map(f => `
+        <div class="faq-item">
+          <div class="faq-q">${f.question}</div>
+          <div class="faq-a">${f.answer}</div>
+        </div>`).join('') + '<div style="font-size:11.5px;color:var(--gray);margin-top:10px">Редактирование текста вопросов и ответов появится в следующей версии — пока доступен только просмотр.</div>';
+    }
+
+    panel.querySelectorAll('.toggle').forEach(t => {
+      t.addEventListener('click', () => {
+        if (t.classList.contains('disabled')) return;
+        const id = parseInt(t.getAttribute('data-id'));
+        const type = t.getAttribute('data-type');
+        if (type === 'city') A.toggleCity(id);
+        if (type === 'banner') A.toggleBanner(id);
+        render();
+      });
+    });
+  }
+
+  document.getElementById('tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.getAttribute('data-tab');
+    render();
+  });
+
+  render();
+}
+</script>
+</body>
+</html>

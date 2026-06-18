@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Безопасность</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
+  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE;
+  --red: #B91C1C; --red-bg: #FEE2E2; --amber: #854F0B; --amber-bg: #FAEEDA;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
+
+.panel { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.panel-title { font-size: 14px; font-weight: 700; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th { text-align: left; padding: 10px 14px; background: var(--gray-light); font-weight: 600; color: var(--gray); font-size: 11px; text-transform: uppercase; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+
+.pill { font-size: 10.5px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
+.pill-success { background: var(--green-bg); color: var(--green); }
+.pill-failed { background: var(--red-bg); color: var(--red); }
+
+.suspicious-card { background: var(--amber-bg); border: 1px solid #F0D9A8; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--amber); margin-bottom: 16px; line-height: 1.6; }
+.btn-danger { padding: 10px 18px; background: var(--red); color: #fff; border: none; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-danger:disabled { background: var(--border); color: var(--gray); cursor: not-allowed; }
+.empty-state { padding: 30px; text-align: center; color: var(--gray); font-size: 13px; }
+</style>
+<script src="/data.js"></script>
+<script src="/admin-data.js"></script>
+<script src="/admin-nav.js"></script>
+</head>
+<body>
+<script>
+const rendered = ShabashkaAdminNav.renderAdminShell('security', 'Безопасность');
+
+if (rendered) {
+  const A = ShabashkaAdmin;
+
+  const suspicious = A.getAllUsers().filter(u => u.status !== 'deleted' && u.rating > 0 && u.rating < 3);
+
+  document.getElementById('admContentRoot').innerHTML = `
+    ${suspicious.length ? `
+    <div class="suspicious-card">
+      ⚠ Найдено ${suspicious.length} пользователей с подозрительно низким рейтингом: ${suspicious.map(u => u.name).join(', ')}.
+      Рекомендуется проверить их историю заказов и жалобы.
+    </div>` : ''}
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Массовая блокировка</div>
+      </div>
+      <div style="font-size:12.5px;color:var(--gray);margin-bottom:12px">Заблокировать всех пользователей с признаками спама (низкий рейтинг и менее 3 заказов).</div>
+      <button class="btn-danger" id="bulkBlockBtn">Заблокировать подозрительных (${suspicious.length})</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title" style="margin-bottom:14px">Журнал действий администраторов</div>
+      <table>
+        <thead><tr><th>Роль</th><th>Действие</th><th>Время</th></tr></thead>
+        <tbody id="actionLogTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title" style="margin-bottom:14px">История входов</div>
+      <table>
+        <thead><tr><th>Роль</th><th>Устройство</th><th>Местоположение</th><th>Время</th><th>Статус</th></tr></thead>
+        <tbody id="loginHistoryTbody"></tbody>
+      </table>
+    </div>
+  `;
+
+  const log = A.getActionLog();
+  document.getElementById('actionLogTbody').innerHTML = log.length
+    ? log.map(l => `<tr><td>${l.role}</td><td>${l.description}</td><td>${new Date(l.timestamp).toLocaleString('ru')}</td></tr>`).join('')
+    : '<tr><td colspan="3"><div class="empty-state">Действий пока не зафиксировано</div></td></tr>';
+
+  document.getElementById('loginHistoryTbody').innerHTML = A.LOGIN_HISTORY.map(h => `
+    <tr>
+      <td>${h.role}</td><td>${h.device}</td><td>${h.location}</td><td>${h.time}</td>
+      <td><span class="pill ${h.status === 'success' ? 'pill-success' : 'pill-failed'}">${h.status === 'success' ? 'Успешно' : 'Отклонён'}</span></td>
+    </tr>`).join('');
+
+  const bulkBlockBtn = document.getElementById('bulkBlockBtn');
+  const canBulkBlock = A.canDo('security.bulkBlock');
+  if (!canBulkBlock || !suspicious.length) bulkBlockBtn.disabled = true;
+  bulkBlockBtn.addEventListener('click', () => {
+    if (!canBulkBlock || !suspicious.length) return;
+    if (!confirm('Заблокировать ' + suspicious.length + ' пользователей?')) return;
+    suspicious.forEach(u => A.blockUser(u.id));
+    A.logAction('Массовая блокировка подозрительных пользователей (' + suspicious.length + ')');
+    window.location.reload();
+  });
+}
+</script>
+</body>
+</html>
