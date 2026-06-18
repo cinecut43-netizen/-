@@ -26,7 +26,8 @@
     { "src": "/data.js", "dest": "/data.js" },
     { "src": "/nav.js", "dest": "/nav.js" },
     { "src": "/admin-data.js", "dest": "/admin-data.js" },
-    { "src": "/admin-nav.js", "dest": "/admin-nav.js" }
+    { "src": "/admin-nav.js", "dest": "/admin-nav.js" },
+    { "src": "/favicon.svg", "dest": "/favicon.svg" }
   ]
 }
 
