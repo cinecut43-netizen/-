@@ -276,6 +276,75 @@
     return { ok: true };
   }
 
+  /* ---------- СПОРЫ ----------
+     Заказчик открывает спор, если исполнитель не пришёл или работа сделана
+     плохо. Заказ замораживается в статусе disputed — деньги из эскроу не
+     списываются исполнителю, пока администратор не примет решение.
+     Решение (возврат заказчику / выплата исполнителю) принимается в
+     admin-complaints.html через тот же интерфейс, что и обычные жалобы. */
+  const DISPUTES_KEY = 'shabashka_disputes';
+
+  const DISPUTE_REASONS = [
+    { id: 'no_show', label: 'Исполнитель не пришёл' },
+    { id: 'bad_quality', label: 'Работа выполнена плохо' },
+    { id: 'no_show_employer', label: 'Заказчик не вышел на связь / отменил на месте' },
+    { id: 'other', label: 'Другая причина' },
+  ];
+
+  function getAllDisputes() {
+    return readList(DISPUTES_KEY, []);
+  }
+
+  function getDisputeForJob(jobId) {
+    return getAllDisputes().find(function (d) { return d.jobId === Number(jobId); }) || null;
+  }
+
+  function hasOpenDispute(jobId) {
+    const d = getDisputeForJob(jobId);
+    return !!(d && d.status === 'open');
+  }
+
+  // reasonId — один из DISPUTE_REASONS.id, comment — пояснение от заказчика
+  function openDispute(jobId, reasonId, comment) {
+    const job = getJob(jobId);
+    if (!job) {
+      return { ok: false, error: 'Заказ не найден' };
+    }
+    if (hasOpenDispute(jobId)) {
+      return { ok: false, error: 'По этому заказу уже открыт спор' };
+    }
+    if (!canDisputeJob(job.status)) {
+      return { ok: false, error: 'Спор можно открыть только для заказа в работе или завершённого' };
+    }
+    const reason = DISPUTE_REASONS.find(function (r) { return r.id === reasonId; });
+    if (!reason) {
+      return { ok: false, error: 'Укажите причину спора' };
+    }
+    if (!comment || !comment.trim()) {
+      return { ok: false, error: 'Опишите ситуацию подробнее' };
+    }
+
+    const disputes = getAllDisputes();
+    disputes.unshift({
+      jobId: Number(jobId),
+      jobTitle: job.title,
+      reasonId: reason.id,
+      reasonLabel: reason.label,
+      comment: comment.trim(),
+      amount: job.pay * (job.people || 1),
+      status: 'open', // open -> refunded (возврат заказчику) | rejected (выплата исполнителю)
+      date: todayLabel(),
+      resolution: null,
+    });
+    localStorage.setItem(DISPUTES_KEY, JSON.stringify(disputes));
+
+    // Замораживаем заказ — статус disputed скрывает его из обычных списков
+    // "в работе"/"завершён", чтобы не запутывать стороны, пока идёт разбор.
+    updateJobStatus(jobId, 'disputed');
+
+    return { ok: true };
+  }
+
   /* ---------- СТАТУСЫ ЗАКАЗА ---------- */
   // Единое определение текста и визуального стиля для каждого статуса —
   // используется в employer.html, admin.html и других местах, где
@@ -287,13 +356,20 @@
     in_progress:   { label: 'В работе',           cls: 's-inprog' },
     done:          { label: 'Завершён',           cls: 's-done' },
     cancelled:     { label: 'Отменён',            cls: 's-cancelled' },
+    disputed:      { label: 'На рассмотрении',    cls: 's-disputed' },
   };
 
   // Порядок этапов для определения, можно ли перейти из одного статуса в другой
   const STATUS_ORDER = ['new', 'has_responses', 'selected', 'in_progress', 'done'];
 
   function canCancelJob(status) {
-    return status !== 'done' && status !== 'cancelled';
+    return status !== 'done' && status !== 'cancelled' && status !== 'disputed';
+  }
+
+  // Спор можно открыть только когда уже была договорённость с исполнителем —
+  // на этапе подбора (new/has_responses) спорить пока не о чём.
+  function canDisputeJob(status) {
+    return status === 'in_progress' || status === 'done';
   }
 
   /* ---------- КАТЕГОРИИ ---------- */
@@ -475,11 +551,18 @@
     STATUS_MAP: STATUS_MAP,
     STATUS_ORDER: STATUS_ORDER,
     canCancelJob: canCancelJob,
+    canDisputeJob: canDisputeJob,
     // Отзывы
     getAllReviews: getAllReviews,
     getReviewForJob: getReviewForJob,
     hasReview: hasReview,
     submitReview: submitReview,
+    // Споры
+    DISPUTE_REASONS: DISPUTE_REASONS,
+    getAllDisputes: getAllDisputes,
+    getDisputeForJob: getDisputeForJob,
+    hasOpenDispute: hasOpenDispute,
+    openDispute: openDispute,
     CATEGORIES: CATEGORIES,
     rub: rub,
     commission: commission,

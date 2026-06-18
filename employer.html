@@ -83,6 +83,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 .s-inprog { background: var(--amber-bg); color: var(--amber); }
 .s-done { background: var(--green-bg); color: var(--green); }
 .s-cancelled { background: var(--red-bg); color: var(--red); }
+.s-disputed { background: var(--amber-bg); color: var(--amber); }
 
 /* RESPONSES */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
@@ -310,6 +311,39 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
     <div class="form-error" id="reviewError" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px"></div>
 
     <button class="modal-submit" onclick="submitReviewForm()">Отправить отзыв</button>
+  </div>
+</div>
+
+<!-- DISPUTE MODAL -->
+<div class="modal-overlay" id="disputeModal">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <h2>Открыть спор</h2>
+      <button class="modal-close" onclick="closeModal('disputeModal')">×</button>
+    </div>
+    <div id="disputeJobTitle" style="font-size:13px;color:var(--gray);margin-bottom:18px"></div>
+
+    <div class="form-group">
+      <label class="form-label">Причина спора</label>
+      <select class="form-select" id="disputeReason">
+        <option value="no_show">Исполнитель не пришёл</option>
+        <option value="bad_quality">Работа выполнена плохо</option>
+        <option value="other">Другая причина</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Опишите ситуацию</label>
+      <textarea class="form-textarea" id="disputeComment" placeholder="Что произошло? Это поможет администрации быстрее принять решение."></textarea>
+    </div>
+
+    <div class="commission-hint" style="background:var(--amber-bg);border-color:#F0D9A8;color:var(--amber)">
+      ⚠ После открытия спора заказ будет заморожен до решения администрации. Оплата исполнителю не пройдёт, пока спор не закрыт.
+    </div>
+
+    <div class="form-error" id="disputeError" style="display:none;color:var(--red);font-size:12px;margin-top:10px"></div>
+
+    <button class="modal-submit" onclick="submitDisputeForm()" style="margin-top:14px">Открыть спор</button>
   </div>
 </div>
 
@@ -597,14 +631,21 @@ function openDetail(id) {
 // Кнопки управления заказом зависят от текущего этапа: выбрать исполнителя
 // уже сделано на уровне откликов, дальше — старт работы, завершение, отзыв.
 function renderDetailActions(o) {
+  if (o.status === 'disputed') {
+    const dispute = Shabashka.getDisputeForJob(o.id);
+    return `<div style="margin-top:16px;padding:14px;background:var(--amber-bg);border-radius:10px;font-size:13px;color:var(--amber)">
+      ⚠ Спор на рассмотрении администрации: «${dispute ? dispute.reasonLabel : ''}». ${dispute ? dispute.comment : ''}
+    </div>`;
+  }
+
   if (o.status === 'done') {
     const review = Shabashka.getReviewForJob(o.id);
-    if (review) {
-      return `<div style="margin-top:16px;padding:14px;background:var(--green-bg);border-radius:10px;font-size:13px;color:var(--green)">
-        ✅ Отзыв оставлен: ${'⭐'.repeat(review.rating)}${'☆'.repeat(5-review.rating)} — «${review.text}»
-      </div>`;
-    }
-    return `<button onclick="closeModal('detailModal');openReviewModal(${o.id})" style="width:100%;padding:10px;background:var(--orange);color:#fff;border:none;border-radius:9px;font-size:14px;cursor:pointer;margin-top:16px">⭐ Оставить отзыв исполнителю</button>`;
+    const reviewBlock = review
+      ? `<div style="margin-top:16px;padding:14px;background:var(--green-bg);border-radius:10px;font-size:13px;color:var(--green)">
+          ✅ Отзыв оставлен: ${'⭐'.repeat(review.rating)}${'☆'.repeat(5-review.rating)} — «${review.text}»
+        </div>`
+      : `<button onclick="closeModal('detailModal');openReviewModal(${o.id})" style="width:100%;padding:10px;background:var(--orange);color:#fff;border:none;border-radius:9px;font-size:14px;cursor:pointer;margin-top:16px">⭐ Оставить отзыв исполнителю</button>`;
+    return reviewBlock + `<button onclick="closeModal('detailModal');openDisputeModal(${o.id})" style="width:100%;padding:10px;background:none;border:1px solid var(--border);color:var(--gray);border-radius:9px;font-size:13px;cursor:pointer;margin-top:8px">⚠ Открыть спор по этому заказу</button>`;
   }
 
   if (o.status === 'cancelled') return '';
@@ -616,8 +657,13 @@ function renderDetailActions(o) {
     progressBtn = `<button onclick="advanceOrder(${o.id},'done')" style="flex:1;padding:10px;background:var(--green-bg);color:var(--green);border:none;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600">✅ Завершить заказ</button>`;
   }
 
+  const disputeBtn = o.status === 'in_progress'
+    ? `<button onclick="closeModal('detailModal');openDisputeModal(${o.id})" style="padding:10px 16px;background:none;border:1px solid var(--border);color:var(--gray);border-radius:9px;font-size:13px;cursor:pointer">⚠ Спор</button>`
+    : '';
+
   return `<div style="display:flex;gap:8px;margin-top:16px">
     ${progressBtn || `<button onclick="closeModal('detailModal')" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:9px;font-size:14px;cursor:pointer">Редактировать</button>`}
+    ${disputeBtn}
     <button onclick="cancelOrder(${o.id})" style="padding:10px 16px;background:var(--red-bg);color:var(--red);border:none;border-radius:9px;font-size:14px;cursor:pointer">Закрыть заказ</button>
   </div>`;
 }
@@ -695,7 +741,7 @@ function submitOrder() {
   renderPage();
 }
 
-['postModal','detailModal','topUpModal','reviewModal'].forEach(id => {
+['postModal','detailModal','topUpModal','reviewModal','disputeModal'].forEach(id => {
   document.getElementById(id).addEventListener('click', function(e) { if(e.target===this) closeModal(id); });
 });
 
@@ -760,6 +806,36 @@ function submitReviewForm() {
 
   closeModal('reviewModal');
   alert('Спасибо за отзыв!');
+  renderPage();
+}
+
+/* ---------- СПОР ПО ЗАКАЗУ ---------- */
+let disputeJobId = null;
+
+function openDisputeModal(jobId) {
+  disputeJobId = jobId;
+  const job = Shabashka.getJob(jobId);
+  document.getElementById('disputeJobTitle').textContent = job ? job.title : '';
+  document.getElementById('disputeReason').selectedIndex = 0;
+  document.getElementById('disputeComment').value = '';
+  document.getElementById('disputeError').style.display = 'none';
+  document.getElementById('disputeModal').classList.add('open');
+}
+
+function submitDisputeForm() {
+  const reasonId = document.getElementById('disputeReason').value;
+  const comment = document.getElementById('disputeComment').value;
+  const result = Shabashka.openDispute(disputeJobId, reasonId, comment);
+
+  if (!result.ok) {
+    document.getElementById('disputeError').textContent = result.error;
+    document.getElementById('disputeError').style.display = 'block';
+    return;
+  }
+
+  ORDERS = loadOrders();
+  closeModal('disputeModal');
+  alert('Спор открыт. Деньги по заказу заморожены до решения администрации.');
   renderPage();
 }
 

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — Жалобы</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -26,12 +27,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; c
 .pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
 .pill-open { background: var(--amber-bg); color: var(--amber); }
 .pill-resolved { background: var(--green-bg); color: var(--green); }
-.complaint-actions { display: flex; gap: 8px; margin-top: 10px; }
+.pill-rejected { background: var(--red-bg); color: var(--red); }
+.complaint-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .btn-sm { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; }
 .btn-sm-green { background: var(--green-bg); color: var(--green); }
 .btn-sm-red { background: var(--red-bg); color: var(--red); }
+.btn-sm-gray { background: var(--gray-light); color: var(--gray); }
 .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
 .empty-state { padding: 60px 20px; text-align: center; color: var(--gray); }
+.dispute-amount { font-size: 13px; font-weight: 700; color: var(--orange-dark); }
+.tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--gray-light); padding: 4px; border-radius: 10px; width: fit-content; }
+.tab-btn { padding: 8px 16px; border-radius: 7px; border: none; background: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--gray); }
+.tab-btn.active { background: var(--white); color: var(--dark); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
 </style>
 <script src="/data.js"></script>
 <script src="/admin-data.js"></script>
@@ -43,32 +50,74 @@ const rendered = ShabashkaAdminNav.renderAdminShell('complaints', 'Жалобы'
 
 if (rendered) {
   const A = ShabashkaAdmin;
+  const Shabashka = window.Shabashka;
   let filter = 'all';
+  let activeTab = 'disputes';
 
   document.getElementById('admContentRoot').innerHTML = `
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="disputes">Споры по заказам</button>
+      <button class="tab-btn" data-tab="complaints">Жалобы на пользователей</button>
+    </div>
     <div class="toolbar">
       <select id="filterSelect">
-        <option value="all">Все жалобы</option>
+        <option value="all">Все</option>
         <option value="open">Открытые</option>
         <option value="resolved">Закрытые</option>
       </select>
     </div>
-    <div id="complaintsList"></div>
+    <div id="listRoot"></div>
   `;
 
-  function render() {
+  function renderDisputes() {
+    let disputes = Shabashka.getAllDisputes();
+    if (filter === 'open') disputes = disputes.filter(d => d.status === 'open');
+    if (filter === 'resolved') disputes = disputes.filter(d => d.status !== 'open');
+
+    if (!disputes.length) {
+      document.getElementById('listRoot').innerHTML = '<div class="empty-state">Споров по этому фильтру нет</div>';
+      return;
+    }
+
+    const canResolve = A.canDo('complaint.resolve');
+
+    document.getElementById('listRoot').innerHTML = disputes.map(d => {
+      const pillCls = d.status === 'open' ? 'pill-open' : d.status === 'refunded' ? 'pill-resolved' : 'pill-rejected';
+      const pillLabel = d.status === 'open' ? 'Открыт' : d.status === 'refunded' ? 'Возврат заказчику' : 'Отклонён';
+      return `
+      <div class="complaint-card">
+        <div class="complaint-top">
+          <div class="complaint-parties">Заказ #${d.jobId} «${d.jobTitle}»</div>
+          <div class="complaint-date">${d.date}</div>
+        </div>
+        <div class="complaint-reason">${d.reasonLabel}: ${d.comment}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="pill ${pillCls}">${pillLabel}</span>
+          <span class="dispute-amount">${d.amount.toLocaleString('ru')} ₽</span>
+        </div>
+        ${d.status === 'open' ? `
+        <div class="complaint-actions">
+          <button class="btn-sm btn-sm-green" ${canResolve?'':'disabled'} onclick="refund(${d.jobId})">Вернуть деньги заказчику</button>
+          <button class="btn-sm btn-sm-gray" ${canResolve?'':'disabled'} onclick="reject(${d.jobId})">Отклонить спор (оплатить исполнителю)</button>
+        </div>` : `<div style="font-size:12px;color:var(--gray);margin-top:8px">${d.resolution}</div>`}
+      </div>
+    `;
+    }).join('');
+  }
+
+  function renderComplaints() {
     let complaints = A.getComplaints();
     if (filter !== 'all') complaints = complaints.filter(c => c.status === filter);
 
     if (!complaints.length) {
-      document.getElementById('complaintsList').innerHTML = '<div class="empty-state">Жалоб по этому фильтру нет</div>';
+      document.getElementById('listRoot').innerHTML = '<div class="empty-state">Жалоб по этому фильтру нет</div>';
       return;
     }
 
     const canResolve = A.canDo('complaint.resolve');
     const canBlock = A.canDo('complaint.blockUser');
 
-    document.getElementById('complaintsList').innerHTML = complaints.map(c => `
+    document.getElementById('listRoot').innerHTML = complaints.map(c => `
       <div class="complaint-card">
         <div class="complaint-top">
           <div class="complaint-parties">${c.reporterName}<span class="arrow">→</span>${c.targetName}</div>
@@ -85,6 +134,21 @@ if (rendered) {
     `).join('');
   }
 
+  function render() {
+    if (activeTab === 'disputes') renderDisputes();
+    else renderComplaints();
+  }
+
+  window.refund = function (jobId) {
+    if (!confirm('Вернуть деньги заказчику? Заказ будет отменён.')) return;
+    A.resolveDisputeRefund(jobId);
+    render();
+  };
+  window.reject = function (jobId) {
+    if (!confirm('Отклонить спор? Заказ будет считаться выполненным, оплата пройдёт исполнителю.')) return;
+    A.resolveDisputeReject(jobId);
+    render();
+  };
   window.resolve = function (id) { A.resolveComplaint(id); render(); };
   window.resolveAndBlock = function (id) {
     if (!confirm('Заблокировать пользователя и закрыть жалобу?')) return;
@@ -93,6 +157,16 @@ if (rendered) {
   };
 
   document.getElementById('filterSelect').addEventListener('change', e => { filter = e.target.value; render(); });
+  document.getElementById('tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.getAttribute('data-tab');
+    filter = 'all';
+    document.getElementById('filterSelect').value = 'all';
+    render();
+  });
 
   render();
 }

@@ -285,6 +285,41 @@
     logAction('Заблокировал нарушителя по жалобе #' + id);
   }
 
+  /* ---------- РАЗРЕШЕНИЕ СПОРОВ ----------
+     Shabashka.openDispute() переводит заказ в статус disputed и создаёт
+     запись спора. Здесь — административная сторона: посмотреть спор и
+     принять решение. resolveDisputeRefund возвращает деньги заказчику
+     (заказ закрывается как cancelled, эскроу не выплачивается исполнителю).
+     resolveDisputeReject отклоняет спор — заказ считается выполненным,
+     оплата исполнителю проходит как обычно. */
+  function resolveDisputeRefund(jobId) {
+    const disputes = Shabashka.getAllDisputes();
+    const dispute = disputes.find(function (d) { return d.jobId === Number(jobId) && d.status === 'open'; });
+    if (!dispute) return { ok: false, error: 'Открытый спор по этому заказу не найден' };
+
+    dispute.status = 'refunded';
+    dispute.resolution = 'Деньги возвращены заказчику';
+    localStorage.setItem('shabashka_disputes', JSON.stringify(disputes));
+
+    Shabashka.updateJobStatus(jobId, 'cancelled');
+    logAction('Разрешил спор по заказу #' + jobId + ' в пользу заказчика (возврат)');
+    return { ok: true };
+  }
+
+  function resolveDisputeReject(jobId) {
+    const disputes = Shabashka.getAllDisputes();
+    const dispute = disputes.find(function (d) { return d.jobId === Number(jobId) && d.status === 'open'; });
+    if (!dispute) return { ok: false, error: 'Открытый спор по этому заказу не найден' };
+
+    dispute.status = 'rejected';
+    dispute.resolution = 'Спор отклонён, оплата исполнителю подтверждена';
+    localStorage.setItem('shabashka_disputes', JSON.stringify(disputes));
+
+    Shabashka.updateJobStatus(jobId, 'done');
+    logAction('Разрешил спор по заказу #' + jobId + ' в пользу исполнителя (отказ в споре)');
+    return { ok: true };
+  }
+
   /* ---------- СКРЫТЫЕ/УДАЛЁННЫЕ ОТЗЫВЫ ----------
      Shabashka.getAllReviews() — реальные отзывы с фото из profile.html.
      Здесь храним только админские пометки (скрыт/удалён) поверх них,
@@ -472,6 +507,9 @@
     getComplaints: getComplaints,
     resolveComplaint: resolveComplaint,
     resolveComplaintAndBlock: resolveComplaintAndBlock,
+
+    resolveDisputeRefund: resolveDisputeRefund,
+    resolveDisputeReject: resolveDisputeReject,
 
     getReviewFlags: getReviewFlags,
     getReviewsWithFlags: getReviewsWithFlags,
