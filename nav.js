@@ -92,6 +92,10 @@
         .sb-links { display: none; }
         .sb-burger { display: block; }
       }
+      @media (max-width: 600px) {
+        .sb-bar { display: none; }
+        .sb-mobile-panel { display: none !important; }
+      }
     `;
     document.head.appendChild(style);
   }
