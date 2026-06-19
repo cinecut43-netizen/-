@@ -27,6 +27,7 @@
     { "src": "/register", "dest": "/register.html" },
     { "src": "/workers", "dest": "/workers.html" },
     { "src": "/favorites", "dest": "/favorites.html" },
+    { "src": "/pro", "dest": "/pro.html" },
     { "src": "/landing", "dest": "/landing.html" },
     { "src": "/onboarding", "dest": "/onboarding.html" },
     { "src": "/privacy", "dest": "/privacy.html" },

@@ -27,6 +27,72 @@
     },
   };
 
+  /* ---------- PRO ПОДПИСКА ---------- */
+  const PRO_KEY = 'shabashka_pro';
+
+  const PRO_PLANS = [
+    {
+      id: 'month',
+      label: 'На месяц',
+      price: 299,
+      period: '/ месяц',
+      days: 30,
+      popular: false,
+      perks: ['Приоритет в выдаче заказов', 'До 20 откликов в день', 'Бейдж PRO в профиле', 'Расширенная статистика'],
+    },
+    {
+      id: 'quarter',
+      label: 'На 3 месяца',
+      price: 199,
+      period: '/ месяц',
+      days: 90,
+      popular: true,
+      badge: 'Выгодно −33%',
+      perks: ['Приоритет в выдаче заказов', 'До 20 откликов в день', 'Бейдж PRO в профиле', 'Расширенная статистика', 'Срочные заказы первым'],
+    },
+    {
+      id: 'year',
+      label: 'На год',
+      price: 149,
+      period: '/ месяц',
+      days: 365,
+      popular: false,
+      badge: 'Лучшая цена',
+      perks: ['Приоритет в выдаче заказов', 'До 20 откликов в день', 'Бейдж PRO в профиле', 'Расширенная статистика', 'Срочные заказы первым', 'Поддержка в приоритете'],
+    },
+  ];
+
+  function getProStatus() {
+    try {
+      var raw = localStorage.getItem(PRO_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data.expiresAt) return null;
+      if (Date.now() > data.expiresAt) {
+        localStorage.removeItem(PRO_KEY);
+        return null;
+      }
+      return data;
+    } catch(e) { return null; }
+  }
+
+  function isPro() {
+    return getProStatus() !== null;
+  }
+
+  function activatePro(planId) {
+    var plan = PRO_PLANS.find(function(p){ return p.id === planId; });
+    if (!plan) return { ok: false, error: 'Тариф не найден' };
+    var expiresAt = Date.now() + plan.days * 24 * 60 * 60 * 1000;
+    var data = { planId: planId, activatedAt: Date.now(), expiresAt: expiresAt };
+    localStorage.setItem(PRO_KEY, JSON.stringify(data));
+    return { ok: true, expiresAt: expiresAt };
+  }
+
+  function deactivatePro() {
+    localStorage.removeItem(PRO_KEY);
+  }
+
   const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
   function formatRegisteredDate(isoDate) {
@@ -748,6 +814,12 @@
     isLoggedIn: isLoggedIn,
     completeRegistration: completeRegistration,
     logout: logout,
+    // PRO подписка
+    PRO_PLANS: PRO_PLANS,
+    getProStatus: getProStatus,
+    isPro: isPro,
+    activatePro: activatePro,
+    deactivatePro: deactivatePro,
     updateProfile: updateProfile,
     formatRegisteredDate: formatRegisteredDate,
     // Совместимость: код, написанный раньше, использует Shabashka.JOBS как массив.
