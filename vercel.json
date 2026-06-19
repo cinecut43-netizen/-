@@ -10,6 +10,7 @@
     { "src": "/api/admin-verify", "dest": "/api/admin-verify.js" },
     { "src": "/api/send-code", "dest": "/api/send-code.js" },
     { "src": "/api/verify-code", "dest": "/api/verify-code.js" },
+    { "src": "/api/check-new-jobs", "dest": "/api/check-new-jobs.js" },
     { "src": "/", "dest": "/index.html" },
     { "src": "/chat", "dest": "/chat.html" },
     { "src": "/profile", "dest": "/profile.html" },
