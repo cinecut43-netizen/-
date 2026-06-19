@@ -435,7 +435,13 @@ function attachHandlers() {
   const goBtn = document.getElementById('goBtn');
   if (goBtn) {
     goBtn.addEventListener('click', () => {
-      window.location.href = state.role === 'employer' ? '/employer' : '/';
+      if (state.role === 'employer') {
+        window.location.href = '/employer';
+      } else {
+        // Новый исполнитель — показываем онбординг один раз
+        const seen = localStorage.getItem('shabashka_onboarding_seen');
+        window.location.href = seen ? '/' : '/onboarding';
+      }
     });
   }
 }

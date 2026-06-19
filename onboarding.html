@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шабашка — Добро пожаловать</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --border: #E5E4E0; --white: #fff;
+}
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--dark);
+  color: var(--white);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* КОНТЕЙНЕР СЛАЙДОВ */
+.slides-wrap {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px 100px;
+  text-align: center;
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+}
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.slide.prev {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+/* ИЛЛЮСТРАЦИЯ */
+.slide-icon {
+  font-size: 80px;
+  margin-bottom: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 8px 24px rgba(232,81,10,0.3));
+}
+
+.slide-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 12px;
+  opacity: 0.9;
+}
+
+.slide-title {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+  max-width: 320px;
+}
+
+.slide-desc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.65);
+  max-width: 300px;
+}
+
+/* ВЫДЕЛЕНИЕ КЛЮЧЕВЫХ СЛОВ */
+.slide-desc strong { color: var(--white); font-weight: 600; }
+
+/* ПРИМЕРЫ — маленькие карточки с демо-данными */
+.slide-example {
+  margin-top: 24px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  max-width: 300px;
+  width: 100%;
+  line-height: 1.5;
+}
+.slide-example-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+.slide-example-label { color: rgba(255,255,255,0.5); }
+.slide-example-value { font-weight: 600; color: var(--white); }
+.slide-example-value.orange { color: #FF8552; }
+.slide-example-value.green { color: #4ACA7A; }
+
+/* НИЖНЯЯ ПАНЕЛЬ */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 20px 24px 32px;
+  background: linear-gradient(to top, var(--dark) 60%, transparent);
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transition: all 0.3s;
+}
+.dot.active {
+  background: var(--orange);
+  width: 22px;
+  border-radius: 4px;
+}
+
+.btn-next {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  display: block;
+  padding: 16px;
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: -0.2px;
+}
+.btn-next:active { transform: scale(0.98); background: var(--orange-dark); }
+
+.btn-skip {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  width: 100%;
+}
+.btn-skip:hover { color: rgba(255,255,255,0.7); }
+
+/* ПРОГРЕСС БАРА */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: var(--orange);
+  transition: width 0.35s ease;
+}
+
+@media (max-width: 400px) {
+  .slide-title { font-size: 24px; }
+  .slide-icon { font-size: 64px; }
+}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar" style="width:25%"></div>
+
+<div class="slides-wrap" id="slidesWrap">
+
+  <!-- СЛАЙД 1 -->
+  <div class="slide active" data-slide="0">
+    <div class="slide-icon">🗺️</div>
+    <div class="slide-tag">Шаг 1 из 4</div>
+    <div class="slide-title">Находи заказы рядом с тобой</div>
+    <div class="slide-desc">
+      Сотни <strong>срочных заказов</strong> каждый день — грузчики, уборка, стройка, ивенты.
+      Фильтруй по категории, городу или смотри на <strong>карте</strong>.
+    </div>
+    <div class="slide-example">
+      <div class="slide-example-row">
+        <span class="slide-example-label">📦 Грузчики на переезд</span>
+        <span class="slide-example-value orange">3 500 ₽</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">🧹 Уборка офиса</span>
+        <span class="slide-example-value orange">2 800 ₽</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">🔥 Срочно · сегодня</span>
+        <span class="slide-example-value green">+5 заказов</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- СЛАЙД 2 -->
+  <div class="slide" data-slide="1">
+    <div class="slide-icon">💬</div>
+    <div class="slide-tag">Шаг 2 из 4</div>
+    <div class="slide-title">Откликайся и торгуйся по цене</div>
+    <div class="slide-desc">
+      Нажми «Откликнуться» — и если работодатель разрешил торг,
+      можешь предложить <strong>свою цену</strong>.
+      Работодатель выберет лучший отклик.
+    </div>
+    <div class="slide-example">
+      <div class="slide-example-row">
+        <span class="slide-example-label">Цена заказа</span>
+        <span class="slide-example-value" style="text-decoration:line-through;color:rgba(255,255,255,0.4)">5 000 ₽</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">Твоё предложение</span>
+        <span class="slide-example-value orange">4 200 ₽</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">Статус</span>
+        <span class="slide-example-value green">✓ Принят</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- СЛАЙД 3 -->
+  <div class="slide" data-slide="2">
+    <div class="slide-icon">⭐</div>
+    <div class="slide-tag">Шаг 3 из 4</div>
+    <div class="slide-title">Работай, получай оценки и расти</div>
+    <div class="slide-desc">
+      После каждого заказа работодатель оставляет <strong>отзыв с фото</strong>.
+      Чем выше рейтинг — тем выше ты в поиске
+      и тем больше работодателей выбирают именно тебя.
+    </div>
+    <div class="slide-example">
+      <div class="slide-example-row">
+        <span class="slide-example-label">Дмитрий К.</span>
+        <span class="slide-example-value">⭐ 4.9</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">Заказов выполнено</span>
+        <span class="slide-example-value green">47</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">Бейдж</span>
+        <span class="slide-example-value" style="color:#4ACA7A">✓ Проверен</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- СЛАЙД 4 -->
+  <div class="slide" data-slide="3">
+    <div class="slide-icon">🔒</div>
+    <div class="slide-tag">Шаг 4 из 4</div>
+    <div class="slide-title">Деньги под защитой платформы</div>
+    <div class="slide-desc">
+      Оплата резервируется на платформе до завершения заказа.
+      Если что-то пошло не так — <strong>откроешь спор</strong>,
+      и администрация рассмотрит ситуацию в течение 24 часов.
+    </div>
+    <div class="slide-example">
+      <div class="slide-example-row">
+        <span class="slide-example-label">Комиссия платформы</span>
+        <span class="slide-example-value">10%</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">Защита от обмана</span>
+        <span class="slide-example-value green">✓ Эскроу</span>
+      </div>
+      <div class="slide-example-row">
+        <span class="slide-example-label">Разрешение споров</span>
+        <span class="slide-example-value green">✓ До 24 часов</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-bar">
+  <div class="dots" id="dots">
+    <div class="dot active"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <button class="btn-next" id="btnNext" onclick="nextSlide()">Далее →</button>
+  <button class="btn-skip" onclick="finish()">Пропустить</button>
+</div>
+
+<script src="/data.js"></script>
+<script>
+// Если онбординг уже был показан — сразу на главную
+if (localStorage.getItem('shabashka_onboarding_seen')) {
+  window.location.replace('/');
+}
+
+let current = 0;
+const total = 4;
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.dot');
+const btnNext = document.getElementById('btnNext');
+const progressBar = document.getElementById('progressBar');
+
+function goToSlide(idx) {
+  slides[current].classList.remove('active');
+  slides[current].classList.add('prev');
+  setTimeout(function () { slides[current].classList.remove('prev'); }, 400);
+
+  current = idx;
+  slides[current].classList.add('active');
+
+  dots.forEach(function (d, i) { d.classList.toggle('active', i === current); });
+  progressBar.style.width = ((current + 1) / total * 100) + '%';
+
+  if (current === total - 1) {
+    btnNext.textContent = '🚀 Начать работать';
+  } else {
+    btnNext.textContent = 'Далее →';
+  }
+}
+
+function nextSlide() {
+  if (current < total - 1) {
+    goToSlide(current + 1);
+  } else {
+    finish();
+  }
+}
+
+function finish() {
+  localStorage.setItem('shabashka_onboarding_seen', '1');
+  window.location.href = '/';
+}
+
+// Свайп на мобильных
+var touchStartX = 0;
+document.addEventListener('touchstart', function (e) { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', function (e) {
+  var diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) {
+    if (diff > 0 && current < total - 1) goToSlide(current + 1);
+    if (diff < 0 && current > 0) goToSlide(current - 1);
+  }
+});
+</script>
+</body>
+</html>
