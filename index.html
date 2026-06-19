@@ -690,7 +690,7 @@ function renderJobs() {
           <div class="job-emoji">${j.emoji}</div>
           <div class="job-info">
             <div class="job-title">${j.title}</div>
-            <div class="job-company">${j.company}</div>
+            <div class="job-company">${j.company}${(function(){ var r = Shabashka.getCompanyRating(j.company); return r ? ' <span style="font-size:11px;color:#E8510A">⭐ ' + r.rating + '</span>' : ''; })()}</div>
           </div>
         </div>
         <div class="job-pay">
@@ -726,6 +726,16 @@ function openDetail(id) {
   const j = JOBS.find(x => x.id === id);
   const commission = Math.round(j.pay * 0.1);
   const alreadyApplied = Shabashka.getResponsesForJob(j.id).some(r => r.workerName === Shabashka.getUser().name);
+  const companyRating = Shabashka.getCompanyRating(j.company);
+  const alreadyRatedEmployer = Shabashka.hasEmployerReview(j.id);
+  const isDone = j.status === 'done';
+
+  const companyRatingHtml = companyRating
+    ? `<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray);margin-top:2px">
+        <span style="color:#E8510A">⭐ ${companyRating.rating}</span>
+        <span>${companyRating.count} отзыв${companyRating.count === 1 ? '' : companyRating.count < 5 ? 'а' : 'ов'} на работодателя</span>
+       </div>`
+    : '<div style="font-size:12px;color:var(--gray);margin-top:2px">Отзывов о работодателе пока нет</div>';
 
   document.getElementById('modalContent').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
@@ -733,6 +743,7 @@ function openDetail(id) {
       <div>
         <h2>${j.title}</h2>
         <div class="modal-meta">${j.company} · ${j.location}</div>
+        ${companyRatingHtml}
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
@@ -747,7 +758,12 @@ function openDetail(id) {
     <div class="modal-section"><h3>Задача</h3><p>${j.desc}</p></div>
     <div class="modal-section"><h3>Требования</h3><p>${j.requirements}</p></div>
     <div class="commission-note">Сервисный сбор платформы — 10% (${commission.toLocaleString('ru')} ₽). Удерживается при подтверждении заказа.</div>
-    ${alreadyApplied ? `
+    ${isDone ? `
+      ${alreadyRatedEmployer
+        ? '<div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:12px;font-size:13px;margin-top:16px">✅ Вы уже оценили работодателя</div>'
+        : '<button onclick="openEmployerReviewModal(' + j.id + ')" style="width:100%;margin-top:16px;padding:11px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">⭐ Оценить работодателя</button>'
+      }
+    ` : alreadyApplied ? `
     <div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:14px;font-size:13px;margin-top:16px">✅ Вы уже откликнулись на этот заказ</div>
     ` : `
     ${j.allowBargain ? `
@@ -872,6 +888,63 @@ document.getElementById('detailModal').addEventListener('click', function(e) {
 document.getElementById('postModal').addEventListener('click', function(e) {
   if (e.target === this) closeModal('postModal');
 });
+
+/* ===== ОТЗЫВ НА РАБОТОДАТЕЛЯ ===== */
+var employerReviewJobId = null;
+var employerReviewRating = 0;
+
+function openEmployerReviewModal(jobId) {
+  employerReviewJobId = jobId;
+  employerReviewRating = 0;
+  closeModal('detailModal');
+
+  var modal = document.createElement('div');
+  modal.id = 'employerReviewOverlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:420px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:17px;font-weight:800">Оценить работодателя</div>
+        <button onclick="document.getElementById('employerReviewOverlay').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6B6B67">×</button>
+      </div>
+      <div style="font-size:13px;color:#6B6B67;margin-bottom:16px">Оцените условия работы и надёжность заказчика</div>
+      <div id="erStars" style="display:flex;gap:8px;font-size:36px;cursor:pointer;margin-bottom:16px">
+        ${[1,2,3,4,5].map(n => `<span onclick="setERating(${n})" style="transition:transform 0.1s" id="erStar${n}">☆</span>`).join('')}
+      </div>
+      <textarea id="erText" placeholder="Как прошёл заказ? Оплатили вовремя? Условия совпали с описанием?" style="width:100%;height:90px;padding:10px 12px;border:1px solid #E5E4E0;border-radius:9px;font-size:14px;font-family:inherit;resize:none;outline:none;margin-bottom:12px"></textarea>
+      <div id="erError" style="color:#E8510A;font-size:12px;margin-bottom:8px;display:none"></div>
+      <button onclick="submitERating()" style="width:100%;padding:12px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Отправить отзыв</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===this) this.remove(); });
+}
+
+function setERating(n) {
+  employerReviewRating = n;
+  for(var i=1;i<=5;i++){
+    document.getElementById('erStar'+i).textContent = i <= n ? '⭐' : '☆';
+    document.getElementById('erStar'+i).style.transform = i === n ? 'scale(1.2)' : 'scale(1)';
+  }
+}
+
+function submitERating() {
+  var text = document.getElementById('erText').value;
+  var errEl = document.getElementById('erError');
+  var result = Shabashka.submitEmployerReview(employerReviewJobId, employerReviewRating, text);
+  if (!result.ok) {
+    errEl.textContent = result.error;
+    errEl.style.display = 'block';
+    return;
+  }
+  document.getElementById('employerReviewOverlay').remove();
+  // Показываем уведомление
+  var toast = document.createElement('div');
+  toast.textContent = 'Спасибо за отзыв о работодателе!';
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
+  document.body.appendChild(toast);
+  setTimeout(function(){ toast.remove(); }, 2500);
+}
 
 renderJobs();
 

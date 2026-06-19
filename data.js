@@ -547,6 +547,66 @@
     return { ok: true };
   }
 
+  /* ---------- ОТЗЫВЫ НА РАБОТОДАТЕЛЕЙ ----------
+     Исполнитель оценивает работодателя после выполнения заказа.
+     Отдельный ключ в localStorage — не смешивается с отзывами на исполнителей. */
+  const EMPLOYER_REVIEWS_KEY = 'shabashka_employer_reviews';
+
+  // Демо-отзывы — несколько компаний уже имеют оценки
+  const BASE_EMPLOYER_REVIEWS = [
+    { jobId: 16, companyName: 'ООО ТрансЛогист', rating: 5, text: 'Всё чётко: деньги вовремя, условия как договорились. Буду работать ещё.', date: '10 июн', reviewerName: 'Дмитрий К.' },
+    { jobId: 17, companyName: 'ООО ТрансЛогист', rating: 4, text: 'Нормально, но пришлось подождать 20 минут на месте. В целом рекомендую.', date: '14 июн', reviewerName: 'Сергей М.' },
+  ];
+
+  function getAllEmployerReviews() {
+    try {
+      var raw = localStorage.getItem(EMPLOYER_REVIEWS_KEY);
+      return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(BASE_EMPLOYER_REVIEWS));
+    } catch(e) { return JSON.parse(JSON.stringify(BASE_EMPLOYER_REVIEWS)); }
+  }
+
+  function getEmployerReviewForJob(jobId) {
+    return getAllEmployerReviews().find(function(r){ return r.jobId === Number(jobId); }) || null;
+  }
+
+  function hasEmployerReview(jobId) {
+    return !!getEmployerReviewForJob(jobId);
+  }
+
+  function getCompanyRating(companyName) {
+    var reviews = getAllEmployerReviews().filter(function(r){ return r.companyName === companyName; });
+    if (!reviews.length) return null;
+    var avg = reviews.reduce(function(s,r){ return s + r.rating; }, 0) / reviews.length;
+    return { rating: Math.round(avg * 10) / 10, count: reviews.length, reviews: reviews };
+  }
+
+  function submitEmployerReview(jobId, rating, text) {
+    rating = Math.round(Number(rating));
+    if (!rating || rating < 1 || rating > 5) {
+      return { ok: false, error: 'Оценка должна быть от 1 до 5 звёзд' };
+    }
+    if (!text || !text.trim()) {
+      return { ok: false, error: 'Напишите текст отзыва' };
+    }
+    if (hasEmployerReview(jobId)) {
+      return { ok: false, error: 'Отзыв на этого работодателя уже оставлен' };
+    }
+    var job = getJob(jobId);
+    if (!job) return { ok: false, error: 'Заказ не найден' };
+
+    var reviews = getAllEmployerReviews();
+    reviews.unshift({
+      jobId: Number(jobId),
+      companyName: job.company || 'Работодатель',
+      rating: rating,
+      text: text.trim(),
+      date: todayLabel(),
+      reviewerName: getUser().name || 'Исполнитель',
+    });
+    localStorage.setItem(EMPLOYER_REVIEWS_KEY, JSON.stringify(reviews));
+    return { ok: true };
+  }
+
   /* ---------- СПОРЫ ----------
      Заказчик открывает спор, если исполнитель не пришёл или работа сделана
      плохо. Заказ замораживается в статусе disputed — деньги из эскроу не
@@ -941,6 +1001,12 @@
     getReviewForJob: getReviewForJob,
     hasReview: hasReview,
     submitReview: submitReview,
+    // Отзывы на работодателей
+    getAllEmployerReviews: getAllEmployerReviews,
+    getEmployerReviewForJob: getEmployerReviewForJob,
+    hasEmployerReview: hasEmployerReview,
+    getCompanyRating: getCompanyRating,
+    submitEmployerReview: submitEmployerReview,
     // Споры
     DISPUTE_REASONS: DISPUTE_REASONS,
     // Исполнители
