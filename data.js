@@ -702,6 +702,46 @@
     return workers;
   }
 
+  /* ---------- ИЗБРАННОЕ ----------
+     Два независимых списка: сохранённые заказы (для исполнителей)
+     и сохранённые исполнители (для работодателей). */
+  const FAV_JOBS_KEY     = 'shabashka_fav_jobs';
+  const FAV_WORKERS_KEY  = 'shabashka_fav_workers';
+
+  function getFavJobs() {
+    try { return JSON.parse(localStorage.getItem(FAV_JOBS_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function getFavWorkers() {
+    try { return JSON.parse(localStorage.getItem(FAV_WORKERS_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function isFavJob(jobId) { return getFavJobs().indexOf(Number(jobId)) !== -1; }
+  function isFavWorker(workerId) { return getFavWorkers().indexOf(Number(workerId)) !== -1; }
+
+  function toggleFavJob(jobId) {
+    var favs = getFavJobs();
+    var id = Number(jobId);
+    var idx = favs.indexOf(id);
+    if (idx === -1) { favs.push(id); } else { favs.splice(idx, 1); }
+    localStorage.setItem(FAV_JOBS_KEY, JSON.stringify(favs));
+    return idx === -1; // true = добавлено, false = удалено
+  }
+  function toggleFavWorker(workerId) {
+    var favs = getFavWorkers();
+    var id = Number(workerId);
+    var idx = favs.indexOf(id);
+    if (idx === -1) { favs.push(id); } else { favs.splice(idx, 1); }
+    localStorage.setItem(FAV_WORKERS_KEY, JSON.stringify(favs));
+    return idx === -1;
+  }
+  function getSavedJobs() {
+    var ids = getFavJobs();
+    return getAllJobs().filter(function(j){ return ids.indexOf(j.id) !== -1; });
+  }
+  function getSavedWorkers() {
+    var ids = getFavWorkers();
+    return BASE_WORKERS.filter(function(w){ return ids.indexOf(w.id) !== -1; });
+  }
+
   window.Shabashka = {
     getUser: getUser,
     setRole: setRole,
@@ -742,6 +782,13 @@
     // Исполнители
     getAllWorkers: getAllWorkers,
     searchWorkers: searchWorkers,
+    // Избранное
+    isFavJob: isFavJob,
+    isFavWorker: isFavWorker,
+    toggleFavJob: toggleFavJob,
+    toggleFavWorker: toggleFavWorker,
+    getSavedJobs: getSavedJobs,
+    getSavedWorkers: getSavedWorkers,
     getAllDisputes: getAllDisputes,
     getDisputeForJob: getDisputeForJob,
     hasOpenDispute: hasOpenDispute,

@@ -21,7 +21,7 @@
 <meta property="og:url" content="https://shabashka-jade.vercel.app/">
 <meta property="og:title" content="Шабашка — найди подработку рядом с домом">
 <meta property="og:description" content="Биржа разовых заказов в Москве и области. Грузчики, уборка, стройка, ивент. Откликнись за 1 минуту — получи оплату в день работы.">
-<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.svg">
+<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Шабашка">
@@ -30,7 +30,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Шабашка — найди подработку рядом с домом">
 <meta name="twitter:description" content="Биржа разовых заказов в Москве и области. Грузчики, уборка, стройка, ивент. Откликнись за 1 минуту — получи оплату в день работы.">
-<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.svg">
+<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -298,6 +298,8 @@
     transition: background 0.15s;
   }
   .apply-btn:hover { background: var(--orange-dark); }
+  .fav-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.15s; flex-shrink: 0; }
+  .fav-btn:hover { border-color: var(--orange); background: var(--orange-light); }
 
   .responses-bar {
     display: flex;
@@ -709,7 +711,12 @@ function renderJobs() {
           </div>
           ${j.responses} откликов
         </div>
-        <button class="apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="fav-btn" id="fav-${j.id}" onclick="event.stopPropagation();toggleFav(${j.id},this)" title="Сохранить">
+            <i class="ph-bold ${Shabashka.isFavJob(j.id) ? 'ph-heart-fill' : 'ph-heart'}" style="color:${Shabashka.isFavJob(j.id) ? '#E8510A' : '#9A9A96'}"></i>
+          </button>
+          <button class="apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
+        </div>
       </div>
     </div>
   `).join('');
@@ -889,6 +896,18 @@ function syncMobileCat(btn) {
   document.querySelectorAll('.mobile-cat-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
+
+function toggleFav(jobId, btn) {
+  const added = Shabashka.toggleFavJob(jobId);
+  const i = btn.querySelector('i');
+  if (added) {
+    i.className = 'ph-bold ph-heart-fill';
+    i.style.color = '#E8510A';
+  } else {
+    i.className = 'ph-bold ph-heart';
+    i.style.color = '#9A9A96';
+  }
+}
 </script>
 
 <!-- Нижняя навигация для мобильных -->
@@ -898,6 +917,9 @@ function syncMobileCat(btn) {
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/map'">
     <i class="ph-bold ph-map-pin mobile-nav-icon"></i>Карта
+  </button>
+  <button class="mobile-nav-btn" onclick="window.location.href='/favorites'">
+    <i class="ph-bold ph-heart mobile-nav-icon"></i>Избранное
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/chat'">
     <i class="ph-bold ph-chat-circle-dots mobile-nav-icon"></i>Чат

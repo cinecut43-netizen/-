@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Избранное — Шабашка</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --white: #fff; --gray: #6B6B67;
+  --gray-light: #F4F3EF; --border: #E5E4E0;
+  --green: #1A7A4A; --green-bg: #E8F5EE;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); }
+
+.page-header { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 24px; }
+.header-top { display: flex; align-items: center; gap: 12px; }
+.back-btn { display: flex; align-items: center; gap: 6px; color: var(--gray); font-size: 13px; text-decoration: none; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); cursor: pointer; font-family: inherit; }
+.back-btn:hover { background: var(--gray-light); }
+.page-title { font-size: 18px; font-weight: 800; }
+
+.tabs { display: flex; gap: 4px; margin-top: 12px; background: var(--gray-light); padding: 4px; border-radius: 10px; width: fit-content; }
+.tab { padding: 8px 18px; border-radius: 7px; border: none; background: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--gray); transition: all 0.12s; }
+.tab.active { background: var(--white); color: var(--dark); box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+
+.main { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+/* Карточка сохранённого заказа */
+.saved-job { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; margin-bottom: 10px; }
+.saved-job-emoji { width: 44px; height: 44px; border-radius: 10px; background: var(--orange-light); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.saved-job-body { flex: 1; min-width: 0; }
+.saved-job-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.saved-job-meta { font-size: 12.5px; color: var(--gray); margin-bottom: 8px; }
+.saved-job-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag-pill { font-size: 11.5px; padding: 3px 9px; border-radius: 20px; background: var(--gray-light); color: var(--gray); }
+.tag-pill.urgent { background: #FFF0E8; color: var(--orange-dark); }
+.saved-job-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex-shrink: 0; }
+.saved-job-pay { font-size: 16px; font-weight: 800; }
+.btn-apply { padding: 7px 14px; border-radius: 9px; background: var(--orange); color: var(--white); border: none; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.btn-apply:hover { background: var(--orange-dark); }
+.btn-unsave { padding: 7px 10px; border-radius: 9px; background: none; border: 1px solid var(--border); color: var(--gray); font-size: 12.5px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; }
+.btn-unsave:hover { border-color: var(--orange); color: var(--orange); }
+
+/* Карточка сохранённого исполнителя */
+.saved-worker { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.saved-worker-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--white); flex-shrink: 0; }
+.saved-worker-body { flex: 1; min-width: 0; }
+.saved-worker-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+.verified-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-bg); padding: 2px 7px; border-radius: 20px; }
+.saved-worker-meta { font-size: 12.5px; color: var(--gray); }
+.saved-worker-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.btn-contact { padding: 8px 14px; border-radius: 9px; background: var(--orange); color: var(--white); border: none; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; }
+.btn-contact:hover { background: var(--orange-dark); }
+.btn-contact i { font-size: 14px; }
+.btn-remove { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--gray); }
+.btn-remove:hover { border-color: #FF4444; color: #FF4444; }
+
+/* Пустое состояние */
+.empty-state { text-align: center; padding: 80px 20px; color: var(--gray); }
+.empty-state i { font-size: 52px; margin-bottom: 14px; display: block; color: #E5E4E0; }
+.empty-state h3 { font-size: 18px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+.empty-state p { font-size: 14px; line-height: 1.6; max-width: 300px; margin: 0 auto 20px; }
+.empty-state a { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; background: var(--orange); color: var(--white); text-decoration: none; font-size: 14px; font-weight: 700; }
+
+@media (max-width: 600px) {
+  body { padding-bottom: 70px; }
+  .page-header { padding: 12px 16px; }
+  .main { padding: 12px; }
+  .saved-job { flex-wrap: wrap; }
+  .saved-job-actions { flex-direction: row; align-items: center; width: 100%; }
+}
+.mobile-bottom-nav { position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid var(--border);display:none;align-items:center;justify-content:space-around;z-index:200; }
+.mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 10px;color:var(--gray);font-family:inherit;font-size:10px; }
+.mobile-nav-btn.active { color:var(--orange); }
+.mobile-nav-btn i { font-size:22px; }
+</style>
+<script src="/data.js"></script>
+<script src="/nav.js"></script>
+<script src="/icons.js"></script>
+</head>
+<body>
+<div id="shabashka-nav"></div>
+
+<div class="page-header">
+  <div class="header-top">
+    <button class="back-btn" onclick="history.back()"><i class="ph-bold ph-arrow-left"></i> Назад</button>
+    <div class="page-title"><i class="ph-bold ph-heart" style="color:var(--orange);margin-right:6px"></i>Избранное</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-jobs" onclick="switchTab('jobs')">Заказы</button>
+    <button class="tab" id="tab-workers" onclick="switchTab('workers')">Исполнители</button>
+  </div>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<div class="mobile-bottom-nav" id="mobileNav">
+  <button class="mobile-nav-btn" onclick="location.href='/'"><i class="ph-bold ph-house"></i>Главная</button>
+  <button class="mobile-nav-btn active" onclick="location.href='/favorites'"><i class="ph-bold ph-heart"></i>Избранное</button>
+  <button class="mobile-nav-btn" onclick="location.href='/chat'"><i class="ph-bold ph-chat-circle-dots"></i>Чат</button>
+  <button class="mobile-nav-btn" onclick="location.href='/profile'"><i class="ph-bold ph-user-circle"></i>Профиль</button>
+</div>
+
+<script>
+Shabashka.renderNav('favorites');
+
+var activeTab = 'jobs';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-jobs').classList.toggle('active', tab === 'jobs');
+  document.getElementById('tab-workers').classList.toggle('active', tab === 'workers');
+  render();
+}
+
+function render() {
+  if (activeTab === 'jobs') renderJobs();
+  else renderWorkers();
+}
+
+function renderJobs() {
+  var jobs = Shabashka.getSavedJobs();
+  if (!jobs.length) {
+    document.getElementById('mainContent').innerHTML = '<div class="empty-state">' +
+      '<i class="ph-bold ph-heart"></i>' +
+      '<h3>Нет сохранённых заказов</h3>' +
+      '<p>Нажми ♡ на карточке заказа, чтобы сохранить его сюда</p>' +
+      '<a href="/"><i class="ph-bold ph-magnifying-glass"></i> Найти заказы</a>' +
+      '</div>';
+    return;
+  }
+  document.getElementById('mainContent').innerHTML = jobs.map(function(j) {
+    var statusLabel = Shabashka.STATUS_MAP[j.status] ? Shabashka.STATUS_MAP[j.status].label : j.status;
+    return '<div class="saved-job">' +
+      '<div class="saved-job-emoji">' + j.emoji + '</div>' +
+      '<div class="saved-job-body">' +
+      '<div class="saved-job-title">' + j.title + '</div>' +
+      '<div class="saved-job-meta">' + j.company + ' · ' + j.location + ' · ' + j.date + '</div>' +
+      '<div class="saved-job-tags">' +
+      (j.urgent ? '<span class="tag-pill urgent"><i class="ph-bold ph-fire" style="font-size:11px"></i> Срочно</span>' : '') +
+      '<span class="tag-pill">' + statusLabel + '</span>' +
+      '</div></div>' +
+      '<div class="saved-job-actions">' +
+      '<div class="saved-job-pay">' + j.pay.toLocaleString('ru') + ' ₽</div>' +
+      '<button class="btn-apply" onclick="location.href=\'/\'">Откликнуться</button>' +
+      '<button class="btn-unsave" onclick="unsaveJob(' + j.id + ')"><i class="ph-bold ph-heart-break" style="font-size:14px"></i>Убрать</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function renderWorkers() {
+  var workers = Shabashka.getSavedWorkers();
+  if (!workers.length) {
+    document.getElementById('mainContent').innerHTML = '<div class="empty-state">' +
+      '<i class="ph-bold ph-users"></i>' +
+      '<h3>Нет сохранённых исполнителей</h3>' +
+      '<p>Нажми ♡ на карточке исполнителя в поиске, чтобы сохранить его</p>' +
+      '<a href="/workers"><i class="ph-bold ph-magnifying-glass"></i> Найти исполнителей</a>' +
+      '</div>';
+    return;
+  }
+  document.getElementById('mainContent').innerHTML = workers.map(function(w) {
+    var verBadge = w.verified ? '<span class="verified-badge"><i class="ph-bold ph-seal-check"></i>Проверен</span>' : '';
+    return '<div class="saved-worker">' +
+      '<div class="saved-worker-avatar" style="background:' + w.color + '">' + w.name[0] + '</div>' +
+      '<div class="saved-worker-body">' +
+      '<div class="saved-worker-name">' + w.name + verBadge + '</div>' +
+      '<div class="saved-worker-meta">⭐ ' + w.rating.toFixed(1) + ' · ' + w.orders + ' заказов · ' + w.location + ' · от ' + w.price.toLocaleString('ru') + ' ₽/день</div>' +
+      '</div>' +
+      '<div class="saved-worker-actions">' +
+      '<button class="btn-contact" onclick="location.href=\'/chat?worker=' + w.id + '\'"><i class="ph-bold ph-chat-circle-dots"></i>Написать</button>' +
+      '<button class="btn-remove" onclick="unsaveWorker(' + w.id + ')" title="Убрать из избранного"><i class="ph-bold ph-x" style="font-size:15px"></i></button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function unsaveJob(id) {
+  Shabashka.toggleFavJob(id);
+  render();
+}
+function unsaveWorker(id) {
+  Shabashka.toggleFavWorker(id);
+  render();
+}
+
+(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();
+
+render();
+</script>
+</body>
+</html>
