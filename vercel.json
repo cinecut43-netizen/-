@@ -8,6 +8,8 @@
     { "src": "/api/ai-chat", "dest": "/api/ai-chat.js" },
     { "src": "/api/admin-login", "dest": "/api/admin-login.js" },
     { "src": "/api/admin-verify", "dest": "/api/admin-verify.js" },
+    { "src": "/api/send-code", "dest": "/api/send-code.js" },
+    { "src": "/api/verify-code", "dest": "/api/verify-code.js" },
     { "src": "/", "dest": "/index.html" },
     { "src": "/chat", "dest": "/chat.html" },
     { "src": "/profile", "dest": "/profile.html" },

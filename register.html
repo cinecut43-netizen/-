@@ -21,7 +21,7 @@
 <meta property="og:url" content="https://shabashka-jade.vercel.app/register">
 <meta property="og:title" content="Регистрация — Шабашка">
 <meta property="og:description" content="Зарегистрируйся за 2 минуты. Найди подработку или размести заказ прямо сейчас.">
-<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.svg">
+<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Шабашка">
@@ -30,7 +30,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Регистрация — Шабашка">
 <meta name="twitter:description" content="Зарегистрируйся за 2 минуты. Найди подработку или размести заказ прямо сейчас.">
-<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.svg">
+<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -249,6 +249,7 @@ function renderCodeStep() {
     <button class="btn-back" id="backBtn">← Изменить номер</button>
     <div class="step-title">Введите код из SMS</div>
     <div class="step-sub">Отправили код на номер <strong>+7 ${formatPhoneDisplay(state.phone)}</strong></div>
+    ${state.demoCode ? `<div style="margin-bottom:16px;padding:10px 14px;background:#FFF0E8;border-radius:9px;font-size:13px;text-align:center;color:#B33D06">🔧 Демо-режим: ваш код <strong>${state.demoCode}</strong></div>` : ''}
 
     <div class="code-row">
       ${[0,1,2,3].map(i => `<input class="code-input" id="code${i}" maxlength="1" inputmode="numeric">`).join('')}
@@ -374,17 +375,40 @@ function attachHandlers() {
     input.addEventListener('input', () => {
       input.value = input.value.replace(/[^\d\s-]/g, '');
     });
-    sendBtn.addEventListener('click', () => {
+    sendBtn.addEventListener('click', async () => {
       const digits = input.value.replace(/\D/g, '');
       if (digits.length < 10) {
         document.getElementById('phoneError').classList.add('show');
         input.style.borderColor = 'var(--red)';
         return;
       }
-      state.phone = digits;
-      state.step = 2;
-      render();
-      startResendTimer();
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Отправляем…';
+      try {
+        const res = await fetch('/api/send-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: digits }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          document.getElementById('phoneError').textContent = data.error || 'Ошибка отправки';
+          document.getElementById('phoneError').classList.add('show');
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Получить код';
+          return;
+        }
+        state.phone = digits;
+        state.demoCode = data.code || null; // null в production
+        state.step = 2;
+        render();
+        startResendTimer();
+      } catch(e) {
+        document.getElementById('phoneError').textContent = 'Не удалось связаться с сервером';
+        document.getElementById('phoneError').classList.add('show');
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Получить код';
+      }
     });
   }
 
@@ -407,10 +431,23 @@ function attachHandlers() {
     codeInputs[0].focus();
 
     const resendLink = document.getElementById('resendLink');
-    resendLink.addEventListener('click', () => {
+    resendLink.addEventListener('click', async () => {
       if (resendLink.classList.contains('disabled')) return;
+      try {
+        const res = await fetch('/api/send-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: state.phone }),
+        });
+        const data = await res.json();
+        if (data.code) state.demoCode = data.code;
+        if (!data.ok) {
+          document.getElementById('codeError').textContent = data.error || 'Ошибка отправки';
+          document.getElementById('codeError').classList.add('show');
+          return;
+        }
+      } catch(e) {}
       startResendTimer();
-      // здесь должен быть повторный вызов реального API отправки SMS
     });
   }
 
@@ -472,20 +509,30 @@ function attachHandlers() {
   }
 }
 
-function checkCode(codeInputs) {
-  // ЗАГЛУШКА: в реальной интеграции здесь должен быть запрос к серверной
-  // функции (например /api/verify-sms), которая проверяет код через
-  // SMS-провайдера. Сейчас любой 4-значный код считается верным,
-  // кроме "0000" — это для демонстрации сценария ошибки.
+async function checkCode(codeInputs) {
   const code = codeInputs.map(i => i.value).join('');
-  if (code === '0000') {
-    document.getElementById('codeError').classList.add('show');
-    codeInputs.forEach(i => { i.value = ''; i.style.borderColor = 'var(--red)'; });
-    codeInputs[0].focus();
-    return;
+  const errorEl = document.getElementById('codeError');
+
+  try {
+    const res = await fetch('/api/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: state.phone, code: code }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      errorEl.textContent = data.error || 'Неверный код';
+      errorEl.classList.add('show');
+      codeInputs.forEach(i => { i.value = ''; i.style.borderColor = 'var(--red)'; });
+      codeInputs[0].focus();
+      return;
+    }
+    state.step = 3;
+    render();
+  } catch(e) {
+    errorEl.textContent = 'Не удалось проверить код. Попробуйте ещё раз.';
+    errorEl.classList.add('show');
   }
-  state.step = 3;
-  render();
 }
 
 let resendTimerInterval = null;
