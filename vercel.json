@@ -4,6 +4,7 @@
     { "src": "/sitemap.xml", "dest": "/sitemap.xml" },
     { "src": "/robots.txt", "dest": "/robots.txt" },
     { "src": "/og-image.svg", "dest": "/og-image.svg" },
+    { "src": "/og-image.png", "dest": "/og-image.png" },
     { "src": "/api/ai-chat", "dest": "/api/ai-chat.js" },
     { "src": "/api/admin-login", "dest": "/api/admin-login.js" },
     { "src": "/api/admin-verify", "dest": "/api/admin-verify.js" },
@@ -38,7 +39,8 @@
     { "src": "/nav.js", "dest": "/nav.js" },
     { "src": "/admin-data.js", "dest": "/admin-data.js" },
     { "src": "/admin-nav.js", "dest": "/admin-nav.js" },
-    { "src": "/favicon.svg", "dest": "/favicon.svg" }
+    { "src": "/favicon.svg", "dest": "/favicon.svg" },
+    { "src": "/(.*)", "dest": "/404.html", "status": 404 }
   ]
 }
 
