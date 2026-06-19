@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Шабашка">
+<link rel="apple-touch-icon" href="/favicon.svg">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Карта заказов — Шабашка</title>
 <meta name="description" content="Найди заказы рядом с тобой на интерактивной карте Москвы и области.">
@@ -356,5 +362,6 @@ initMap();
   <button class="mobile-nav-btn" onclick="location.href='/profile'"><i class="ph-bold ph-user-circle" style="font-size:22px"></i><span style="font-size:10px">Профиль</span></button>
 </div>
 <script>(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
+<script src="/pwa.js"></script>
 </body>
 </html>

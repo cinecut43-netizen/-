@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Шабашка">
+<link rel="apple-touch-icon" href="/favicon.svg">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Кабинет работодателя — Шабашка</title>
 <meta name="description" content="Управляй заказами, откликами и платежами в личном кабинете работодателя.">
@@ -1002,5 +1008,6 @@ function syncEmployerNav(page) {
   if (btn) btn.classList.add('active');
 }
 </script>
+<script src="/pwa.js"></script>
 </body>
 </html>
