@@ -14,20 +14,25 @@
   }
 
   // Пункты меню для роли "исполнитель"
+  // Иконки через icons.js — функция icon() доступна после загрузки icons.js
+  function ic(name) {
+    return window.ShabashkaIcons ? window.ShabashkaIcons.icon(name, 18) : '';
+  }
+
   const WORKER_LINKS = [
-    { page: 'index', href: '/', icon: '🔍', label: 'Найти работу' },
-    { page: 'map', href: '/map', icon: '🗺', label: 'Карта' },
-    { page: 'chat', href: '/chat', icon: '💬', label: 'Сообщения' },
-    { page: 'wallet', href: '/wallet', icon: '💳', label: 'Кошелёк' },
-    { page: 'profile', href: '/profile', icon: '👤', label: 'Профиль' },
+    { page: 'index', href: '/', icon: 'search', label: 'Найти работу' },
+    { page: 'map', href: '/map', icon: 'map', label: 'Карта' },
+    { page: 'chat', href: '/chat', icon: 'message-circle', label: 'Сообщения' },
+    { page: 'wallet', href: '/wallet', icon: 'credit-card', label: 'Кошелёк' },
+    { page: 'profile', href: '/profile', icon: 'user', label: 'Профиль' },
   ];
 
   // Пункты меню для роли "работодатель"
   const EMPLOYER_LINKS = [
-    { page: 'employer', href: '/employer', icon: '📊', label: 'Кабинет' },
-    { page: 'map', href: '/map', icon: '🗺', label: 'Карта' },
-    { page: 'chat', href: '/chat', icon: '💬', label: 'Сообщения' },
-    { page: 'profile', href: '/profile', icon: '👤', label: 'Профиль' },
+    { page: 'employer', href: '/employer', icon: 'layout-dashboard', label: 'Кабинет' },
+    { page: 'map', href: '/map', icon: 'map', label: 'Карта' },
+    { page: 'chat', href: '/chat', icon: 'message-circle', label: 'Сообщения' },
+    { page: 'profile', href: '/profile', icon: 'user', label: 'Профиль' },
   ];
 
   const NAV_STYLE_ID = 'shabashka-nav-style';
@@ -54,6 +59,8 @@
       }
       .sb-link:hover { background: #F4F3EF; color: #1A1A18; }
       .sb-link.sb-active { background: #FFF0E8; color: #B33D06; font-weight: 600; }
+      .sb-link-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
+      .sb-link-icon svg { display: block; }
       .sb-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
       .sb-role-toggle {
         display: flex; background: #F4F3EF; border-radius: 8px; padding: 3px; gap: 2px;
@@ -118,7 +125,7 @@
     const linksHtml = links.map(function (l) {
       const active = l.page === activePage ? ' sb-active' : '';
       return '<a class="sb-link' + active + '" href="' + l.href + '">' +
-        '<span>' + l.icon + '</span><span>' + l.label + '</span></a>';
+        '<span class="sb-link-icon">' + ic(l.icon) + '</span><span>' + l.label + '</span></a>';
     }).join('');
 
     const accountHtml = loggedIn
@@ -135,7 +142,7 @@
             '<button class="sb-role-btn' + (user.role === 'employer' ? ' sb-active' : '') + '" data-role="employer">Я работодатель</button>' +
           '</div>' +
           accountHtml +
-          '<button class="sb-burger" aria-label="Меню">☰</button>' +
+          '<button class="sb-burger" aria-label="Меню">' + ic('menu') + '</button>' +
         '</div>' +
       '</div>' +
       '<div class="sb-mobile-panel" id="sbMobilePanel">' + linksHtml + '</div>';

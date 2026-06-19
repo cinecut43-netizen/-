@@ -144,7 +144,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; c
   padding: 28px;
 }
 .how-num { font-size: 13px; font-weight: 700; color: var(--orange); margin-bottom: 16px; }
-.how-icon { font-size: 36px; margin-bottom: 12px; }
+.how-icon { font-size: 36px; margin-bottom: 12px; display: flex; align-items: center; }
+.how-icon svg { display: block; }
 .how-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
 .how-desc { font-size: 14px; color: var(--gray); line-height: 1.6; }
 
@@ -329,19 +330,19 @@ footer {
     <div class="how-grid">
       <div class="how-card">
         <div class="how-num">01</div>
-        <div class="how-icon">🔍</div>
+        <div class="how-icon"><span data-icon="search" data-size="40" data-color="#E8510A"></span></div>
         <div class="how-title">Найди заказ рядом</div>
         <div class="how-desc">Фильтруй по категории, дате и оплате. Смотри на карте — заказы рядом с тобой подсвечены прямо на улице.</div>
       </div>
       <div class="how-card">
         <div class="how-num">02</div>
-        <div class="how-icon">💬</div>
+        <div class="how-icon"><span data-icon="message-circle" data-size="40" data-color="#E8510A"></span></div>
         <div class="how-title">Откликнись и договорись</div>
         <div class="how-desc">Один клик — и твой отклик у работодателя. Можешь предложить свою цену, если работодатель открыт к торгу.</div>
       </div>
       <div class="how-card">
         <div class="how-num">03</div>
-        <div class="how-icon">💰</div>
+        <div class="how-icon"><span data-icon="shield-check" data-size="40" data-color="#E8510A"></span></div>
         <div class="how-title">Выйди и получи деньги</div>
         <div class="how-desc">Деньги зарезервированы заранее. После выполнения — выплата на карту. Если что-то пошло не так — платформа разберётся.</div>
       </div>
@@ -477,6 +478,7 @@ footer {
   <div class="footer-copy">© 2025 Шабашка</div>
 </footer>
 
+<script src="/icons.js"></script>
 <script>
 // Анимация счётчиков при прокрутке к герою
 function animateCount(el, target, suffix) {

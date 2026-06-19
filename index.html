@@ -491,6 +491,7 @@
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
+<script src="/icons.js"></script>
 </head>
 <body>
 
@@ -867,16 +868,16 @@ function syncMobileCat(btn) {
 <!-- Нижняя навигация для мобильных -->
 <div class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
   <button class="mobile-nav-btn active" onclick="window.location.href='/'">
-    <span class="mobile-nav-icon">🏠</span>Главная
+    <span class="mobile-nav-icon" data-icon="home" data-size="22"></span>Главная
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/map'">
-    <span class="mobile-nav-icon">🗺</span>Карта
+    <span class="mobile-nav-icon" data-icon="map" data-size="22"></span>Карта
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/chat'">
-    <span class="mobile-nav-icon">💬</span>Чат
+    <span class="mobile-nav-icon" data-icon="message-circle" data-size="22"></span>Чат
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/profile'">
-    <span class="mobile-nav-icon">👤</span>Профиль
+    <span class="mobile-nav-icon" data-icon="user" data-size="22"></span>Профиль
   </button>
 </div>
 </body>

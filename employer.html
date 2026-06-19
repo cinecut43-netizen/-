@@ -235,6 +235,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
+<script src="/icons.js"></script>
 </head>
 <body>
 
@@ -947,19 +948,19 @@ renderPage();
 <!-- Нижняя навигация для мобильных (работодатель) -->
 <div class="employer-bottom-nav" id="employerBottomNav">
   <button class="employer-nav-btn active" id="enav-dashboard" onclick="setPage('dashboard', null); syncEmployerNav('dashboard')">
-    <span class="employer-nav-icon">📊</span>Дашборд
+    <span data-icon="layout-dashboard" data-size="22"></span>Дашборд
   </button>
   <button class="employer-nav-btn" id="enav-orders" onclick="setPage('orders', null); syncEmployerNav('orders')">
-    <span class="employer-nav-icon">📋</span>Заказы
+    <span data-icon="clipboard-list" data-size="22"></span>Заказы
   </button>
   <button class="employer-nav-btn" id="enav-responses" onclick="setPage('responses', null); syncEmployerNav('responses')">
-    <span class="employer-nav-icon">👥</span>Отклики
+    <span data-icon="users" data-size="22"></span>Отклики
   </button>
   <button class="employer-nav-btn" id="enav-payments" onclick="setPage('payments', null); syncEmployerNav('payments')">
-    <span class="employer-nav-icon">💳</span>Платежи
+    <span data-icon="credit-card" data-size="22"></span>Платежи
   </button>
   <button class="employer-nav-btn" id="enav-company" onclick="setPage('company', null); syncEmployerNav('company')">
-    <span class="employer-nav-icon">🏢</span>Компания
+    <span data-icon="building-2" data-size="22"></span>Компания
   </button>
 </div>
 
