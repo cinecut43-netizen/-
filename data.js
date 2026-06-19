@@ -93,6 +93,91 @@
     localStorage.removeItem(PRO_KEY);
   }
 
+  /* ---------- РЕФЕРАЛЬНАЯ ПРОГРАММА ----------
+     У каждого пользователя есть уникальный реферальный код (генерируется
+     один раз и сохраняется в localStorage). Ссылка для шеринга:
+     /register?ref=КОД. При регистрации по ней:
+     — новый пользователь получает 200 ₽ приветственного бонуса
+     — пригласивший получает 200 ₽ за каждого реферала
+     История приглашений хранится в REFERRAL_HISTORY_KEY. */
+  const REFERRAL_CODE_KEY    = 'shabashka_referral_code';
+  const REFERRAL_HISTORY_KEY = 'shabashka_referral_history';
+  const REFERRAL_BONUS       = 200; // ₽ за каждого приглашённого
+
+  function generateRefCode() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code = '';
+    for (var i = 0; i < 6; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return code;
+  }
+
+  function getRefCode() {
+    var code = localStorage.getItem(REFERRAL_CODE_KEY);
+    if (!code) {
+      code = generateRefCode();
+      localStorage.setItem(REFERRAL_CODE_KEY, code);
+    }
+    return code;
+  }
+
+  function getRefLink() {
+    return 'https://shabashka-jade.vercel.app/register?ref=' + getRefCode();
+  }
+
+  function getReferralHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(REFERRAL_HISTORY_KEY) || '[]');
+    } catch(e) { return []; }
+  }
+
+  function getReferralStats() {
+    var history = getReferralHistory();
+    var earned = history.filter(function(r){ return r.status === 'paid'; })
+      .reduce(function(s){ return s + REFERRAL_BONUS; }, 0);
+    return {
+      total: history.length,
+      paid: history.filter(function(r){ return r.status === 'paid'; }).length,
+      pending: history.filter(function(r){ return r.status === 'pending'; }).length,
+      earned: earned,
+      history: history,
+    };
+  }
+
+  // Вызывается при регистрации нового пользователя по реф-ссылке
+  function processReferral(refCode) {
+    if (!refCode) return;
+    var myCode = getRefCode();
+    if (refCode === myCode) return; // нельзя пригласить себя
+    var history = getReferralHistory();
+    var exists = history.find(function(r){ return r.refCode === refCode; });
+    if (exists) return; // уже обработан
+    history.unshift({
+      id: Date.now(),
+      refCode: refCode,
+      name: 'Новый пользователь',
+      date: todayLabel(),
+      status: 'pending', // → 'paid' после первого выполненного заказа
+      bonus: REFERRAL_BONUS,
+    });
+    localStorage.setItem(REFERRAL_HISTORY_KEY, JSON.stringify(history));
+    // Приветственный бонус новому пользователю — сразу на кошелёк
+    topUpBalance(REFERRAL_BONUS, 'Приветственный бонус по реф-ссылке');
+  }
+
+  // Демо: симулируем что первый реферал уже выполнил заказ и бонус выплачен
+  function seedDemoReferrals() {
+    if (getReferralHistory().length > 0) return;
+    var demo = [
+      { id: 1, name: 'Алексей К.', date: '10 июн', status: 'paid', bonus: REFERRAL_BONUS },
+      { id: 2, name: 'Ольга Р.', date: '14 июн', status: 'paid', bonus: REFERRAL_BONUS },
+      { id: 3, name: 'Максим Т.', date: '17 июн', status: 'pending', bonus: REFERRAL_BONUS },
+    ];
+    localStorage.setItem(REFERRAL_HISTORY_KEY, JSON.stringify(demo));
+  }
+  seedDemoReferrals();
+
   const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
   function formatRegisteredDate(isoDate) {
@@ -820,6 +905,13 @@
     isPro: isPro,
     activatePro: activatePro,
     deactivatePro: deactivatePro,
+    // Реферальная программа
+    REFERRAL_BONUS: REFERRAL_BONUS,
+    getRefCode: getRefCode,
+    getRefLink: getRefLink,
+    getReferralHistory: getReferralHistory,
+    getReferralStats: getReferralStats,
+    processReferral: processReferral,
     updateProfile: updateProfile,
     formatRegisteredDate: formatRegisteredDate,
     // Совместимость: код, написанный раньше, использует Shabashka.JOBS как массив.

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Пригласи друга — Шабашка</title>
+<meta name="description" content="Пригласи друга на Шабашку и получи 200 ₽ за каждого. Друг тоже получит бонус при регистрации.">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --white: #fff; --gray: #6B6B67;
+  --gray-light: #F4F3EF; --border: #E5E4E0;
+  --green: #1A7A4A; --green-bg: #E8F5EE;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); padding-bottom: 40px; }
+
+/* ГЕРОЙ */
+.hero {
+  background: var(--dark);
+  padding: 56px 24px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(232,81,10,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(232,81,10,0.12); border: 1px solid rgba(232,81,10,0.25);
+  color: #FF8552; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 18px;
+}
+.hero-title { font-size: clamp(26px, 5vw, 44px); font-weight: 900; color: var(--white); letter-spacing: -1px; line-height: 1.15; margin-bottom: 12px; }
+.hero-title span { color: var(--orange); }
+.hero-sub { font-size: 15px; color: rgba(255,255,255,0.5); max-width: 380px; margin: 0 auto 36px; line-height: 1.6; }
+
+/* КАРТОЧКИ БОНУСА */
+.bonus-cards { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+.bonus-card {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 18px 24px; text-align: center; min-width: 150px;
+}
+.bonus-card-icon { font-size: 28px; margin-bottom: 8px; }
+.bonus-card-amount { font-size: 28px; font-weight: 900; color: var(--orange); margin-bottom: 2px; }
+.bonus-card-label { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+
+/* БЛОК ССЫЛКИ */
+.link-block {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 20px 24px; max-width: 480px; margin: 0 auto;
+}
+.link-label { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
+.link-row { display: flex; gap: 8px; }
+.link-input {
+  flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 9px; padding: 10px 14px; font-size: 13px; color: var(--white);
+  font-family: 'Courier New', monospace; outline: none;
+}
+.btn-copy {
+  padding: 10px 18px; border-radius: 9px; background: var(--orange); color: var(--white);
+  border: none; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: all 0.12s;
+}
+.btn-copy:hover { background: var(--orange-dark); }
+.btn-copy i { font-size: 15px; }
+.share-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.btn-share {
+  flex: 1; padding: 9px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7);
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.12s;
+}
+.btn-share:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+.btn-share i { font-size: 16px; }
+
+/* ОСНОВНОЙ КОНТЕНТ */
+.main { max-width: 680px; margin: 0 auto; padding: 24px 20px 0; }
+
+/* СТАТИСТИКА */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 18px; text-align: center; }
+.stat-num { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; }
+.stat-label { font-size: 12px; color: var(--gray); margin-top: 3px; }
+
+/* КАК РАБОТАЕТ */
+.how-section { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+.how-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+.how-steps { display: flex; flex-direction: column; gap: 14px; }
+.how-step { display: flex; gap: 12px; align-items: flex-start; }
+.how-step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--orange-light); color: var(--orange-dark); font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.how-step-text { font-size: 13.5px; line-height: 1.5; color: var(--dark); }
+.how-step-text strong { font-weight: 700; }
+
+/* ИСТОРИЯ ПРИГЛАШЕНИЙ */
+.history-section { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+.history-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+.history-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.history-item:last-child { border-bottom: none; }
+.history-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gray-light); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--gray); flex-shrink: 0; }
+.history-info { flex: 1; }
+.history-name { font-size: 13.5px; font-weight: 600; }
+.history-date { font-size: 12px; color: var(--gray); }
+.history-status { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.status-paid { background: var(--green-bg); color: var(--green); }
+.status-pending { background: #FFF8E6; color: #B07800; }
+.history-bonus { font-size: 14px; font-weight: 800; color: var(--green); }
+
+.empty-history { text-align: center; padding: 32px 16px; color: var(--gray); }
+.empty-history i { font-size: 36px; margin-bottom: 10px; display: block; color: #E5E4E0; }
+
+@media (max-width: 600px) {
+  body { padding-bottom: 70px; }
+  .hero { padding: 40px 16px 36px; }
+  .main { padding: 16px 12px 0; }
+  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-num { font-size: 22px; }
+  .link-row { flex-direction: column; }
+  .btn-copy { justify-content: center; }
+}
+.mobile-bottom-nav { position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid var(--border);display:none;align-items:center;justify-content:space-around;z-index:200; }
+.mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 10px;color:var(--gray);font-family:inherit;font-size:10px; }
+.mobile-nav-btn.active { color:var(--orange); }
+.mobile-nav-btn i { font-size:22px; }
+
+/* TOAST */
+.toast { position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--dark);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap; }
+.toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+</style>
+<script src="/data.js"></script>
+<script src="/nav.js"></script>
+<script src="/icons.js"></script>
+</head>
+<body>
+<div id="shabashka-nav"></div>
+
+<!-- ГЕРОЙ -->
+<section class="hero">
+  <div class="hero-eyebrow"><i class="ph-bold ph-users" style="font-size:13px"></i> Реферальная программа</div>
+  <h1 class="hero-title">Пригласи друга —<br>получи <span>200 ₽</span></h1>
+  <p class="hero-sub">За каждого друга, который зарегистрируется по твоей ссылке и выполнит первый заказ. Друг тоже получит 200 ₽ приветственный бонус.</p>
+
+  <div class="bonus-cards">
+    <div class="bonus-card">
+      <div class="bonus-card-icon"><i class="ph-bold ph-user-plus" style="color:#E8510A"></i></div>
+      <div class="bonus-card-amount">200 ₽</div>
+      <div class="bonus-card-label">тебе за каждого<br>приглашённого</div>
+    </div>
+    <div class="bonus-card">
+      <div class="bonus-card-icon"><i class="ph-bold ph-gift" style="color:#4ACA7A"></i></div>
+      <div class="bonus-card-amount">200 ₽</div>
+      <div class="bonus-card-label">другу при<br>регистрации</div>
+    </div>
+  </div>
+
+  <!-- ССЫЛКА -->
+  <div class="link-block">
+    <div class="link-label">Твоя реферальная ссылка</div>
+    <div class="link-row">
+      <input class="link-input" id="refLinkInput" readonly>
+      <button class="btn-copy" onclick="copyLink()"><i class="ph-bold ph-copy"></i> Копировать</button>
+    </div>
+    <div class="share-row">
+      <button class="btn-share" onclick="shareTelegram()"><i class="ph-bold ph-telegram-logo"></i> Telegram</button>
+      <button class="btn-share" onclick="shareWhatsApp()"><i class="ph-bold ph-whatsapp-logo"></i> WhatsApp</button>
+      <button class="btn-share" onclick="shareNative()"><i class="ph-bold ph-share-network"></i> Поделиться</button>
+    </div>
+  </div>
+</section>
+
+<!-- ОСНОВНОЙ КОНТЕНТ -->
+<div class="main">
+
+  <!-- СТАТИСТИКА -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- КАК РАБОТАЕТ -->
+  <div class="how-section">
+    <div class="how-title">Как это работает</div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-step-num">1</div>
+        <div class="how-step-text"><strong>Поделись ссылкой</strong> — отправь её другу в Telegram, WhatsApp или любом мессенджере</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">2</div>
+        <div class="how-step-text">Друг <strong>регистрируется по твоей ссылке</strong> и сразу получает 200 ₽ на счёт в качестве приветственного бонуса</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">3</div>
+        <div class="how-step-text">После того как друг <strong>выполняет первый заказ</strong>, тебе начисляется 200 ₽ — автоматически на кошелёк</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ИСТОРИЯ -->
+  <div class="history-section">
+    <div class="history-title">История приглашений</div>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<!-- НИЖНЯЯ НАВИГАЦИЯ -->
+<div class="mobile-bottom-nav" id="mobileNav">
+  <button class="mobile-nav-btn" onclick="location.href='/'"><i class="ph-bold ph-house"></i>Главная</button>
+  <button class="mobile-nav-btn" onclick="location.href='/wallet'"><i class="ph-bold ph-wallet"></i>Кошелёк</button>
+  <button class="mobile-nav-btn" onclick="location.href='/chat'"><i class="ph-bold ph-chat-circle-dots"></i>Чат</button>
+  <button class="mobile-nav-btn active" onclick="location.href='/profile'"><i class="ph-bold ph-user-circle"></i>Профиль</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+Shabashka.renderNav('referral');
+
+var S = window.Shabashka;
+var refLink = S.getRefLink();
+
+document.getElementById('refLinkInput').value = refLink;
+
+function copyLink() {
+  navigator.clipboard.writeText(refLink).then(function() {
+    showToast('Ссылка скопирована!');
+    var btn = document.querySelector('.btn-copy');
+    btn.innerHTML = '<i class="ph-bold ph-check" style="font-size:15px"></i> Скопировано';
+    setTimeout(function() {
+      btn.innerHTML = '<i class="ph-bold ph-copy" style="font-size:15px"></i> Копировать';
+    }, 2000);
+  }).catch(function() {
+    document.getElementById('refLinkInput').select();
+    document.execCommand('copy');
+    showToast('Ссылка скопирована!');
+  });
+}
+
+function shareTelegram() {
+  var text = 'Зарабатывай на подработках! Регистрируйся по моей ссылке и получи 200 ₽ бонус на первый заказ';
+  window.open('https://t.me/share/url?url=' + encodeURIComponent(refLink) + '&text=' + encodeURIComponent(text), '_blank');
+}
+
+function shareWhatsApp() {
+  var text = 'Зарабатывай на подработках! Регистрируйся и получи 200 ₽ бонус: ' + refLink;
+  window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
+}
+
+function shareNative() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Шабашка — подработка рядом',
+      text: 'Регистрируйся по моей ссылке и получи 200 ₽ бонус!',
+      url: refLink,
+    }).catch(function(){});
+  } else {
+    copyLink();
+  }
+}
+
+function renderStats() {
+  var stats = S.getReferralStats();
+  document.getElementById('statsRow').innerHTML =
+    '<div class="stat-card"><div class="stat-num">' + stats.total + '</div><div class="stat-label">Приглашено</div></div>' +
+    '<div class="stat-card"><div class="stat-num" style="color:var(--green)">' + stats.paid + '</div><div class="stat-label">Начислено</div></div>' +
+    '<div class="stat-card"><div class="stat-num" style="color:var(--orange)">' + (stats.earned || 0).toLocaleString('ru') + ' ₽</div><div class="stat-label">Заработано</div></div>';
+}
+
+function renderHistory() {
+  var history = S.getReferralHistory();
+  if (!history.length) {
+    document.getElementById('historyList').innerHTML =
+      '<div class="empty-history"><i class="ph-bold ph-users"></i><div>Пока никого не пригласил</div><div style="font-size:12px;margin-top:4px">Поделись ссылкой выше — и друзья появятся здесь</div></div>';
+    return;
+  }
+  document.getElementById('historyList').innerHTML = history.map(function(r) {
+    var statusHtml = r.status === 'paid'
+      ? '<span class="history-status status-paid">Начислено</span>'
+      : '<span class="history-status status-pending">Ждём первый заказ</span>';
+    var bonusHtml = r.status === 'paid'
+      ? '<div class="history-bonus">+' + r.bonus + ' ₽</div>'
+      : '<div style="font-size:12px;color:var(--gray)">+' + r.bonus + ' ₽</div>';
+    return '<div class="history-item">' +
+      '<div class="history-avatar">' + r.name[0] + '</div>' +
+      '<div class="history-info"><div class="history-name">' + r.name + '</div><div class="history-date">' + r.date + '</div></div>' +
+      statusHtml +
+      bonusHtml +
+      '</div>';
+  }).join('');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();
+
+renderStats();
+renderHistory();
+</script>
+</body>
+</html>
