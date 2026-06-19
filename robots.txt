@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-users
+Disallow: /admin-orders
+Disallow: /admin-workers
+Disallow: /admin-reviews
+Disallow: /admin-complaints
+Disallow: /admin-finance
+Disallow: /admin-settings
+Disallow: /admin-content
+Disallow: /admin-security
+Disallow: /api/
+
+Sitemap: https://shabashka-jade.vercel.app/sitemap.xml

@@ -1,6 +1,9 @@
 {
   "version": 2,
   "routes": [
+    { "src": "/sitemap.xml", "dest": "/sitemap.xml" },
+    { "src": "/robots.txt", "dest": "/robots.txt" },
+    { "src": "/og-image.svg", "dest": "/og-image.svg" },
     { "src": "/api/ai-chat", "dest": "/api/ai-chat.js" },
     { "src": "/api/admin-login", "dest": "/api/admin-login.js" },
     { "src": "/api/admin-verify", "dest": "/api/admin-verify.js" },
