@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Найти исполнителя — Шабашка</title>
+<meta name="description" content="Поиск проверенных исполнителей в Москве. Грузчики, уборщицы, строители, промоутеры. Рейтинг, отзывы, быстрый отклик.">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --white: #fff; --gray: #6B6B67;
+  --gray-light: #F4F3EF; --border: #E5E4E0;
+  --green: #1A7A4A; --green-bg: #E8F5EE;
+  --blue: #185FA5; --blue-bg: #E6F1FB;
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); }
+
+/* ФИЛЬТРЫ СВЕРХУ */
+.page-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  position: sticky; top: 0; z-index: 50;
+}
+.header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--gray); font-size: 13px; text-decoration: none;
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--white); cursor: pointer; font-family: inherit;
+}
+.back-btn:hover { background: var(--gray-light); }
+.page-title { font-size: 18px; font-weight: 800; }
+.results-count { font-size: 13px; color: var(--gray); margin-left: auto; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.search-input-wrap { position: relative; flex: 1; min-width: 200px; }
+.search-input-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray); font-size: 16px; }
+.search-inp {
+  width: 100%; padding: 9px 12px 9px 36px;
+  border: 1px solid var(--border); border-radius: 9px;
+  font-size: 14px; font-family: inherit; outline: none;
+  background: var(--gray-light);
+}
+.search-inp:focus { border-color: var(--orange); background: var(--white); }
+
+.filter-select {
+  padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px;
+  font-size: 13px; font-family: inherit; background: var(--gray-light);
+  color: var(--dark); outline: none; cursor: pointer;
+}
+.filter-select:focus { border-color: var(--orange); }
+
+.filter-toggle {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border: 1px solid var(--border); border-radius: 9px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: var(--gray-light); color: var(--gray);
+  font-family: inherit; transition: all 0.12s;
+}
+.filter-toggle.active { background: var(--orange-light); border-color: var(--orange); color: var(--orange-dark); }
+
+/* КАТЕГОРИИ ПИЛЛЮЛИ */
+.cat-pills { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.cat-pills::-webkit-scrollbar { display: none; }
+.cat-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 20px; white-space: nowrap;
+  border: 1px solid var(--border); background: var(--white);
+  font-size: 13px; font-weight: 500; color: var(--gray); cursor: pointer;
+  transition: all 0.12s; flex-shrink: 0;
+}
+.cat-pill.active { background: var(--orange-light); border-color: var(--orange); color: var(--orange-dark); }
+.cat-pill i { font-size: 15px; }
+
+/* ОСНОВНОЙ ГРИД */
+.main { max-width: 1100px; margin: 0 auto; padding: 20px 20px 40px; }
+.workers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+
+/* КАРТОЧКА ИСПОЛНИТЕЛЯ */
+.worker-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px 20px;
+  cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
+}
+.worker-card:hover { border-color: var(--orange); box-shadow: 0 4px 20px rgba(232,81,10,0.08); }
+
+.worker-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.worker-avatar {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: var(--white);
+}
+.worker-info { flex: 1; min-width: 0; }
+.worker-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+.verified-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 600; color: var(--green);
+  background: var(--green-bg); padding: 2px 7px; border-radius: 20px;
+}
+.verified-badge i { font-size: 12px; }
+.worker-location { font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 4px; }
+.worker-location i { font-size: 13px; }
+
+.worker-stats { display: flex; gap: 12px; margin-bottom: 12px; }
+.worker-stat { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+.worker-stat i { font-size: 14px; color: var(--orange); }
+.worker-stat strong { font-weight: 700; }
+
+.worker-bio { font-size: 13px; color: var(--gray); line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.worker-skills { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 14px; }
+.skill-tag { font-size: 11.5px; padding: 3px 9px; border-radius: 20px; background: var(--gray-light); color: var(--gray); font-weight: 500; }
+
+.worker-footer { display: flex; align-items: center; justify-content: space-between; }
+.worker-price { font-size: 16px; font-weight: 800; color: var(--dark); }
+.worker-price span { font-size: 12px; font-weight: 400; color: var(--gray); }
+.worker-time { font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 4px; }
+.worker-time i { font-size: 13px; }
+.contact-btn {
+  padding: 8px 16px; border-radius: 9px;
+  background: var(--orange); color: var(--white);
+  border: none; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.12s;
+}
+.contact-btn:hover { background: var(--orange-dark); }
+.contact-btn i { font-size: 15px; }
+
+/* ПУСТОЙ СПИСОК */
+.empty-state { text-align: center; padding: 80px 20px; color: var(--gray); }
+.empty-state i { font-size: 48px; margin-bottom: 12px; display: block; }
+.empty-state h3 { font-size: 18px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+
+/* МОДАЛКА ПРОФИЛЯ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: 16px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray); padding: 4px; }
+.modal-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: var(--white); margin-bottom: 12px; }
+.modal-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.modal-meta { font-size: 13px; color: var(--gray); margin-bottom: 16px; }
+.modal-section { margin-bottom: 16px; }
+.modal-section h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); margin-bottom: 8px; }
+.modal-bio { font-size: 14px; line-height: 1.6; color: var(--dark); }
+.modal-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.modal-skill { font-size: 13px; padding: 5px 12px; border-radius: 20px; background: var(--orange-light); color: var(--orange-dark); font-weight: 500; }
+.modal-stats-row { display: flex; gap: 16px; }
+.modal-stat { flex: 1; background: var(--gray-light); border-radius: 10px; padding: 12px; text-align: center; }
+.modal-stat-val { font-size: 22px; font-weight: 800; }
+.modal-stat-label { font-size: 11px; color: var(--gray); margin-top: 2px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.modal-btn-primary { background: var(--orange); color: var(--white); }
+.modal-btn-primary:hover { background: var(--orange-dark); }
+.modal-btn-secondary { background: var(--gray-light); color: var(--dark); }
+.modal-btn i { font-size: 17px; }
+
+@media (max-width: 600px) {
+  body { padding-bottom: 70px; }
+  .page-header { padding: 12px 16px; }
+  .main { padding: 12px 12px 32px; }
+  .workers-grid { grid-template-columns: 1fr; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal { border-radius: 20px 20px 0 0; max-height: 85vh; }
+}
+.mobile-bottom-nav { position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid var(--border);display:none;align-items:center;justify-content:space-around;z-index:200; }
+.mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 12px;color:var(--gray);font-family:inherit;font-size:10px; }
+.mobile-nav-btn.active { color:var(--orange); }
+.mobile-nav-btn i { font-size:22px; }
+</style>
+<script src="/data.js"></script>
+<script src="/nav.js"></script>
+<script src="/icons.js"></script>
+</head>
+<body>
+<div id="shabashka-nav"></div>
+
+<div class="page-header">
+  <div class="header-top">
+    <button class="back-btn" onclick="history.back()">
+      <i class="ph-bold ph-arrow-left"></i> Назад
+    </button>
+    <div class="page-title">Найти исполнителя</div>
+    <div class="results-count" id="resultsCount"></div>
+  </div>
+  <div class="filters" style="margin-bottom:10px">
+    <div class="search-input-wrap">
+      <i class="ph-bold ph-magnifying-glass"></i>
+      <input class="search-inp" id="searchInp" placeholder="Поиск по имени или навыку..." oninput="applyFilters()">
+    </div>
+    <select class="filter-select" id="sortSelect" onchange="applyFilters()">
+      <option value="rating">По рейтингу</option>
+      <option value="orders">По заказам</option>
+      <option value="price_asc">Дешевле</option>
+      <option value="price_desc">Дороже</option>
+    </select>
+    <button class="filter-toggle" id="verifiedToggle" onclick="toggleVerified()">
+      <i class="ph-bold ph-seal-check"></i> Только проверенные
+    </button>
+  </div>
+  <div class="cat-pills" id="catPills">
+    <div class="cat-pill active" data-cat="all" onclick="selectCat('all', this)"><i class="ph-bold ph-squares-four"></i> Все</div>
+    <div class="cat-pill" data-cat="move" onclick="selectCat('move', this)"><i class="ph-bold ph-package"></i> Переезд</div>
+    <div class="cat-pill" data-cat="build" onclick="selectCat('build', this)"><i class="ph-bold ph-hammer"></i> Стройка</div>
+    <div class="cat-pill" data-cat="clean" onclick="selectCat('clean', this)"><i class="ph-bold ph-broom"></i> Уборка</div>
+    <div class="cat-pill" data-cat="event" onclick="selectCat('event', this)"><i class="ph-bold ph-confetti"></i> Ивент</div>
+    <div class="cat-pill" data-cat="other" onclick="selectCat('other', this)"><i class="ph-bold ph-lightning"></i> Прочее</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="workers-grid" id="workersList"></div>
+</div>
+
+<!-- Модалка профиля -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="profileModalContent"></div>
+</div>
+
+<!-- Нижняя мобильная навигация -->
+<div class="mobile-bottom-nav" id="mobileNav">
+  <button class="mobile-nav-btn" onclick="location.href='/'"><i class="ph-bold ph-house"></i>Главная</button>
+  <button class="mobile-nav-btn active" onclick="location.href='/workers'"><i class="ph-bold ph-users"></i>Исполнители</button>
+  <button class="mobile-nav-btn" onclick="location.href='/chat'"><i class="ph-bold ph-chat-circle-dots"></i>Чат</button>
+  <button class="mobile-nav-btn" onclick="location.href='/profile'"><i class="ph-bold ph-user-circle"></i>Профиль</button>
+</div>
+
+<script>
+Shabashka.renderNav('workers');
+
+var currentCat = 'all';
+var verifiedOnly = false;
+
+function selectCat(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-pill').forEach(function(p){ p.classList.remove('active'); });
+  el.classList.add('active');
+  applyFilters();
+}
+
+function toggleVerified() {
+  verifiedOnly = !verifiedOnly;
+  document.getElementById('verifiedToggle').classList.toggle('active', verifiedOnly);
+  applyFilters();
+}
+
+function applyFilters() {
+  var workers = Shabashka.searchWorkers({
+    cat: currentCat,
+    query: document.getElementById('searchInp').value,
+    verified: verifiedOnly,
+    sort: document.getElementById('sortSelect').value,
+  });
+  render(workers);
+}
+
+function render(workers) {
+  document.getElementById('resultsCount').textContent = workers.length + ' ' + plural(workers.length, 'исполнитель', 'исполнителя', 'исполнителей');
+  if (!workers.length) {
+    document.getElementById('workersList').innerHTML = '<div class="empty-state"><i class="ph-bold ph-users" style="color:#E5E4E0"></i><h3>Никого не найдено</h3><p>Попробуй изменить фильтры или сброси поиск</p></div>';
+    return;
+  }
+  document.getElementById('workersList').innerHTML = workers.map(workerCard).join('');
+}
+
+function workerCard(w) {
+  var stars = '⭐ ' + w.rating.toFixed(1);
+  var verBadge = w.verified ? '<span class="verified-badge"><i class="ph-bold ph-seal-check"></i>Проверен</span>' : '';
+  var skills = w.skills.slice(0, 3).map(function(s){ return '<span class="skill-tag">' + s + '</span>'; }).join('');
+  return '<div class="worker-card" onclick="openProfile(' + w.id + ')">' +
+    '<div class="worker-top">' +
+    '<div class="worker-avatar" style="background:' + w.color + '">' + w.name[0] + '</div>' +
+    '<div class="worker-info">' +
+    '<div class="worker-name">' + w.name + verBadge + '</div>' +
+    '<div class="worker-location"><i class="ph-bold ph-map-pin"></i>' + w.location + '</div>' +
+    '</div></div>' +
+    '<div class="worker-stats">' +
+    '<div class="worker-stat"><i class="ph-bold ph-star"></i><strong>' + w.rating.toFixed(1) + '</strong></div>' +
+    '<div class="worker-stat"><i class="ph-bold ph-briefcase"></i><strong>' + w.orders + '</strong> заказов</div>' +
+    '<div class="worker-stat"><i class="ph-bold ph-clock"></i>' + w.responseTime + '</div>' +
+    '</div>' +
+    '<div class="worker-bio">' + w.bio + '</div>' +
+    '<div class="worker-skills">' + skills + '</div>' +
+    '<div class="worker-footer">' +
+    '<div><div class="worker-price">' + w.price.toLocaleString('ru') + ' ₽ <span>/ день</span></div></div>' +
+    '<button class="contact-btn" onclick="event.stopPropagation();openProfile(' + w.id + ')"><i class="ph-bold ph-chat-circle-dots"></i>Связаться</button>' +
+    '</div></div>';
+}
+
+function openProfile(id) {
+  var w = Shabashka.getAllWorkers().find(function(x){ return x.id === id; });
+  if (!w) return;
+  var verBadge = w.verified ? '<span class="verified-badge" style="font-size:12px"><i class="ph-bold ph-seal-check"></i>Проверенный исполнитель</span>' : '';
+  var skills = w.skills.map(function(s){ return '<span class="modal-skill">' + s + '</span>'; }).join('');
+  document.getElementById('profileModalContent').innerHTML =
+    '<div class="modal-header">' +
+    '<div></div>' +
+    '<button class="modal-close" onclick="closeModal()"><i class="ph-bold ph-x"></i></button>' +
+    '</div>' +
+    '<div class="modal-avatar" style="background:' + w.color + '">' + w.name[0] + '</div>' +
+    '<div class="modal-name">' + w.name + '</div>' +
+    '<div class="modal-meta"><i class="ph-bold ph-map-pin" style="font-size:13px;vertical-align:-1px"></i> ' + w.location + ' · ' + verBadge + '</div>' +
+    '<div class="modal-stats-row">' +
+    '<div class="modal-stat"><div class="modal-stat-val">⭐ ' + w.rating.toFixed(1) + '</div><div class="modal-stat-label">Рейтинг</div></div>' +
+    '<div class="modal-stat"><div class="modal-stat-val">' + w.orders + '</div><div class="modal-stat-label">Заказов</div></div>' +
+    '<div class="modal-stat"><div class="modal-stat-val">' + w.responseTime + '</div><div class="modal-stat-label">Отклик</div></div>' +
+    '</div>' +
+    '<div class="modal-section" style="margin-top:16px"><h3>О себе</h3><div class="modal-bio">' + w.bio + '</div></div>' +
+    '<div class="modal-section"><h3>Навыки</h3><div class="modal-skills">' + skills + '</div></div>' +
+    '<div class="modal-section"><h3>Ставка</h3><div style="font-size:24px;font-weight:800">' + w.price.toLocaleString('ru') + ' ₽ <span style="font-size:14px;font-weight:400;color:var(--gray)">/ день</span></div></div>' +
+    '<div class="modal-actions">' +
+    '<button class="modal-btn modal-btn-primary" onclick="contactWorker(' + w.id + ')"><i class="ph-bold ph-chat-circle-dots"></i>Написать</button>' +
+    '<button class="modal-btn modal-btn-secondary" onclick="closeModal()"><i class="ph-bold ph-x"></i>Закрыть</button>' +
+    '</div>';
+  document.getElementById('profileModal').classList.add('open');
+}
+
+function contactWorker(id) {
+  closeModal();
+  window.location.href = '/chat?worker=' + id;
+}
+
+function closeModal() {
+  document.getElementById('profileModal').classList.remove('open');
+}
+
+function plural(n, one, few, many) {
+  var mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return n + ' ' + one;
+  if ([2,3,4].indexOf(mod10) !== -1 && ![12,13,14].indexOf(mod100) !== -1) return n + ' ' + few;
+  return n + ' ' + many;
+}
+
+// Мобильная навигация
+(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();
+
+applyFilters();
+</script>
+</body>
+</html>

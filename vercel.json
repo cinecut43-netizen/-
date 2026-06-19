@@ -25,6 +25,7 @@
     { "src": "/admin-content", "dest": "/admin-content.html" },
     { "src": "/admin-security", "dest": "/admin-security.html" },
     { "src": "/register", "dest": "/register.html" },
+    { "src": "/workers", "dest": "/workers.html" },
     { "src": "/landing", "dest": "/landing.html" },
     { "src": "/onboarding", "dest": "/onboarding.html" },
     { "src": "/privacy", "dest": "/privacy.html" },
