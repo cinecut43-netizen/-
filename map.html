@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Шабашка — Карта заказов</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
@@ -330,10 +331,10 @@ renderFilters();
 initMap();
 </script>
 <div class="mobile-bottom-nav" id="mobileNav">
-  <button class="mobile-nav-btn" onclick="location.href='/'"><span style="font-size:20px">🏠</span><span style="font-size:10px">Главная</span></button>
-  <button class="mobile-nav-btn active" onclick="location.href='/map'"><span style="font-size:20px">🗺</span><span style="font-size:10px">Карта</span></button>
-  <button class="mobile-nav-btn" onclick="location.href='/chat'"><span style="font-size:20px">💬</span><span style="font-size:10px">Чат</span></button>
-  <button class="mobile-nav-btn" onclick="location.href='/profile'"><span style="font-size:20px">👤</span><span style="font-size:10px">Профиль</span></button>
+  <button class="mobile-nav-btn" onclick="location.href='/'"><i class="ph-bold ph-house" style="font-size:22px"></i><span style="font-size:10px">Главная</span></button>
+  <button class="mobile-nav-btn active" onclick="location.href='/map'"><i class="ph-bold ph-map-pin" style="font-size:22px"></i><span style="font-size:10px">Карта</span></button>
+  <button class="mobile-nav-btn" onclick="location.href='/chat'"><i class="ph-bold ph-chat-circle-dots" style="font-size:22px"></i><span style="font-size:10px">Чат</span></button>
+  <button class="mobile-nav-btn" onclick="location.href='/profile'"><i class="ph-bold ph-user-circle" style="font-size:22px"></i><span style="font-size:10px">Профиль</span></button>
 </div>
 <script>(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
 </body>

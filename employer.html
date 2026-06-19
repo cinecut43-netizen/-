@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — Кабинет работодателя</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -948,19 +949,19 @@ renderPage();
 <!-- Нижняя навигация для мобильных (работодатель) -->
 <div class="employer-bottom-nav" id="employerBottomNav">
   <button class="employer-nav-btn active" id="enav-dashboard" onclick="setPage('dashboard', null); syncEmployerNav('dashboard')">
-    <span data-icon="layout-dashboard" data-size="22"></span>Дашборд
+    <i class="ph-bold ph-chart-bar" style="font-size:22px"></i>Дашборд
   </button>
   <button class="employer-nav-btn" id="enav-orders" onclick="setPage('orders', null); syncEmployerNav('orders')">
-    <span data-icon="clipboard-list" data-size="22"></span>Заказы
+    <i class="ph-bold ph-clipboard-text" style="font-size:22px"></i>Заказы
   </button>
   <button class="employer-nav-btn" id="enav-responses" onclick="setPage('responses', null); syncEmployerNav('responses')">
-    <span data-icon="users" data-size="22"></span>Отклики
+    <i class="ph-bold ph-users" style="font-size:22px"></i>Отклики
   </button>
   <button class="employer-nav-btn" id="enav-payments" onclick="setPage('payments', null); syncEmployerNav('payments')">
-    <span data-icon="credit-card" data-size="22"></span>Платежи
+    <i class="ph-bold ph-wallet" style="font-size:22px"></i>Платежи
   </button>
   <button class="employer-nav-btn" id="enav-company" onclick="setPage('company', null); syncEmployerNav('company')">
-    <span data-icon="building-2" data-size="22"></span>Компания
+    <i class="ph-bold ph-buildings" style="font-size:22px"></i>Компания
   </button>
 </div>
 

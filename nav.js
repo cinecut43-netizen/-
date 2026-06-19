@@ -14,9 +14,18 @@
   }
 
   // Пункты меню для роли "исполнитель"
-  // Иконки через icons.js — функция icon() доступна после загрузки icons.js
-  function ic(name) {
-    return window.ShabashkaIcons ? window.ShabashkaIcons.icon(name, 18) : '';
+  // Phosphor Bold иконки через CDN (подключается в injectPhosphor)
+  const PH_MAP = {
+    'search': 'ph-magnifying-glass', 'map': 'ph-map-pin',
+    'message-circle': 'ph-chat-circle-dots', 'credit-card': 'ph-credit-card',
+    'wallet': 'ph-wallet', 'user': 'ph-user-circle',
+    'layout-dashboard': 'ph-chart-bar', 'menu': 'ph-list',
+  };
+
+  function ic(name, size) {
+    var ph = PH_MAP[name] || ('ph-' + name);
+    var st = size ? ' style="font-size:' + size + 'px"' : '';
+    return '<i class="ph-bold ' + ph + '"' + st + ' aria-hidden="true"></i>';
   }
 
   const WORKER_LINKS = [
@@ -37,7 +46,17 @@
 
   const NAV_STYLE_ID = 'shabashka-nav-style';
 
+  function injectPhosphor() {
+    if (document.getElementById('phosphor-css')) return;
+    var link = document.createElement('link');
+    link.id = 'phosphor-css';
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css';
+    document.head.appendChild(link);
+  }
+
   function injectStyle() {
+    injectPhosphor();
     if (document.getElementById(NAV_STYLE_ID)) return;
     const style = document.createElement('style');
     style.id = NAV_STYLE_ID;

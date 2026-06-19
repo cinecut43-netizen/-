@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — работа на один день</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -486,7 +487,7 @@
       font-family: inherit;
     }
     .mobile-nav-btn.active { color: var(--orange); }
-    .mobile-nav-icon { font-size: 20px; }
+    .mobile-nav-icon { font-size: 24px; }
   }
 </style>
 <script src="/data.js"></script>
@@ -553,12 +554,12 @@
   <main>
     <!-- Горизонтальные категории только для мобильных -->
     <div class="mobile-cats" id="mobileCats" style="display:none">
-      <button class="mobile-cat-btn active" onclick="filterCat('all',this);syncMobileCat(this)">🏠 Все</button>
-      <button class="mobile-cat-btn" onclick="filterCat('move',this);syncMobileCat(this)">📦 Переезд</button>
-      <button class="mobile-cat-btn" onclick="filterCat('build',this);syncMobileCat(this)">🔨 Стройка</button>
-      <button class="mobile-cat-btn" onclick="filterCat('clean',this);syncMobileCat(this)">🧹 Уборка</button>
-      <button class="mobile-cat-btn" onclick="filterCat('event',this);syncMobileCat(this)">🎉 Ивент</button>
-      <button class="mobile-cat-btn" onclick="filterCat('other',this);syncMobileCat(this)">⚡ Прочее</button>
+      <button class="mobile-cat-btn active" onclick="filterCat('all',this);syncMobileCat(this)"><i class="ph-bold ph-squares-four"></i> Все</button>
+      <button class="mobile-cat-btn" onclick="filterCat('move',this);syncMobileCat(this)"><i class="ph-bold ph-package"></i> Переезд</button>
+      <button class="mobile-cat-btn" onclick="filterCat('build',this);syncMobileCat(this)"><i class="ph-bold ph-hammer"></i> Стройка</button>
+      <button class="mobile-cat-btn" onclick="filterCat('clean',this);syncMobileCat(this)"><i class="ph-bold ph-broom"></i> Уборка</button>
+      <button class="mobile-cat-btn" onclick="filterCat('event',this);syncMobileCat(this)"><i class="ph-bold ph-confetti"></i> Ивент</button>
+      <button class="mobile-cat-btn" onclick="filterCat('other',this);syncMobileCat(this)"><i class="ph-bold ph-lightning"></i> Прочее</button>
     </div>
     <div class="search-bar">
       <input type="text" class="search-input" placeholder="Поиск по заказам..." id="searchInput" oninput="filterSearch()">
@@ -868,16 +869,16 @@ function syncMobileCat(btn) {
 <!-- Нижняя навигация для мобильных -->
 <div class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
   <button class="mobile-nav-btn active" onclick="window.location.href='/'">
-    <span class="mobile-nav-icon" data-icon="home" data-size="22"></span>Главная
+    <i class="ph-bold ph-house mobile-nav-icon"></i>Главная
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/map'">
-    <span class="mobile-nav-icon" data-icon="map" data-size="22"></span>Карта
+    <i class="ph-bold ph-map-pin mobile-nav-icon"></i>Карта
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/chat'">
-    <span class="mobile-nav-icon" data-icon="message-circle" data-size="22"></span>Чат
+    <i class="ph-bold ph-chat-circle-dots mobile-nav-icon"></i>Чат
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/profile'">
-    <span class="mobile-nav-icon" data-icon="user" data-size="22"></span>Профиль
+    <i class="ph-bold ph-user-circle mobile-nav-icon"></i>Профиль
   </button>
 </div>
 </body>
