@@ -3,97 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<title>Оферта — Шабашка</title>
-<meta name="description" content="Публичная оферта платформы Шабашка.">
+<link rel="stylesheet" href="/mobile.css">
+<title>Публичная оферта — Шабашка</title>
+<meta name="description" content="Публичная оферта на оказание информационных услуг платформы Шабашка.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://shabashka-jade.vercel.app/offer">
-<!-- Open Graph / Telegram / WhatsApp -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://shabashka-jade.vercel.app/offer">
-<meta property="og:title" content="Оферта — Шабашка">
-<meta property="og:description" content="Публичная оферта платформы Шабашка.">
-<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:site_name" content="Шабашка">
-<meta property="og:locale" content="ru_RU">
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Оферта — Шабашка">
-<meta name="twitter:description" content="Публичная оферта платформы Шабашка.">
-<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
-  --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF;
-  --border: #E2E1DB; --white: #FFFFFF; --amber: #854F0B; --amber-bg: #FAEEDA;
-}
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; }
-nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; }
-.logo { font-size: 19px; font-weight: 700; color: var(--dark); text-decoration: none; }
+:root { --orange: #E8510A; --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E2E1DB; --white: #fff; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); }
+nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; }
+.logo { font-size: 19px; font-weight: 800; color: var(--dark); text-decoration: none; }
 .logo span { color: var(--orange); }
-.page { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
-h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
-.updated { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
-.todo-banner {
-  background: var(--amber-bg); border: 1px solid #F0D9A8; border-radius: 10px;
-  padding: 14px 16px; font-size: 13px; color: var(--amber); margin-bottom: 28px; line-height: 1.6;
-}
-.todo-banner strong { display: block; margin-bottom: 4px; }
-section { margin-bottom: 22px; }
-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-section p { font-size: 14px; line-height: 1.7; color: var(--dark); }
-.placeholder { color: var(--gray); font-style: italic; }
+nav a.back { font-size: 13px; color: var(--gray); text-decoration: none; margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.page { max-width: 720px; margin: 0 auto; padding: 40px 20px 60px; }
+.doc-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 36px 40px; }
+h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+.meta { font-size: 13px; color: var(--gray); margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+section { margin-bottom: 24px; }
+section h2 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+section p, section li { font-size: 14px; line-height: 1.75; color: #2A2A28; }
+section ul { padding-left: 20px; margin-top: 6px; }
+section li { margin-bottom: 4px; }
+.table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+.table th, .table td { padding: 10px 12px; border: 1px solid var(--border); text-align: left; }
+.table th { background: var(--gray-light); font-weight: 600; }
+.site-footer { background: var(--dark); padding: 32px 24px; }
+.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-logo { font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; }
+.footer-logo span { color: var(--orange); }
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-link { font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; }
+.footer-link:hover { color: rgba(255,255,255,0.75); }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.2); }
+@media (max-width: 600px) { .doc-card { padding: 20px 16px; } .footer-inner { flex-direction: column; align-items: flex-start; } }
 </style>
 </head>
 <body>
-
-<nav><a class="logo" href="/">Шаба<span>шка</span></a></nav>
+<nav>
+  <a class="logo" href="/">Шаба<span>шка</span></a>
+  <a class="back" href="/"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i> На главную</a>
+</nav>
 
 <div class="page">
-  <h1>Оферта на оказание услуг платформы</h1>
-  <div class="updated">Версия документа: черновик · не опубликована</div>
-
-  <div class="todo-banner">
-    <strong>⚠️ Это техническая заглушка, а не юридический документ.</strong>
-    Этот документ описывает денежные отношения (комиссия, удержание средств
-    до подтверждения заказа) — здесь особенно важна консультация юриста,
-    так как это касается порядка расчётов между сторонами и платформой.
-  </div>
+<div class="doc-card">
+  <h1>Публичная оферта</h1>
+  <div class="meta">Редакция от 20 июня 2025 г. · Вступает в силу с даты публикации</div>
 
   <section>
-    <h2>1. Предмет оферты</h2>
-    <p class="placeholder">[Описание услуги: технический сервис приёма и временного удержания денежных средств заказчика до подтверждения выполнения заказа исполнителем.]</p>
+    <h2>1. Общие положения</h2>
+    <p>Настоящий документ является публичной офертой (далее — Оферта) владельца информационного сервиса «Шабашка» (далее — Исполнитель) в соответствии со статьёй 437 Гражданского кодекса Российской Федерации. Акцептом настоящей Оферты является регистрация пользователя на Платформе и/или оплата комиссии за услуги.</p>
   </section>
 
   <section>
-    <h2>2. Порядок резервирования средств</h2>
-    <p class="placeholder">[Момент списания средств с заказчика, способ хранения до подтверждения, момент перевода исполнителю.]</p>
+    <h2>2. Предмет оферты</h2>
+    <p>Исполнитель оказывает Заказчику (пользователю Платформы) информационные услуги по предоставлению доступа к функциональным возможностям Платформы «Шабашка», включая:</p>
+    <ul>
+      <li>Доступ к базе заказов и анкетам исполнителей</li>
+      <li>Возможность размещения заказов и откликов</li>
+      <li>Функции обмена сообщениями между пользователями</li>
+      <li>Систему оценок и отзывов</li>
+      <li>Сервис урегулирования споров</li>
+    </ul>
   </section>
 
   <section>
-    <h2>3. Комиссия платформы</h2>
-    <p class="placeholder">[Размер — 10% от суммы заказа, момент удержания, из чьих средств вычитается.]</p>
+    <h2>3. Стоимость услуг и порядок оплаты</h2>
+    <table class="table">
+      <tr><th>Услуга</th><th>Стоимость</th></tr>
+      <tr><td>Регистрация и базовое использование</td><td>Бесплатно</td></tr>
+      <tr><td>Размещение заказа (для работодателя)</td><td>Бесплатно</td></tr>
+      <tr><td>Отклик на заказ (для исполнителя)</td><td>Бесплатно (до 5 в день)</td></tr>
+      <tr><td>Комиссия платформы за выполненный заказ</td><td>10% от суммы заказа</td></tr>
+      <tr><td>Подписка PRO (расширенные возможности)</td><td>от 149 ₽/месяц</td></tr>
+    </table>
+    <p style="margin-top:10px">Комиссия удерживается автоматически при подтверждении выполнения заказа. НДС не облагается (физическое лицо).</p>
   </section>
 
   <section>
-    <h2>4. Возврат средств</h2>
-    <p class="placeholder">[Условия и сроки возврата при отмене заказа, неявке исполнителя, споре сторон.]</p>
+    <h2>4. Права и обязанности сторон</h2>
+    <p><strong>Исполнитель обязуется:</strong></p>
+    <ul>
+      <li>Обеспечивать бесперебойную работу Платформы (не менее 95% времени в месяц)</li>
+      <li>Рассматривать споры между пользователями в течение 24 часов</li>
+      <li>Обеспечивать защиту персональных данных пользователей</li>
+      <li>Уведомлять об изменении условий оферты не менее чем за 5 дней</li>
+    </ul>
+    <p style="margin-top:10px"><strong>Заказчик обязуется:</strong></p>
+    <ul>
+      <li>Предоставлять достоверные сведения при регистрации</li>
+      <li>Соблюдать Пользовательское соглашение</li>
+      <li>Своевременно оплачивать услуги согласно установленным тарифам</li>
+    </ul>
   </section>
 
   <section>
-    <h2>5. Способы вывода средств исполнителем</h2>
-    <p class="placeholder">[Банковские карты, электронные кошельки, сроки стандартного и экспресс-вывода, комиссия за экспресс-вывод если применимо.]</p>
+    <h2>5. Ответственность сторон</h2>
+    <p>Исполнитель не несёт ответственности за содержание заказов и анкет, размещённых пользователями, за качество работ, выполненных исполнителями, а также за действия третьих лиц. Совокупная ответственность Исполнителя по настоящей Оферте ограничена суммой фактически уплаченной комиссии за последние 3 месяца.</p>
   </section>
 
   <section>
-    <h2>6. Налоговые обязательства сторон</h2>
-    <p class="placeholder">[Платформа не является налоговым агентом / является налоговым агентом (выбрать применимую модель) — обязанности исполнителя по уплате налога на профессиональный доход (НПД) при статусе самозанятого.]</p>
+    <h2>6. Срок действия и изменение оферты</h2>
+    <p>Оферта действует бессрочно. Исполнитель вправе изменить условия Оферты в одностороннем порядке с уведомлением пользователей на Платформе. Продолжение использования Платформы после вступления изменений в силу означает акцепт изменённых условий.</p>
+  </section>
+
+  <section>
+    <h2>7. Применимое право и споры</h2>
+    <p>Настоящая Оферта регулируется законодательством Российской Федерации. Споры, не урегулированные в претензионном порядке, передаются на рассмотрение суда общей юрисдикции по месту нахождения Исполнителя. Срок рассмотрения претензий — 30 календарных дней.</p>
+  </section>
+
+  <section>
+    <h2>8. Реквизиты Исполнителя</h2>
+    <p>Физическое лицо, гражданин Российской Федерации<br>
+    Email для обращений: <a href="mailto:shabashka.legal@yandex.ru" style="color:var(--orange)">shabashka.legal@yandex.ru</a><br>
+    Сайт: <a href="https://shabashka-jade.vercel.app" style="color:var(--orange)">shabashka-jade.vercel.app</a></p>
   </section>
 </div>
+</div>
 
+<footer class="site-footer">
+  <div class="footer-inner">
+    <a class="footer-logo" href="/">Шаба<span>шка</span></a>
+    <div class="footer-links">
+      <a class="footer-link" href="/privacy">Конфиденциальность</a>
+      <a class="footer-link" href="/terms">Условия использования</a>
+      <a class="footer-link" href="/offer">Оферта</a>
+      <a class="footer-link" href="/contacts">Контакты</a>
+    </div>
+    <div class="footer-copy">© 2025 Шабашка · 18+</div>
+  </div>
+</footer>
 </body>
 </html>

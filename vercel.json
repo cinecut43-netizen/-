@@ -58,6 +58,7 @@
     { "src": "/privacy", "dest": "/privacy.html" },
     { "src": "/terms", "dest": "/terms.html" },
     { "src": "/offer", "dest": "/offer.html" },
+    { "src": "/contacts", "dest": "/contacts.html" },
     { "src": "/employer-rules", "dest": "/employer-rules.html" },
     { "src": "/data.js", "dest": "/data.js" },
     { "src": "/manifest.json", "dest": "/manifest.json" },

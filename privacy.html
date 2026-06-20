@@ -3,113 +3,150 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/mobile.css">
 <title>Политика конфиденциальности — Шабашка</title>
-<meta name="description" content="Политика конфиденциальности платформы Шабашка.">
+<meta name="description" content="Политика обработки персональных данных платформы Шабашка. Соответствует требованиям 152-ФЗ.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://shabashka-jade.vercel.app/privacy">
-<!-- Open Graph / Telegram / WhatsApp -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://shabashka-jade.vercel.app/privacy">
-<meta property="og:title" content="Политика конфиденциальности — Шабашка">
-<meta property="og:description" content="Политика конфиденциальности платформы Шабашка.">
-<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:site_name" content="Шабашка">
-<meta property="og:locale" content="ru_RU">
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Политика конфиденциальности — Шабашка">
-<meta name="twitter:description" content="Политика конфиденциальности платформы Шабашка.">
-<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
-  --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF;
-  --border: #E2E1DB; --white: #FFFFFF; --amber: #854F0B; --amber-bg: #FAEEDA;
-}
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; }
-nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; }
-.logo { font-size: 19px; font-weight: 700; color: var(--dark); text-decoration: none; }
+:root { --orange: #E8510A; --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E2E1DB; --white: #fff; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); }
+nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; }
+.logo { font-size: 19px; font-weight: 800; color: var(--dark); text-decoration: none; }
 .logo span { color: var(--orange); }
-.page { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
-h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
-.updated { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
-.todo-banner {
-  background: var(--amber-bg); border: 1px solid #F0D9A8; border-radius: 10px;
-  padding: 14px 16px; font-size: 13px; color: var(--amber); margin-bottom: 28px; line-height: 1.6;
-}
-.todo-banner strong { display: block; margin-bottom: 4px; }
-section { margin-bottom: 22px; }
-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-section p { font-size: 14px; line-height: 1.7; color: var(--dark); }
-.placeholder { color: var(--gray); font-style: italic; }
+nav a.back { font-size: 13px; color: var(--gray); text-decoration: none; margin-left: auto; display: flex; align-items: center; gap: 4px; }
+nav a.back:hover { color: var(--dark); }
+.page { max-width: 720px; margin: 0 auto; padding: 40px 20px 60px; }
+.doc-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 36px 40px; }
+h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+.meta { font-size: 13px; color: var(--gray); margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+section { margin-bottom: 24px; }
+section h2 { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: var(--dark); }
+section p, section li { font-size: 14px; line-height: 1.75; color: #2A2A28; }
+section ul { padding-left: 20px; margin-top: 6px; }
+section li { margin-bottom: 4px; }
+.contact-box { background: var(--gray-light); border-radius: 10px; padding: 16px 18px; margin-top: 8px; font-size: 14px; }
+.contact-box a { color: var(--orange); }
+.site-footer { background: var(--dark); padding: 32px 24px; margin-top: 0; }
+.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-logo { font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; }
+.footer-logo span { color: var(--orange); }
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-link { font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; }
+.footer-link:hover { color: rgba(255,255,255,0.75); }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.2); }
+@media (max-width: 600px) { .doc-card { padding: 20px 16px; } .footer-inner { flex-direction: column; align-items: flex-start; } }
 </style>
 </head>
 <body>
-
-<nav><a class="logo" href="/">Шаба<span>шка</span></a></nav>
+<nav>
+  <a class="logo" href="/">Шаба<span>шка</span></a>
+  <a class="back" href="/"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i> На главную</a>
+</nav>
 
 <div class="page">
+<div class="doc-card">
   <h1>Политика обработки персональных данных</h1>
-  <div class="updated">Версия документа: черновик · не опубликована</div>
-
-  <div class="todo-banner">
-    <strong>⚠️ Это техническая заглушка, а не юридический документ.</strong>
-    Перед запуском платформы здесь должен появиться текст, согласованный с юристом
-    и соответствующий требованиям 152-ФЗ «О персональных данных». Ниже — обязательные
-    разделы, которые обычно входят в такую политику для маркетплейса услуг с пользователями
-    из РФ. Замените плейсхолдеры на согласованные формулировки.
-  </div>
+  <div class="meta">Редакция от 20 июня 2025 г. · Вступает в силу с даты публикации</div>
 
   <section>
     <h2>1. Общие положения</h2>
-    <p class="placeholder">[Кто является оператором персональных данных — юридическое лицо/ИП, ОГРН, адрес. Ссылка на закон 152-ФЗ. Цель документа.]</p>
+    <p>Настоящая Политика определяет порядок обработки персональных данных пользователей информационного сервиса «Шабашка» (далее — Платформа), расположенного по адресу: shabashka-jade.vercel.app.</p>
+    <p style="margin-top:8px">Оператором персональных данных является физическое лицо — владелец Платформы (далее — Оператор). Обработка данных осуществляется в соответствии с Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных».</p>
   </section>
 
   <section>
-    <h2>2. Какие данные собираются</h2>
-    <p class="placeholder">[ФИО, телефон, email, геолокация, данные документов при верификации (паспорт/патент), история заказов, платёжные данные. Указать конкретный перечень для исполнителей и отдельно для работодателей.]</p>
+    <h2>2. Какие данные мы собираем</h2>
+    <p>При использовании Платформы могут обрабатываться следующие данные:</p>
+    <ul>
+      <li>Имя, номер телефона (для верификации аккаунта)</li>
+      <li>Город, возраст, сведения о профессиональных навыках (указываются добровольно)</li>
+      <li>Фотография документа, удостоверяющего личность (только при прохождении добровольной верификации)</li>
+      <li>История заказов, откликов и отзывов на Платформе</li>
+      <li>Технические данные: IP-адрес, тип устройства и браузера, cookie-файлы</li>
+    </ul>
   </section>
 
   <section>
     <h2>3. Цели обработки</h2>
-    <p class="placeholder">[Регистрация и идентификация, подбор заказов/исполнителей, обработка платежей, связь с пользователем, исполнение требований закона, аналитика и улучшение сервиса.]</p>
+    <ul>
+      <li>Регистрация и идентификация пользователя на Платформе</li>
+      <li>Обеспечение взаимодействия между исполнителями и работодателями</li>
+      <li>Направление уведомлений о новых заказах и откликах</li>
+      <li>Верификация личности исполнителя (по добровольному запросу)</li>
+      <li>Улучшение качества работы Платформы</li>
+      <li>Исполнение требований законодательства Российской Федерации</li>
+    </ul>
   </section>
 
   <section>
-    <h2>4. Правовые основания обработки</h2>
-    <p class="placeholder">[Согласие субъекта персональных данных, исполнение договора (оферты), требования законодательства.]</p>
+    <h2>4. Правовые основания</h2>
+    <p>Обработка персональных данных осуществляется на основании:</p>
+    <ul>
+      <li>Согласия субъекта персональных данных (ст. 6 ч. 1 п. 1 ФЗ-152)</li>
+      <li>Необходимости исполнения договора (Пользовательского соглашения), стороной которого является субъект (ст. 6 ч. 1 п. 5 ФЗ-152)</li>
+      <li>Требований законодательства Российской Федерации</li>
+    </ul>
   </section>
 
   <section>
-    <h2>5. Место хранения и передача данных третьим лицам</h2>
-    <p class="placeholder">[Где физически хранятся данные — критично указать сервер в РФ, если требуется по 242-ФЗ о локализации данных. Передаются ли данные платёжным системам, SMS-провайдерам, аналитическим сервисам, и на каком основании.]</p>
+    <h2>5. Хранение и передача данных</h2>
+    <p>Персональные данные пользователей хранятся в защищённом виде. Фотографии документов, загруженные для верификации, хранятся временно (до 48 часов) и не передаются третьим лицам без согласия пользователя.</p>
+    <p style="margin-top:8px">Платформа не передаёт персональные данные третьим лицам, за исключением случаев, предусмотренных действующим законодательством РФ.</p>
   </section>
 
   <section>
-    <h2>6. Срок хранения данных</h2>
-    <p class="placeholder">[Срок хранения и условия удаления после удаления аккаунта.]</p>
+    <h2>6. Срок хранения</h2>
+    <p>Данные хранятся в течение всего срока использования Платформы пользователем. При удалении аккаунта персональные данные удаляются в течение 30 дней, если иное не предусмотрено требованиями законодательства.</p>
   </section>
 
   <section>
-    <h2>7. Права субъекта персональных данных</h2>
-    <p class="placeholder">[Право на доступ, исправление, удаление данных, отзыв согласия — куда обращаться, контактный email/форма.]</p>
+    <h2>7. Права пользователя</h2>
+    <p>Вы вправе в любое время:</p>
+    <ul>
+      <li>Получить информацию об обрабатываемых персональных данных</li>
+      <li>Потребовать исправления неточных данных</li>
+      <li>Отозвать согласие на обработку персональных данных</li>
+      <li>Потребовать удаления данных («право на забвение»)</li>
+    </ul>
+    <p style="margin-top:8px">Для реализации прав обратитесь по контактам в разделе 9.</p>
   </section>
 
   <section>
-    <h2>8. Меры защиты данных</h2>
-    <p class="placeholder">[Технические и организационные меры защиты — шифрование, ограничение доступа и т.д.]</p>
+    <h2>8. Защита данных</h2>
+    <p>Оператор принимает технические и организационные меры для защиты персональных данных: передача данных по защищённому протоколу HTTPS, ограничение доступа к данным верификации (только для авторизованных администраторов), хранение паролей в хэшированном виде.</p>
   </section>
 
   <section>
     <h2>9. Контакты оператора</h2>
-    <p class="placeholder">[Email и/или почтовый адрес для обращений по вопросам персональных данных.]</p>
+    <p>По вопросам обработки персональных данных, а также для реализации своих прав обращайтесь:</p>
+    <div class="contact-box">
+      <strong>Email:</strong> <a href="mailto:shabashka.legal@yandex.ru">shabashka.legal@yandex.ru</a><br>
+      <span style="color:var(--gray);font-size:13px">Срок ответа — не более 30 дней с даты обращения</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>10. Изменения политики</h2>
+    <p>Оператор вправе вносить изменения в настоящую Политику. Актуальная версия всегда доступна по адресу: <a href="/privacy" style="color:var(--orange)">shabashka-jade.vercel.app/privacy</a>. Продолжение использования Платформы после публикации изменений означает согласие с новой редакцией.</p>
   </section>
 </div>
+</div>
 
+<footer class="site-footer">
+  <div class="footer-inner">
+    <a class="footer-logo" href="/">Шаба<span>шка</span></a>
+    <div class="footer-links">
+      <a class="footer-link" href="/privacy">Конфиденциальность</a>
+      <a class="footer-link" href="/terms">Условия использования</a>
+      <a class="footer-link" href="/offer">Оферта</a>
+      <a class="footer-link" href="/contacts">Контакты</a>
+    </div>
+    <div class="footer-copy">© 2025 Шабашка · 18+</div>
+  </div>
+</footer>
 </body>
 </html>

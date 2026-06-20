@@ -3,107 +3,156 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<title>Условия использования — Шабашка</title>
-<meta name="description" content="Условия использования платформы Шабашка.">
+<link rel="stylesheet" href="/mobile.css">
+<title>Пользовательское соглашение — Шабашка</title>
+<meta name="description" content="Пользовательское соглашение платформы Шабашка. Правила использования сервиса для исполнителей и работодателей.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://shabashka-jade.vercel.app/terms">
-<!-- Open Graph / Telegram / WhatsApp -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://shabashka-jade.vercel.app/terms">
-<meta property="og:title" content="Условия использования — Шабашка">
-<meta property="og:description" content="Условия использования платформы Шабашка.">
-<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:site_name" content="Шабашка">
-<meta property="og:locale" content="ru_RU">
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Условия использования — Шабашка">
-<meta name="twitter:description" content="Условия использования платформы Шабашка.">
-<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
-  --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF;
-  --border: #E2E1DB; --white: #FFFFFF; --amber: #854F0B; --amber-bg: #FAEEDA;
-}
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; }
-nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; }
-.logo { font-size: 19px; font-weight: 700; color: var(--dark); text-decoration: none; }
+:root { --orange: #E8510A; --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E2E1DB; --white: #fff; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); }
+nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; }
+.logo { font-size: 19px; font-weight: 800; color: var(--dark); text-decoration: none; }
 .logo span { color: var(--orange); }
-.page { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
-h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
-.updated { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
-.todo-banner {
-  background: var(--amber-bg); border: 1px solid #F0D9A8; border-radius: 10px;
-  padding: 14px 16px; font-size: 13px; color: var(--amber); margin-bottom: 28px; line-height: 1.6;
-}
-.todo-banner strong { display: block; margin-bottom: 4px; }
-section { margin-bottom: 22px; }
-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-section p { font-size: 14px; line-height: 1.7; color: var(--dark); }
-.placeholder { color: var(--gray); font-style: italic; }
+nav a.back { font-size: 13px; color: var(--gray); text-decoration: none; margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.page { max-width: 720px; margin: 0 auto; padding: 40px 20px 60px; }
+.doc-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 36px 40px; }
+h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+.meta { font-size: 13px; color: var(--gray); margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+section { margin-bottom: 24px; }
+section h2 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+section p, section li { font-size: 14px; line-height: 1.75; color: #2A2A28; }
+section ul { padding-left: 20px; margin-top: 6px; }
+section li { margin-bottom: 4px; }
+.highlight { background: #FFF0E8; border-left: 3px solid var(--orange); padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: 8px; font-size: 13px; line-height: 1.6; }
+.site-footer { background: var(--dark); padding: 32px 24px; }
+.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-logo { font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; }
+.footer-logo span { color: var(--orange); }
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-link { font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; }
+.footer-link:hover { color: rgba(255,255,255,0.75); }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.2); }
+@media (max-width: 600px) { .doc-card { padding: 20px 16px; } .footer-inner { flex-direction: column; align-items: flex-start; } }
 </style>
 </head>
 <body>
-
-<nav><a class="logo" href="/">Шаба<span>шка</span></a></nav>
+<nav>
+  <a class="logo" href="/">Шаба<span>шка</span></a>
+  <a class="back" href="/"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i> На главную</a>
+</nav>
 
 <div class="page">
+<div class="doc-card">
   <h1>Пользовательское соглашение</h1>
-  <div class="updated">Версия документа: черновик · не опубликована</div>
-
-  <div class="todo-banner">
-    <strong>⚠️ Это техническая заглушка, а не юридический документ.</strong>
-    Текст должен быть подготовлен или провизирован юристом с учётом того, что
-    платформа сводит заказчиков и физических исполнителей разовых работ —
-    важно явно развести это с трудовыми отношениями по ТК РФ.
-  </div>
+  <div class="meta">Редакция от 20 июня 2025 г. · Вступает в силу с даты публикации</div>
 
   <section>
     <h2>1. Предмет соглашения</h2>
-    <p class="placeholder">[Платформа предоставляет информационные услуги по поиску друг друга заказчикам и исполнителям разовых работ. Платформа не является работодателем и не вступает в трудовые отношения с исполнителями.]</p>
+    <p>Настоящее Пользовательское соглашение (далее — Соглашение) регулирует отношения между владельцем информационного сервиса «Шабашка» (далее — Платформа) и пользователями Платформы. Регистрируясь на Платформе, вы подтверждаете, что ознакомились с настоящим Соглашением и принимаете его условия в полном объёме.</p>
   </section>
 
   <section>
-    <h2>2. Регистрация и статус пользователя</h2>
-    <p class="placeholder">[Условия регистрации, требование к возрасту 18+, ответственность за достоверность указанных данных.]</p>
+    <h2>2. Описание сервиса</h2>
+    <p>Платформа «Шабашка» — информационный посредник, предоставляющий пользователям возможность:</p>
+    <ul>
+      <li><strong>Исполнителям</strong> — публиковать анкету, находить разовые заказы и откликаться на них</li>
+      <li><strong>Работодателям</strong> — размещать заказы на выполнение разовых работ и выбирать исполнителей</li>
+    </ul>
+    <div class="highlight">Платформа является информационным посредником и не является стороной договора между исполнителем и работодателем. Трудовые отношения между пользователями Платформы не возникают.</div>
   </section>
 
   <section>
-    <h2>3. Права и обязанности заказчика</h2>
-    <p class="placeholder">[Обязанность оплаты за выполненную работу, ответственность за условия труда, запрет дискриминационных требований к исполнителям.]</p>
+    <h2>3. Регистрация и аккаунт</h2>
+    <ul>
+      <li>Для регистрации необходимо подтверждение номера телефона</li>
+      <li>Пользователь обязан предоставлять достоверные сведения о себе</li>
+      <li>Запрещено создавать несколько аккаунтов одному лицу</li>
+      <li>Пользователь несёт ответственность за сохранность доступа к своему аккаунту</li>
+      <li>Регистрация доступна лицам, достигшим 18 лет</li>
+    </ul>
   </section>
 
   <section>
-    <h2>4. Права и обязанности исполнителя</h2>
-    <p class="placeholder">[Необходимость наличия законного права на трудовую деятельность в РФ для иностранных граждан — патент/РВП/ВНЖ; ответственность за качество выполненной работы.]</p>
+    <h2>4. Правила размещения заказов</h2>
+    <p>Работодатель при размещении заказа обязуется:</p>
+    <ul>
+      <li>Предоставлять достоверную информацию об объёме, характере и условиях работ</li>
+      <li>Своевременно оплачивать выполненные работы в соответствии с условиями заказа</li>
+      <li>Не размещать заказы, связанные с незаконной деятельностью</li>
+      <li>Не размещать заказы на работы, требующие специальных лицензий, без их наличия</li>
+    </ul>
   </section>
 
   <section>
-    <h2>5. Комиссия и порядок расчётов</h2>
-    <p class="placeholder">[Размер комиссии платформы (10%), момент её списания, порядок возврата средств при отмене заказа, ссылка на договор оферты с описанием эскроу-механизма.]</p>
+    <h2>5. Правила для исполнителей</h2>
+    <p>Исполнитель при принятии заказа обязуется:</p>
+    <ul>
+      <li>Выполнять работы в срок, оговорённый с работодателем</li>
+      <li>Выполнять работы качественно и в полном объёме</li>
+      <li>Своевременно уведомлять о невозможности выполнить заказ</li>
+      <li>Не предоставлять заведомо ложные сведения в анкете</li>
+    </ul>
   </section>
 
   <section>
-    <h2>6. Ответственность платформы</h2>
-    <p class="placeholder">[Платформа не несёт ответственности за качество выполненных работ третьими лицами, но обеспечивает технические механизмы защиты сделки (эскроу) согласно отдельной оферте.]</p>
+    <h2>6. Комиссия платформы</h2>
+    <p>За использование сервиса Платформа взимает комиссию в размере <strong>10%</strong> от стоимости заказа. Комиссия удерживается при подтверждении выполнения заказа. Размещение заказов и отклики — бесплатны.</p>
   </section>
 
   <section>
-    <h2>7. Разрешение споров</h2>
-    <p class="placeholder">[Досудебный порядок, контакты службы поддержки, применимое право — законодательство РФ.]</p>
+    <h2>7. Система споров</h2>
+    <p>В случае возникновения спора между исполнителем и работодателем любая из сторон вправе обратиться к администрации Платформы. Платформа рассматривает споры в течение 24 часов и принимает решение на основании имеющихся доказательств. Решение Платформы является обязательным для сторон в части средств, находящихся в системе.</p>
   </section>
 
   <section>
-    <h2>8. Изменение условий соглашения</h2>
-    <p class="placeholder">[Порядок уведомления пользователей об изменениях.]</p>
+    <h2>8. Запрещённые действия</h2>
+    <p>На Платформе запрещено:</p>
+    <ul>
+      <li>Обходить систему оплаты (договариваться об оплате вне Платформы после знакомства через неё)</li>
+      <li>Оставлять заведомо ложные отзывы</li>
+      <li>Публиковать контактные данные в открытом профиле для обхода комиссии</li>
+      <li>Использовать Платформу для распространения спама и рекламы</li>
+      <li>Совершать действия, нарушающие законодательство РФ</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>9. Ответственность</h2>
+    <p>Платформа не несёт ответственности за качество работ, выполненных исполнителями, за достоверность сведений, указанных пользователями, а также за ущерб, причинённый в результате взаимодействия пользователей между собой. Максимальная ответственность Платформы ограничена суммой комиссии, уплаченной пользователем.</p>
+  </section>
+
+  <section>
+    <h2>10. Блокировка аккаунта</h2>
+    <p>Платформа вправе заблокировать аккаунт пользователя при нарушении настоящего Соглашения, поступлении обоснованных жалоб других пользователей или по требованию уполномоченных органов. При блокировке средства на кошельке возвращаются пользователю за вычетом задолженностей.</p>
+  </section>
+
+  <section>
+    <h2>11. Применимое право</h2>
+    <p>Настоящее Соглашение регулируется законодательством Российской Федерации. Все споры разрешаются в судебном порядке по месту нахождения Оператора.</p>
+  </section>
+
+  <section>
+    <h2>12. Контакты</h2>
+    <p>По вопросам, связанным с настоящим Соглашением: <a href="mailto:shabashka.legal@yandex.ru" style="color:var(--orange)">shabashka.legal@yandex.ru</a></p>
   </section>
 </div>
+</div>
 
+<footer class="site-footer">
+  <div class="footer-inner">
+    <a class="footer-logo" href="/">Шаба<span>шка</span></a>
+    <div class="footer-links">
+      <a class="footer-link" href="/privacy">Конфиденциальность</a>
+      <a class="footer-link" href="/terms">Условия использования</a>
+      <a class="footer-link" href="/offer">Оферта</a>
+      <a class="footer-link" href="/contacts">Контакты</a>
+    </div>
+    <div class="footer-copy">© 2025 Шабашка · 18+</div>
+  </div>
+</footer>
 </body>
 </html>
