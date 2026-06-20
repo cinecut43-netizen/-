@@ -116,8 +116,50 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .leaflet-control-attribution { display: none !important; }
 /* Делаем OSM карту светлее и менее "зелёной" */
 .leaflet-tile-pane { filter: grayscale(30%) brightness(1.08) saturate(0.7); }
-.job-marker { background: var(--white); border: 2.5px solid var(--orange);
-.job-marker.urgent { border-color: var(--orange); background: var(--orange); color: #fff; }
+
+/* ПИН ЗАКАЗА — пузырь с хвостиком вниз */
+.job-pin {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.2));
+  transition: transform 0.15s;
+}
+.job-pin:hover { transform: translateY(-3px); }
+.job-pin-bubble {
+  background: #fff;
+  border: 2.5px solid #E8510A;
+  border-radius: 12px;
+  padding: 5px 10px;
+  display: flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.job-pin-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px; left: 50%; transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top: 6px solid #E8510A;
+}
+.job-pin-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -7px; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top: 5px solid #fff;
+  z-index: 1;
+}
+.job-pin-emoji { font-size: 15px; line-height: 1; }
+.job-pin-price { font-size: 12px; font-weight: 700; color: #14151A; letter-spacing: -0.2px; }
+.job-pin-dot { width: 6px; height: 6px; border-radius: 50%; background: #E8510A; margin-top: 2px; }
+
+/* Срочный — оранжевый заполненный */
+.job-pin.urgent .job-pin-bubble { background: #E8510A; border-color: #B33D06; }
+.job-pin.urgent .job-pin-bubble::before { border-top-color: #E8510A; }
+.job-pin.urgent .job-pin-bubble::after { border-top-color: #B33D06; }
+.job-pin.urgent .job-pin-price { color: #fff; }
+.job-pin.urgent .job-pin-dot { background: #B33D06; }
+
 .my-marker { width: 16px; height: 16px; background: var(--blue); border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 4px rgba(24,95,165,0.2); }
 
 /* TOAST */
@@ -228,8 +270,15 @@ function renderMarkers() {
   document.getElementById('countBadge').textContent = jobs.length + ' заказов рядом';
 
   jobs.forEach(j => {
-    const html = `<div class="job-marker ${j.urgent ? 'urgent' : ''}">${j.emoji} ${j.pay.toLocaleString('ru')}₽</div>`;
-    const icon = L.divIcon({ className: '', html, iconAnchor: [40, 16] });
+    const price = j.pay.toLocaleString('ru') + ' ₽';
+    const html = '<div class="job-pin' + (j.urgent ? ' urgent' : '') + '">' +
+      '<div class="job-pin-bubble">' +
+      '<span class="job-pin-emoji">' + j.emoji + '</span>' +
+      '<span class="job-pin-price">' + price + '</span>' +
+      '</div>' +
+      '<div class="job-pin-dot"></div>' +
+      '</div>';
+    const icon = L.divIcon({ className: '', html: html, iconSize: [80, 40], iconAnchor: [40, 40] });
     const m = L.marker([j.lat, j.lng], { icon }).addTo(map);
     m.on('click', () => openDetail(j.id));
     markers.push(m);
