@@ -520,6 +520,7 @@
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
 <script src="/icons.js"></script>
+<link rel="stylesheet" href="/mobile.css">
 </head>
 <body>
 
@@ -595,6 +596,17 @@
         <option value="pay">По оплате ↑</option>
         <option value="urgent">Срочные</option>
       </select>
+    </div>
+
+    <!-- Баннер верификации — показывается неверифицированным исполнителям -->
+    <div id="verifyBanner" style="display:none;background:#FFF8E6;border:1px solid #F5A623;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+      <i class="ph-bold ph-seal-check" style="font-size:24px;color:#F5A623;flex-shrink:0"></i>
+      <div style="flex:1">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:2px">Верифицированных выбирают в 2 раза чаще</div>
+        <div style="font-size:12px;color:#6B6B67">Загрузи паспорт — займёт 2 минуты, проверим за 1-2 дня</div>
+      </div>
+      <a href="/profile" style="flex-shrink:0;padding:7px 14px;background:#F5A623;color:#fff;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none">Пройти</a>
+      <button onclick="this.parentElement.style.display='none';localStorage.setItem('shabashka_verify_banner_dismissed','1')" style="background:none;border:none;color:#9A9A96;cursor:pointer;font-size:18px;padding:0 0 0 4px;flex-shrink:0">×</button>
     </div>
 
     <div class="results-header">
@@ -947,6 +959,24 @@ function submitERating() {
 }
 
 renderJobs();
+
+// Показываем баннер верификации исполнителям у которых паспорт не проверен
+(function() {
+  try {
+    var user = Shabashka.getUser();
+    var dismissed = localStorage.getItem('shabashka_verify_banner_dismissed');
+    var vs = Shabashka.getVerificationStatus();
+    var vsStatus = vs ? vs.status : 'none';
+    var banner = document.getElementById('verifyBanner');
+    if (!banner) return;
+    if (user.role === 'worker' && !user.verified.passport &&
+        vsStatus !== 'approved' && vsStatus !== 'pending' && !dismissed) {
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e) {}
+})();
 
 // Подсветить актуальный режим (работник/работодатель) в верхнем табе
 if (Shabashka.getUser().role === 'employer') {

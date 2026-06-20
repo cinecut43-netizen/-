@@ -1,0 +1,292 @@
+/* mobile.css — глобальные мобильные улучшения для Шабашки
+   Подключается на всех страницах после основных стилей.
+   Целевой viewport: 375px (iPhone SE) до 430px (iPhone Pro Max) */
+
+/* ===== БАЗОВЫЕ ИСПРАВЛЕНИЯ ===== */
+@media (max-width: 600px) {
+
+  /* Предотвращаем zoom при фокусе на input в iOS */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Safe area для iPhone X+ (notch + home bar) */
+  body {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Запрет горизонтального скролла */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* ===== НАВИГАЦИЯ ===== */
+  /* Скрываем верхнюю шапку — на мобильном только нижняя панель */
+  #shabashka-nav .sb-bar {
+    padding: 0 12px;
+    height: 48px;
+  }
+
+  /* ===== НИЖНЯЯ НАВИГАЦИЯ ===== */
+  .mobile-bottom-nav,
+  .employer-bottom-nav {
+    height: 56px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid #E5E4E0;
+    box-shadow: 0 -1px 0 rgba(0,0,0,0.06);
+  }
+
+  .mobile-nav-btn,
+  .employer-nav-btn {
+    min-height: 44px; /* минимальный touch target Apple HIG */
+    min-width: 44px;
+    padding: 6px 8px;
+    font-size: 9.5px;
+  }
+
+  .mobile-nav-icon,
+  .employer-nav-icon {
+    font-size: 22px;
+  }
+
+  /* ===== МОДАЛКИ — выезжают снизу как шит ===== */
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 92vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    margin: 0 !important;
+    padding: 0 16px 32px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ручка-индикатор для модалки */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: #E5E4E0;
+    border-radius: 2px;
+    margin: 12px auto 16px;
+    flex-shrink: 0;
+  }
+
+  /* ===== КНОПКИ — увеличиваем touch target ===== */
+  button, .btn, .apply-btn, .btn-hero-primary, .btn-hero-ghost,
+  .for-btn, .plan-btn, .contact-btn, .btn-apply, .btn-contact {
+    min-height: 44px;
+  }
+
+  /* ===== КАРТОЧКИ ЗАКАЗОВ (index.html) ===== */
+  .job-card {
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .job-title { font-size: 14px; }
+  .pay-amount { font-size: 16px; }
+
+  /* ===== ПРОФИЛЬ ===== */
+  .hero-card {
+    padding: 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero-name { font-size: 20px !important; }
+
+  .verify-row {
+    flex-direction: column;
+  }
+
+  /* ===== ЧАТ ===== */
+  /* Учитываем клавиатуру iOS */
+  .chat-layout {
+    height: calc(100dvh - 48px - 56px) !important;
+  }
+
+  .chat-input-bar {
+    padding: 8px 10px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bubble {
+    max-width: 88%;
+  }
+
+  /* ===== КАБИНЕТ РАБОТОДАТЕЛЯ ===== */
+  .sidenav { display: none !important; }
+  .main-content { width: 100% !important; }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-card-num { font-size: 22px; }
+
+  .order-row {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .order-pay, .order-date {
+    font-size: 12px;
+    width: auto;
+  }
+
+  /* ===== КАРТОЧКИ ИСПОЛНИТЕЛЕЙ (workers.html) ===== */
+  .worker-card {
+    padding: 14px;
+  }
+
+  .worker-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+
+  .worker-name { font-size: 14px; }
+
+  .contact-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* ===== ИЗБРАННОЕ ===== */
+  .saved-job {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .saved-job-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  /* ===== PRO страница ===== */
+  .plans-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .compare {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-stats {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  /* ===== ЛЕНДИНГ ===== */
+  .how-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .trust-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .for-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reviews-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-btns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* ===== КОШЕЛЁК ===== */
+  .balance-amount { font-size: 28px !important; }
+  .balance-actions { gap: 8px; }
+  .balance-btn { flex: 1; min-height: 44px; }
+
+  /* ===== КАРТА ===== */
+  #map {
+    height: calc(100dvh - 48px - 56px) !important;
+  }
+
+  /* ===== РЕГИСТРАЦИЯ ===== */
+  .card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .role-switch {
+    gap: 10px;
+  }
+
+  .role-card {
+    padding: 14px 12px;
+  }
+
+  /* ===== ПОИСК ИСПОЛНИТЕЛЕЙ ===== */
+  .workers-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .filter-toggle {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  /* ===== ТИПОГРАФИЯ ===== */
+  h1, .hero-title { letter-spacing: -0.5px; }
+  h2, .section-title { font-size: clamp(20px, 5vw, 32px) !important; }
+}
+
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (375px iPhone SE) ===== */
+@media (max-width: 390px) {
+  .mobile-nav-btn,
+  .employer-nav-btn {
+    padding: 6px 6px;
+    font-size: 9px;
+  }
+
+  .mobile-nav-btn span:last-child,
+  .employer-nav-btn span:last-child {
+    display: none; /* Скрываем подписи на самых маленьких экранах */
+  }
+
+  .job-card { padding: 10px 12px; }
+  .job-title { font-size: 13.5px; }
+  .pay-amount { font-size: 15px; }
+
+  .stat-card-num { font-size: 20px; }
+  .trust-num { font-size: 28px !important; }
+}
+
+/* ===== ЛАНДШАФТНЫЙ РЕЖИМ ===== */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .mobile-bottom-nav,
+  .employer-bottom-nav {
+    display: none !important;
+  }
+
+  body {
+    padding-bottom: 0 !important;
+  }
+
+  #map {
+    height: calc(100dvh - 48px) !important;
+  }
+
+  .chat-layout {
+    height: calc(100dvh - 48px) !important;
+  }
+}
