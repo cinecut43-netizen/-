@@ -201,10 +201,11 @@ let map, myMarker, markers = [], currentCat = 'all', currentSearch = '';
 const MY_LAT = 55.751, MY_LNG = 37.618;
 
 function initMap() {
-  map = L.map('map', { zoomControl: false, attributionControl: false }).setView([MY_LAT, MY_LNG], 12);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd',
-    maxZoom: 19,
+  map = L.map('map', { zoomControl: false, attributionControl: false }).setView([MY_LAT, MY_LNG], 13);
+  // Stadia Maps Alidade Smooth — чистый светлый стиль, работает без ключа
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    minZoom: 5,
   }).addTo(map);
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
