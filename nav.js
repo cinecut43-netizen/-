@@ -80,6 +80,13 @@
       .sb-link.sb-active { background: #FFF0E8; color: #B33D06; font-weight: 600; }
       .sb-link-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
       .sb-link-icon svg { display: block; }
+      .sb-badge {
+        position: absolute; top: -5px; right: -7px;
+        background: #E8510A; color: #fff;
+        font-size: 10px; font-weight: 700; line-height: 1;
+        padding: 2px 4px; border-radius: 10px; min-width: 16px;
+        text-align: center; pointer-events: none;
+      }
       .sb-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
       .sb-role-toggle {
         display: flex; background: #F4F3EF; border-radius: 8px; padding: 3px; gap: 2px;
@@ -141,10 +148,17 @@
     const links = user.role === 'employer' ? EMPLOYER_LINKS : WORKER_LINKS;
     const compact = !!opts.compact;
 
+    const unread = (typeof window !== 'undefined' && window.Shabashka)
+      ? window.Shabashka.getUnreadCount() : 0;
+
     const linksHtml = links.map(function (l) {
       const active = l.page === activePage ? ' sb-active' : '';
+      const badge = (l.page === 'chat' && unread > 0)
+        ? '<span class="sb-badge">' + (unread > 9 ? '9+' : unread) + '</span>'
+        : '';
       return '<a class="sb-link' + active + '" href="' + l.href + '">' +
-        '<span class="sb-link-icon">' + ic(l.icon) + '</span><span>' + l.label + '</span></a>';
+        '<span class="sb-link-icon" style="position:relative">' + ic(l.icon) + badge + '</span>' +
+        '<span>' + l.label + '</span></a>';
     }).join('');
 
     const accountHtml = loggedIn

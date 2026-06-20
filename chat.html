@@ -21,7 +21,7 @@
 <meta property="og:url" content="https://shabashka-jade.vercel.app/chat">
 <meta property="og:title" content="Сообщения — Шабашка">
 <meta property="og:description" content="Переписка с работодателями и исполнителями по заказам.">
-<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.svg">
+<meta property="og:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Шабашка">
@@ -30,7 +30,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Сообщения — Шабашка">
 <meta name="twitter:description" content="Переписка с работодателями и исполнителями по заказам.">
-<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.svg">
+<meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -289,6 +289,7 @@ function switchConvo(id) {
   document.getElementById('bannerDetail').textContent = '📅 ' + c.date;
   document.getElementById('bannerPay').textContent = c.pay;
   c.unread = 0;
+  syncUnreadCount();
   renderSidebar();
   renderMessages();
   renderQuickReplies();
@@ -470,7 +471,18 @@ function acceptWorker() {
   renderMessages();
 }
 
+// Обновляем глобальный счётчик непрочитанных из текущего состояния CONVOS
+function syncUnreadCount() {
+  var total = CONVOS.reduce(function(s, c) { return s + (c.unread || 0); }, 0);
+  Shabashka.setUnreadCount(total);
+}
+
 // init
+// При открытии чата обнуляем непрочитанные текущего разговора
+CONVOS.forEach(function(c) {
+  if (c.id === currentConvo) c.unread = 0;
+});
+syncUnreadCount();
 renderSidebar();
 
 (function initFromQuery() {

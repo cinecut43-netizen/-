@@ -961,6 +961,18 @@ function checkMobile() {
   const mobileNav = document.getElementById('mobileBottomNav');
   if (mobileCats) mobileCats.style.display = isMobile ? 'flex' : 'none';
   if (mobileNav) mobileNav.style.display = isMobile ? 'flex' : 'none';
+
+  // Обновляем бейдж непрочитанных сообщений
+  const unread = Shabashka.getUnreadCount();
+  const badge = document.getElementById('chatBadgeMobile');
+  if (badge) {
+    if (unread > 0) {
+      badge.textContent = unread > 9 ? '9+' : unread;
+      badge.style.display = 'block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
 }
 checkMobile();
 window.addEventListener('resize', checkMobile);
@@ -995,7 +1007,10 @@ function toggleFav(jobId, btn) {
     <i class="ph-bold ph-heart mobile-nav-icon"></i>Избранное
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/chat'">
-    <i class="ph-bold ph-chat-circle-dots mobile-nav-icon"></i>Чат
+    <span style="position:relative;display:inline-flex">
+      <i class="ph-bold ph-chat-circle-dots mobile-nav-icon"></i>
+      <span id="chatBadgeMobile" style="display:none;position:absolute;top:-4px;right:-6px;background:#E8510A;color:#fff;font-size:10px;font-weight:700;padding:1px 4px;border-radius:10px;line-height:1.4;min-width:15px;text-align:center"></span>
+    </span>Чат
   </button>
   <button class="mobile-nav-btn" onclick="window.location.href='/profile'">
     <i class="ph-bold ph-user-circle mobile-nav-icon"></i>Профиль

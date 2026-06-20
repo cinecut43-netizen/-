@@ -868,6 +868,29 @@
     return BASE_WORKERS.filter(function(w){ return ids.indexOf(w.id) !== -1; });
   }
 
+  /* ---------- НЕПРОЧИТАННЫЕ СООБЩЕНИЯ ----------
+     Простой счётчик в localStorage — общее число непрочитанных
+     сообщений во всех чатах. Обновляется из chat.html при открытии/закрытии
+     переписки, и читается nav.js для отображения бейджа на иконке. */
+  const UNREAD_KEY = 'shabashka_unread_count';
+
+  function getUnreadCount() {
+    return parseInt(localStorage.getItem(UNREAD_KEY) || '0');
+  }
+
+  function setUnreadCount(n) {
+    localStorage.setItem(UNREAD_KEY, String(Math.max(0, n)));
+  }
+
+  function clearUnread() {
+    localStorage.removeItem(UNREAD_KEY);
+  }
+
+  // Инициализируем счётчик при первом посещении (3 непрочитанных из демо-чатов)
+  if (localStorage.getItem(UNREAD_KEY) === null) {
+    localStorage.setItem(UNREAD_KEY, '3');
+  }
+
   window.Shabashka = {
     getUser: getUser,
     setRole: setRole,
@@ -880,6 +903,10 @@
     isPro: isPro,
     activatePro: activatePro,
     deactivatePro: deactivatePro,
+    // Непрочитанные сообщения
+    getUnreadCount: getUnreadCount,
+    setUnreadCount: setUnreadCount,
+    clearUnread: clearUnread,
     updateProfile: updateProfile,
     formatRegisteredDate: formatRegisteredDate,
     // Совместимость: код, написанный раньше, использует Shabashka.JOBS как массив.
