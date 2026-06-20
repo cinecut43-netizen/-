@@ -559,20 +559,46 @@ function submitPassport() {
     errEl.style.display = 'block';
     return;
   }
-  var result = Shabashka.submitVerification(passportPhotoBase64);
-  if (!result.ok) {
-    errEl.textContent = result.error;
+
+  var btn = document.querySelector('#passportModal button[onclick="submitPassport()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем…'; }
+
+  // Отправляем фото на сервер — НЕ храним в localStorage
+  fetch('/api/upload-doc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ photo: passportPhotoBase64, type: 'passport' }),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.ok) {
+      errEl.textContent = data.error || 'Ошибка загрузки';
+      errEl.style.display = 'block';
+      if (btn) { btn.disabled = false; btn.textContent = 'Отправить на проверку'; }
+      return;
+    }
+    // Сохраняем только docId (не само фото!) и отправляем заявку
+    var result = Shabashka.submitVerification(data.docId);
+    if (!result.ok) {
+      errEl.textContent = result.error;
+      errEl.style.display = 'block';
+      if (btn) { btn.disabled = false; btn.textContent = 'Отправить на проверку'; }
+      return;
+    }
+    passportPhotoBase64 = null; // очищаем из памяти
+    document.getElementById('passportModal').remove();
+    renderVerification();
+    var t = document.createElement('div');
+    t.textContent = '✅ Заявка отправлена — проверим в течение 1-2 дней';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:400;white-space:nowrap';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3000);
+  })
+  .catch(function() {
+    errEl.textContent = 'Не удалось загрузить фото. Проверьте соединение.';
     errEl.style.display = 'block';
-    return;
-  }
-  document.getElementById('passportModal').remove();
-  renderVerification();
-  // Toast
-  var t = document.createElement('div');
-  t.textContent = '✅ Заявка отправлена — проверим в течение 1-2 дней';
-  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:400;white-space:nowrap';
-  document.body.appendChild(t);
-  setTimeout(function(){ t.remove(); }, 3000);
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить на проверку'; }
+  });
 }
 
 function openEdit() {

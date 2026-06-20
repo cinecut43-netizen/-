@@ -83,54 +83,48 @@ if (rendered) {
   }
 
   function renderWorkers() {
-    let workers = A.getAllUsers().filter(u => u.role === 'worker' && u.status !== 'deleted');
-    if (filter === 'verified') workers = workers.filter(w => w.verifiedPassport);
-    if (filter === 'unverified') workers = workers.filter(w => !w.verifiedPassport);
-    if (filter === 'blocked') workers = workers.filter(w => w.status === 'blocked');
+    var workers = A.getAllUsers().filter(function(u){ return u.role === 'worker' && u.status !== 'deleted'; });
+    if (filter === 'verified') workers = workers.filter(function(w){ return w.verifiedPassport; });
+    if (filter === 'unverified') workers = workers.filter(function(w){ return !w.verifiedPassport; });
+    if (filter === 'blocked') workers = workers.filter(function(w){ return w.status === 'blocked'; });
 
-    const canVerify = A.canDo('worker.verify');
-    const canBlock = A.canDo('worker.block');
+    var canVerify = A.canDo('worker.verify');
+    var canBlock = A.canDo('worker.block');
 
-    document.getElementById('tabContent').innerHTML = `
-      <div class="toolbar">
-        <select id="filterSelect">
-          <option value="all">Все исполнители</option>
-          <option value="verified">Проверенные</option>
-          <option value="unverified">Не проверенные</option>
-          <option value="blocked">Заблокированные</option>
-        </select>
-      </div>
-      <div class="cards-grid" id="workersGrid">
-        ${!workers.length
-          ? '<div style="padding:40px;color:var(--gray);text-align:center">Нет исполнителей по этому фильтру</div>'
-          : workers.map(w => {
-              const s = { active:'pill-active', blocked:'pill-blocked', pending_review:'pill-pending' }[w.status] || 'pill-active';
-              const sl = { active:'Активен', blocked:'Блокирован', pending_review:'На проверке' }[w.status] || 'Активен';
-              return `<div class="worker-card">
-                <div class="worker-head">
-                  <div class="worker-avatar">${(w.name[0]||'?').toUpperCase()}</div>
-                  <div>
-                    <div class="worker-name">${w.name} ${w.verifiedPassport ? '<span class="trusted-badge">✓ Проверен</span>' : ''}</div>
-                    <div class="worker-city">${w.city}</div>
-                  </div>
-                </div>
-                <div class="worker-stats">
-                  <div class="wstat"><div class="wstat-num">${w.completedOrders}</div><div class="wstat-label">заказов</div></div>
-                  <div class="wstat"><div class="wstat-num">${w.rating||'—'}</div><div class="wstat-label">рейтинг</div></div>
-                </div>
-                <span class="pill ${s}">${sl}</span>
-                <div class="worker-actions">
-                  ${w.verifiedPassport
-                    ? `<button class="btn-sm btn-sm-gray" ${canVerify?'':'disabled'} onclick="toggleVerify(${w.id},false)">Снять подтверждение</button>`
-                    : `<button class="btn-sm btn-sm-green" ${canVerify?'':'disabled'} onclick="toggleVerify(${w.id},true)">Подтвердить</button>`}
-                  ${w.status==='blocked'
-                    ? `<button class="btn-sm btn-sm-green" ${canBlock?'':'disabled'} onclick="unblock(${w.id})">Разблокировать</button>`
-                    : `<button class="btn-sm btn-sm-red" ${canBlock?'':'disabled'} onclick="block(${w.id})">Блокировать</button>`}
-                </div>
-              </div>`;
-            }).join('')}
-      </div>`;
-    document.getElementById('filterSelect').addEventListener('change', e => { filter = e.target.value; renderWorkers(); });
+    var gridHtml = !workers.length
+      ? '<div style="padding:40px;color:var(--gray);text-align:center">Нет исполнителей по этому фильтру</div>'
+      : workers.map(function(w) {
+          var s = ({active:'pill-active',blocked:'pill-blocked',pending_review:'pill-pending'})[w.status]||'pill-active';
+          var sl = ({active:'Активен',blocked:'Блокирован',pending_review:'На проверке'})[w.status]||'Активен';
+          var cv = canVerify ? '' : ' disabled';
+          var cb = canBlock ? '' : ' disabled';
+          var vBtn = w.verifiedPassport
+            ? '<button class="btn-sm btn-sm-gray"'+cv+' onclick="toggleVerify('+w.id+',false)">Снять подтверждение</button>'
+            : '<button class="btn-sm btn-sm-green"'+cv+' onclick="toggleVerify('+w.id+',true)">Подтвердить</button>';
+          var bBtn = w.status==='blocked'
+            ? '<button class="btn-sm btn-sm-green"'+cb+' onclick="unblock('+w.id+')">Разблокировать</button>'
+            : '<button class="btn-sm btn-sm-red"'+cb+' onclick="block('+w.id+')">Блокировать</button>';
+          return '<div class="worker-card">' +
+            '<div class="worker-head"><div class="worker-avatar">'+(w.name[0]||'?').toUpperCase()+'</div>' +
+            '<div><div class="worker-name">'+w.name+(w.verifiedPassport?' <span class="trusted-badge">&#10003; Проверен</span>':'')+'</div>' +
+            '<div class="worker-city">'+w.city+'</div></div></div>' +
+            '<div class="worker-stats">' +
+            '<div class="wstat"><div class="wstat-num">'+w.completedOrders+'</div><div class="wstat-label">заказов</div></div>' +
+            '<div class="wstat"><div class="wstat-num">'+(w.rating||'&#8212;')+'</div><div class="wstat-label">рейтинг</div></div>' +
+            '</div><span class="pill '+s+'">'+sl+'</span>' +
+            '<div class="worker-actions">'+vBtn+bBtn+'</div></div>';
+        }).join('');
+
+    document.getElementById('tabContent').innerHTML =
+      '<div class="toolbar"><select id="filterSelect">' +
+      '<option value="all">Все исполнители</option>' +
+      '<option value="verified">Проверенные</option>' +
+      '<option value="unverified">Не проверенные</option>' +
+      '<option value="blocked">Заблокированные</option>' +
+      '</select></div>' +
+      '<div class="cards-grid" id="workersGrid">' + gridHtml + '</div>';
+
+    document.getElementById('filterSelect').addEventListener('change', function(e){ filter = e.target.value; renderWorkers(); });
   }
 
   function renderVerifQueue() {
@@ -146,32 +140,71 @@ if (rendered) {
     const statusColors = { pending:'#B07800', approved:'#1A7A4A', rejected:'#B91C1C' };
     const statusLabels = { pending:'На проверке', approved:'Одобрена', rejected:'Отклонена' };
 
-    document.getElementById('tabContent').innerHTML = `
-      <div class="verif-card">
-        <div class="verif-top">
-          <div>
-            <div class="verif-name">${vs.userId}</div>
-            <div class="verif-date">Подана: ${vs.submittedAt}</div>
-          </div>
-          <span class="pill" style="background:#F4F3EF;color:${statusColors[vs.status]}">${statusLabels[vs.status]}</span>
-        </div>
-        ${vs.photo ? `<img class="verif-photo" src="${vs.photo}" alt="Документ" onclick="window.open(this.src,'_blank')">` : ''}
-        <div style="font-size:12px;color:var(--gray);margin-bottom:12px">Нажмите на фото для просмотра в полном размере</div>
-        ${vs.status === 'pending' ? `
-        <div class="verif-actions">
-          <button class="btn-sm btn-sm-green" style="flex:1;padding:10px" ${canVerify?'':'disabled'} onclick="approveVerif()">✓ Одобрить</button>
-          <button class="btn-sm btn-sm-red" style="flex:1;padding:10px" ${canVerify?'':'disabled'} onclick="document.getElementById('rejectForm').style.display='block'">✗ Отклонить</button>
-        </div>
-        <div class="reject-form" id="rejectForm">
-          <input class="reject-input" id="rejectReason" placeholder="Причина отклонения (например: фото нечёткое)">
-          <button class="btn-sm btn-sm-red" style="width:100%;padding:9px" onclick="rejectVerif()">Отклонить заявку</button>
-        </div>` : vs.status === 'approved' ? `
-        <div style="background:var(--green-bg);color:var(--green);padding:12px;border-radius:9px;font-size:13px;font-weight:600">✅ Заявка одобрена ${vs.reviewedAt ? '· ' + vs.reviewedAt : ''}</div>
-        ` : `
-        <div style="background:var(--red-bg);color:var(--red);padding:12px;border-radius:9px;font-size:13px">❌ Отклонена: ${vs.rejectReason || '—'}</div>
-        `}
-      </div>`;
+    var docPhotoHtml = vs.docId
+      ? '<div id="docPhotoWrap" style="margin-bottom:12px">' +
+        '<button onclick="loadDocPhoto(this.dataset.id)" data-id="' + vs.docId + '" id="loadPhotoBtn"' +
+        ' style="width:100%;padding:10px;border:1px dashed var(--border);border-radius:10px;background:var(--gray-light);cursor:pointer;font-size:13px;color:var(--gray);font-family:inherit">' +
+        '🔍 Загрузить фото документа (только для администраторов)</button></div>'
+      : '';
+
+    var actionsHtml = vs.status === 'pending'
+      ? '<div class="verif-actions">' +
+        '<button class="btn-sm btn-sm-green" style="flex:1;padding:10px" ' + (canVerify?'':'disabled') + ' onclick="approveVerif()">&#10003; Одобрить</button>' +
+        '<button class="btn-sm btn-sm-red" style="flex:1;padding:10px" ' + (canVerify?'':'disabled') + ' onclick="showRejectForm()">&#10007; Отклонить</button>' +
+        '</div><div class="reject-form" id="rejectForm">' +
+        '<input class="reject-input" id="rejectReason" placeholder="Причина отклонения (например: фото нечёткое)">' +
+        '<button class="btn-sm btn-sm-red" style="width:100%;padding:9px" onclick="rejectVerif()">Отклонить заявку</button></div>'
+      : vs.status === 'approved'
+        ? '<div style="background:var(--green-bg);color:var(--green);padding:12px;border-radius:9px;font-size:13px;font-weight:600">&#9989; Заявка одобрена' + (vs.reviewedAt ? ' &middot; ' + vs.reviewedAt : '') + '</div>'
+        : '<div style="background:var(--red-bg);color:var(--red);padding:12px;border-radius:9px;font-size:13px">&#10060; Отклонена: ' + (vs.rejectReason || '&mdash;') + '</div>';
+
+    document.getElementById('tabContent').innerHTML =
+      '<div class="verif-card">' +
+      '<div class="verif-top"><div>' +
+      '<div class="verif-name">' + vs.userId + '</div>' +
+      '<div class="verif-date">Подана: ' + vs.submittedAt + '</div>' +
+      '</div><span class="pill" style="background:#F4F3EF;color:' + statusColors[vs.status] + '">' + statusLabels[vs.status] + '</span></div>' +
+      docPhotoHtml +
+      '<div style="font-size:12px;color:var(--gray);margin-bottom:12px">Нажмите на фото для просмотра в полном размере</div>' +
+      actionsHtml +
+      '</div>';
   }
+
+  window.loadDocPhoto = function(docId) {
+    var btn = document.getElementById('loadPhotoBtn');
+    if (btn) { btn.textContent = 'Загружаем…'; btn.disabled = true; }
+
+    var token = localStorage.getItem('shabashka_admin_token');
+    var role = localStorage.getItem('shabashka_admin_role');
+
+    fetch('/api/get-doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docId: docId, adminToken: token, adminRole: role }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) {
+        var wrap = document.getElementById('docPhotoWrap');
+        if (wrap) wrap.innerHTML = '<div style="color:var(--red);font-size:13px;padding:10px">' + (data.error || 'Ошибка загрузки') + '</div>';
+        return;
+      }
+      var wrap = document.getElementById('docPhotoWrap');
+      if (wrap) {
+        wrap.innerHTML = '<img src="' + data.photo + '" alt="Документ" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;border:1px solid var(--border);cursor:pointer;margin-bottom:8px" onclick="window.open(this.src,\'_blank\')">' +
+          '<div style="font-size:11px;color:var(--gray)">Нажмите для просмотра в полном размере · Доступ зафиксирован в журнале</div>';
+      }
+    })
+    .catch(function() {
+      var wrap = document.getElementById('docPhotoWrap');
+      if (wrap) wrap.innerHTML = '<div style="color:var(--red);font-size:13px;padding:10px">Не удалось загрузить документ</div>';
+    });
+  };
+
+  window.showRejectForm = function() {
+    var f = document.getElementById('rejectForm');
+    if (f) f.style.display = 'block';
+  };
 
   window.approveVerif = function() {
     if (!confirm('Одобрить верификацию паспорта?')) return;

@@ -911,8 +911,8 @@
     } catch(e) { return null; }
   }
 
-  function submitVerification(photoBase64) {
-    if (!photoBase64) return { ok: false, error: 'Загрузите фото документа' };
+  function submitVerification(docId) {
+    if (!docId) return { ok: false, error: 'Не указан ID документа' };
     var existing = getVerificationStatus();
     if (existing && existing.status === 'pending') {
       return { ok: false, error: 'Заявка уже отправлена и ожидает проверки' };
@@ -922,7 +922,8 @@
     }
     var record = {
       userId: getUser().name,
-      photo: photoBase64,
+      docId: docId, // только ID, не само фото
+      photo: null,  // фото хранится на сервере, не здесь
       status: 'pending',
       submittedAt: todayLabel(),
       reviewedAt: null,
@@ -955,6 +956,29 @@
     return { ok: true };
   }
 
+  /* ---------- УТИЛИТЫ БЕЗОПАСНОСТИ ---------- */
+
+  // Маскирует номер телефона для отображения: 79031234567 → +7 (903) ***-**-67
+  function maskPhone(phone) {
+    if (!phone) return '';
+    var digits = String(phone).replace(/\D/g, '');
+    if (digits.length < 10) return phone;
+    var last2 = digits.slice(-2);
+    var code = digits.slice(1, 4);
+    return '+7 (' + code + ') ***-**-' + last2;
+  }
+
+  // Удаляет чувствительные данные из localStorage при выходе из аккаунта
+  // (в дополнение к стандартному logout)
+  function clearSensitiveData() {
+    // Не удаляем: данные пользователя, настройки сайта
+    // Удаляем: верификационные данные с docId, кэшированные токены
+    localStorage.removeItem(VERIFICATION_KEY);
+    localStorage.removeItem('shabashka_push_granted');
+    localStorage.removeItem('shabashka_push_dismissed');
+    // Pro статус и избранное оставляем — они не чувствительные
+  }
+
   window.Shabashka = {
     getUser: getUser,
     setRole: setRole,
@@ -977,6 +1001,9 @@
     submitVerification: submitVerification,
     approveVerification: approveVerification,
     rejectVerification: rejectVerification,
+    // Утилиты безопасности
+    maskPhone: maskPhone,
+    clearSensitiveData: clearSensitiveData,
     updateProfile: updateProfile,
     formatRegisteredDate: formatRegisteredDate,
     // Совместимость: код, написанный раньше, использует Shabashka.JOBS как массив.
