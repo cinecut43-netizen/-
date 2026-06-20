@@ -430,20 +430,149 @@ function renderHero() {
   }
 }
 
-// Блок верификации — отдельные статусы телефона и паспорта,
-// чтобы было видно, что именно подтверждено, а что ещё нет
 function renderVerification() {
   const u = Shabashka.getUser();
-  const items = [
-    { key: 'phone', label: 'Телефон подтверждён', done: u.verified.phone },
-    { key: 'passport', label: 'Паспорт проверен', done: u.verified.passport },
-  ];
-  document.getElementById('verifyRow').innerHTML = items.map(it => `
-    <div class="verify-item ${it.done ? 'done' : 'pending'}">
-      <span class="verify-icon">${it.done ? '✅' : '⏳'}</span>
-      <span>${it.label}</span>
-      ${!it.done ? `<button class="verify-action" onclick="alert('Загрузка документов появится в следующей версии')">Пройти</button>` : ''}
-    </div>`).join('');
+  const vs = Shabashka.getVerificationStatus();
+  const vsStatus = vs ? vs.status : 'none';
+
+  const phoneItem = `
+    <div class="verify-item ${u.verified.phone ? 'done' : 'pending'}">
+      <span class="verify-icon">${u.verified.phone ? '✅' : '⏳'}</span>
+      <span>Телефон подтверждён</span>
+    </div>`;
+
+  let passportItem;
+  if (u.verified.passport || vsStatus === 'approved') {
+    passportItem = `
+      <div class="verify-item done">
+        <span class="verify-icon">✅</span>
+        <span>Паспорт проверен</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">ПРОВЕРЕН</span>
+      </div>`;
+  } else if (vsStatus === 'pending') {
+    passportItem = `
+      <div class="verify-item pending">
+        <span class="verify-icon">🔍</span>
+        <span>Паспорт на проверке</span>
+        <span style="margin-left:auto;font-size:11px;background:#FFF8E6;color:#B07800;padding:2px 8px;border-radius:20px;font-weight:600">На проверке</span>
+      </div>`;
+  } else if (vsStatus === 'rejected') {
+    passportItem = `
+      <div class="verify-item pending">
+        <span class="verify-icon">❌</span>
+        <div style="flex:1">
+          <div>Паспорт отклонён</div>
+          <div style="font-size:11.5px;color:var(--gray);margin-top:2px">${vs.rejectReason || 'Причина не указана'}</div>
+        </div>
+        <button class="verify-action" onclick="openPassportModal()">Повторить</button>
+      </div>`;
+  } else {
+    passportItem = `
+      <div class="verify-item pending">
+        <span class="verify-icon">📄</span>
+        <div style="flex:1">
+          <div>Паспорт не проверен</div>
+          <div style="font-size:11.5px;color:var(--gray);margin-top:2px">Верифицированных выбирают чаще</div>
+        </div>
+        <button class="verify-action" onclick="openPassportModal()">Пройти</button>
+      </div>`;
+  }
+
+  document.getElementById('verifyRow').innerHTML = phoneItem + passportItem;
+}
+
+var passportPhotoBase64 = null;
+
+function openPassportModal() {
+  passportPhotoBase64 = null;
+  var modal = document.createElement('div');
+  modal.id = 'passportModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:17px;font-weight:800">Верификация паспорта</div>
+        <button onclick="document.getElementById('passportModal').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6B6B67;line-height:1">×</button>
+      </div>
+      <div style="font-size:13px;color:#6B6B67;margin-bottom:20px;line-height:1.5">Загрузите фото разворота паспорта с вашей фотографией. Документ проверит администрация в течение 1-2 рабочих дней.</div>
+
+      <div style="background:#F4F3EF;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px">
+        <div style="font-weight:700;margin-bottom:6px">Требования к фото:</div>
+        <div style="color:#6B6B67;line-height:1.6">
+          ✓ Чёткое, не размытое<br>
+          ✓ Весь разворот с фото и данными виден<br>
+          ✓ Без отражений и теней<br>
+          ✓ Реальный документ (не копия с экрана)
+        </div>
+      </div>
+
+      <input type="file" id="passportFileInput" accept="image/*" style="display:none" onchange="previewPassport(this)">
+
+      <div id="passportPreviewWrap" style="display:none;margin-bottom:16px">
+        <img id="passportPreview" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;border:1px solid #E5E4E0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <div style="font-size:12px;color:#1A7A4A">✓ Фото загружено</div>
+          <button onclick="document.getElementById('passportFileInput').click()" style="font-size:12px;color:#6B6B67;background:none;border:none;cursor:pointer;text-decoration:underline">Изменить</button>
+        </div>
+      </div>
+
+      <div id="passportUploadBtn" onclick="document.getElementById('passportFileInput').click()" style="border:2px dashed #E5E4E0;border-radius:12px;padding:28px;text-align:center;cursor:pointer;margin-bottom:16px;transition:border-color 0.15s">
+        <div style="font-size:32px;margin-bottom:8px">📄</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Нажмите чтобы загрузить фото</div>
+        <div style="font-size:12px;color:#6B6B67">JPG, PNG до 10 МБ</div>
+      </div>
+
+      <div id="passportError" style="color:#E8510A;font-size:12.5px;margin-bottom:10px;display:none"></div>
+
+      <div style="background:#E6F1FB;border-radius:10px;padding:12px;font-size:12.5px;color:#185FA5;margin-bottom:16px;line-height:1.5">
+        🔒 Фото документа хранится только для проверки и не передаётся третьим лицам
+      </div>
+
+      <button onclick="submitPassport()" style="width:100%;padding:13px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Отправить на проверку</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===this) this.remove(); });
+}
+
+function previewPassport(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Файл слишком большой. Максимум 10 МБ.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    passportPhotoBase64 = e.target.result;
+    document.getElementById('passportPreview').src = passportPhotoBase64;
+    document.getElementById('passportPreviewWrap').style.display = 'block';
+    document.getElementById('passportUploadBtn').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitPassport() {
+  var errEl = document.getElementById('passportError');
+  if (!passportPhotoBase64) {
+    errEl.textContent = 'Загрузите фото документа';
+    errEl.style.display = 'block';
+    return;
+  }
+  var result = Shabashka.submitVerification(passportPhotoBase64);
+  if (!result.ok) {
+    errEl.textContent = result.error;
+    errEl.style.display = 'block';
+    return;
+  }
+  document.getElementById('passportModal').remove();
+  renderVerification();
+  // Toast
+  var t = document.createElement('div');
+  t.textContent = '✅ Заявка отправлена — проверим в течение 1-2 дней';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:400;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
 }
 
 function openEdit() {

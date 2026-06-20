@@ -891,6 +891,70 @@
     localStorage.setItem(UNREAD_KEY, '3');
   }
 
+  /* ---------- ВЕРИФИКАЦИЯ ПАСПОРТА ----------
+     Исполнитель загружает фото документа (разворот с фото + прописка).
+     Заявка сохраняется в localStorage и появляется в очереди у администратора.
+     После одобрения — поле user.verified.passport = true и бейдж в профиле. */
+  const VERIFICATION_KEY = 'shabashka_passport_verification';
+
+  var VERIFICATION_STATUSES = {
+    none:     'Не подана',
+    pending:  'На проверке',
+    approved: 'Одобрена',
+    rejected: 'Отклонена',
+  };
+
+  function getVerificationStatus() {
+    try {
+      var raw = localStorage.getItem(VERIFICATION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+  }
+
+  function submitVerification(photoBase64) {
+    if (!photoBase64) return { ok: false, error: 'Загрузите фото документа' };
+    var existing = getVerificationStatus();
+    if (existing && existing.status === 'pending') {
+      return { ok: false, error: 'Заявка уже отправлена и ожидает проверки' };
+    }
+    if (existing && existing.status === 'approved') {
+      return { ok: false, error: 'Паспорт уже проверен' };
+    }
+    var record = {
+      userId: getUser().name,
+      photo: photoBase64,
+      status: 'pending',
+      submittedAt: todayLabel(),
+      reviewedAt: null,
+      rejectReason: null,
+    };
+    localStorage.setItem(VERIFICATION_KEY, JSON.stringify(record));
+    return { ok: true };
+  }
+
+  function approveVerification() {
+    var record = getVerificationStatus();
+    if (!record) return { ok: false, error: 'Заявка не найдена' };
+    record.status = 'approved';
+    record.reviewedAt = todayLabel();
+    localStorage.setItem(VERIFICATION_KEY, JSON.stringify(record));
+    // Обновляем флаг в профиле пользователя
+    var user = BASE_USER;
+    user.verified.passport = true;
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    return { ok: true };
+  }
+
+  function rejectVerification(reason) {
+    var record = getVerificationStatus();
+    if (!record) return { ok: false, error: 'Заявка не найдена' };
+    record.status = 'rejected';
+    record.reviewedAt = todayLabel();
+    record.rejectReason = reason || 'Документ нечёткий или неподходящий';
+    localStorage.setItem(VERIFICATION_KEY, JSON.stringify(record));
+    return { ok: true };
+  }
+
   window.Shabashka = {
     getUser: getUser,
     setRole: setRole,
@@ -907,6 +971,12 @@
     getUnreadCount: getUnreadCount,
     setUnreadCount: setUnreadCount,
     clearUnread: clearUnread,
+    // Верификация паспорта
+    VERIFICATION_STATUSES: VERIFICATION_STATUSES,
+    getVerificationStatus: getVerificationStatus,
+    submitVerification: submitVerification,
+    approveVerification: approveVerification,
+    rejectVerification: rejectVerification,
     updateProfile: updateProfile,
     formatRegisteredDate: formatRegisteredDate,
     // Совместимость: код, написанный раньше, использует Shabashka.JOBS как массив.
