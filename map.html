@@ -114,6 +114,8 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 
 /* CUSTOM MARKER */
 .leaflet-control-attribution { display: none !important; }
+/* Делаем OSM карту светлее и менее "зелёной" */
+.leaflet-tile-pane { filter: grayscale(30%) brightness(1.08) saturate(0.7); }
 .job-marker { background: var(--white); border: 2.5px solid var(--orange);
 .job-marker.urgent { border-color: var(--orange); background: var(--orange); color: #fff; }
 .my-marker { width: 16px; height: 16px; background: var(--blue); border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 4px rgba(24,95,165,0.2); }
@@ -202,9 +204,9 @@ const MY_LAT = 55.751, MY_LNG = 37.618;
 
 function initMap() {
   map = L.map('map', { zoomControl: false, attributionControl: false }).setView([MY_LAT, MY_LNG], 13);
-  // Stadia Maps Alidade Smooth — чистый светлый стиль, работает без ключа
-  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20,
+  // OpenStreetMap — работает везде без ключа, русские названия
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
     minZoom: 5,
   }).addTo(map);
 
