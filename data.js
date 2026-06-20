@@ -596,17 +596,18 @@
   // используется в employer.html, admin.html и других местах, где
   // отображается статус заказа, чтобы не дублировать и не расходиться.
   const STATUS_MAP = {
-    new:           { label: 'Новый',              cls: 's-new' },
-    has_responses: { label: 'Есть отклики',       cls: 's-has-responses' },
-    selected:      { label: 'Исполнитель выбран', cls: 's-selected' },
-    in_progress:   { label: 'В работе',           cls: 's-inprog' },
-    done:          { label: 'Завершён',           cls: 's-done' },
-    cancelled:     { label: 'Отменён',            cls: 's-cancelled' },
-    disputed:      { label: 'На рассмотрении',    cls: 's-disputed' },
+    new:           { label: 'Новый',                cls: 's-new' },
+    has_responses: { label: 'Есть отклики',         cls: 's-has-responses' },
+    selected:      { label: 'Исполнитель выбран',   cls: 's-selected' },
+    on_the_way:    { label: '🚶 Едет к вам',        cls: 's-ontheway' },
+    in_progress:   { label: 'В работе',             cls: 's-inprog' },
+    done:          { label: 'Завершён',              cls: 's-done' },
+    cancelled:     { label: 'Отменён',              cls: 's-cancelled' },
+    disputed:      { label: 'На рассмотрении',      cls: 's-disputed' },
   };
 
   // Порядок этапов для определения, можно ли перейти из одного статуса в другой
-  const STATUS_ORDER = ['new', 'has_responses', 'selected', 'in_progress', 'done'];
+  const STATUS_ORDER = ['new', 'has_responses', 'selected', 'on_the_way', 'in_progress', 'done'];
 
   function canCancelJob(status) {
     return status !== 'done' && status !== 'cancelled' && status !== 'disputed';
