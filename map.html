@@ -113,7 +113,8 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .dtag-gray { background: var(--gray-light); color: var(--gray); }
 
 /* CUSTOM MARKER */
-.job-marker { background: var(--white); border: 2.5px solid var(--orange); border-radius: 12px; padding: 4px 8px; font-size: 12px; font-weight: 700; color: var(--dark); white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.leaflet-control-attribution { display: none !important; }
+.job-marker { background: var(--white); border: 2.5px solid var(--orange);
 .job-marker.urgent { border-color: var(--orange); background: var(--orange); color: #fff; }
 .my-marker { width: 16px; height: 16px; background: var(--blue); border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 4px rgba(24,95,165,0.2); }
 
@@ -200,9 +201,9 @@ let map, myMarker, markers = [], currentCat = 'all', currentSearch = '';
 const MY_LAT = 55.751, MY_LNG = 37.618;
 
 function initMap() {
-  map = L.map('map', { zoomControl: false }).setView([MY_LAT, MY_LNG], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
+  map = L.map('map', { zoomControl: false, attributionControl: false }).setView([MY_LAT, MY_LNG], 12);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd',
     maxZoom: 19,
   }).addTo(map);
 
