@@ -741,6 +741,8 @@ function openDetail(id) {
   const companyRating = Shabashka.getCompanyRating(j.company);
   const alreadyRatedEmployer = Shabashka.hasEmployerReview(j.id);
   const isDone = j.status === 'done';
+  const isSelected = j.status === 'selected';
+  const isOnTheWay = j.status === 'on_the_way';
 
   const companyRatingHtml = companyRating
     ? `<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray);margin-top:2px">
@@ -775,6 +777,18 @@ function openDetail(id) {
         ? '<div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:12px;font-size:13px;margin-top:16px">✅ Вы уже оценили работодателя</div>'
         : '<button onclick="openEmployerReviewModal(' + j.id + ')" style="width:100%;margin-top:16px;padding:11px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">⭐ Оценить работодателя</button>'
       }
+    ` : isOnTheWay ? `
+    <div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:14px;font-size:13px;margin-top:16px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:20px">🚶</span>
+      <div><div style="font-weight:600">Вы в пути</div><div style="margin-top:2px;opacity:0.8">Работодатель знает что вы едете</div></div>
+    </div>
+    ` : isSelected ? `
+    <div style="margin-top:16px">
+      <div style="background:#FFF8E6;color:#B07800;border-radius:10px;padding:12px;font-size:13px;margin-bottom:10px">
+        🎉 Вас выбрали! Сообщите работодателю когда выедете.
+      </div>
+      <button onclick="markOnTheWay(${j.id})" style="width:100%;padding:12px;background:#1A7A4A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🚶 Я еду к вам</button>
+    </div>
     ` : alreadyApplied ? `
     <div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:14px;font-size:13px;margin-top:16px">✅ Вы уже откликнулись на этот заказ</div>
     ` : `
@@ -1022,6 +1036,20 @@ function toggleFav(jobId, btn) {
     i.className = 'ph-bold ph-heart';
     i.style.color = '#9A9A96';
   }
+}
+
+function markOnTheWay(jobId) {
+  Shabashka.updateJobStatus(jobId, 'on_the_way');
+  JOBS = Shabashka.getOpenJobs();
+  filtered = filtered.map(j => JOBS.find(x => x.id === j.id) || j);
+  closeModal('detailModal');
+  renderJobs();
+  // Toast
+  var t = document.createElement('div');
+  t.textContent = '🚶 Работодатель получил уведомление что вы едете';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
 }
 </script>
 

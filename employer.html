@@ -106,6 +106,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 .s-new { background: var(--blue-bg); color: var(--blue); }
 .s-has-responses { background: var(--orange-light); color: var(--orange-dark); }
 .s-selected { background: var(--amber-bg); color: var(--amber); }
+.s-ontheway { background: #E8F5EE; color: #1A7A4A; font-weight: 600; }
 .s-inprog { background: var(--amber-bg); color: var(--amber); }
 .s-done { background: var(--green-bg); color: var(--green); }
 .s-cancelled { background: var(--red-bg); color: var(--red); }
@@ -729,7 +730,7 @@ function getCompanyPage() {
 }
 
 function getDashboard() {
-  const activeStatuses = ['new', 'has_responses', 'selected', 'in_progress'];
+  const activeStatuses = ['new', 'has_responses', 'selected', 'on_the_way', 'in_progress'];
   const activeOrders = ORDERS.filter(o => activeStatuses.includes(o.status)).length;
   const done = ORDERS.filter(o => o.status === 'done').length;
   const totalSpent = ORDERS.filter(o => o.status === 'done').reduce((s,o) => s + o.pay * o.people, 0);
@@ -795,6 +796,7 @@ function getOrdersPage() {
         <button class="filter-tab" onclick="filterOrders('new',this)">Новые</button>
         <button class="filter-tab" onclick="filterOrders('has_responses',this)">Есть отклики</button>
         <button class="filter-tab" onclick="filterOrders('in_progress',this)">В работе</button>
+        <button class="filter-tab" onclick="filterOrders('on_the_way',this)">🚶 Едет</button>
         <button class="filter-tab" onclick="filterOrders('done',this)">Завершённые</button>
       </div>
       <input class="search-small" placeholder="Поиск..." oninput="searchOrders(this.value)">
@@ -977,6 +979,8 @@ function renderDetailActions(o) {
 
   let progressBtn = '';
   if (o.status === 'selected') {
+    progressBtn = `<button onclick="advanceOrder(${o.id},'on_the_way')" style="flex:1;padding:10px;background:#E8F5EE;color:#1A7A4A;border:none;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600">🚶 Исполнитель выехал</button>`;
+  } else if (o.status === 'on_the_way') {
     progressBtn = `<button onclick="advanceOrder(${o.id},'in_progress')" style="flex:1;padding:10px;background:var(--amber-bg);color:var(--amber);border:none;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600">▶ Начать работу</button>`;
   } else if (o.status === 'in_progress') {
     progressBtn = `<button onclick="advanceOrder(${o.id},'done')" style="flex:1;padding:10px;background:var(--green-bg);color:var(--green);border:none;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600">✅ Завершить заказ</button>`;

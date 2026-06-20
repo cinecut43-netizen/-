@@ -259,6 +259,11 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
     </div>
   </div>
 
+  <div class="card" id="activeOrdersCard" style="display:none">
+    <div class="section-title">Активные заказы</div>
+    <div id="activeOrdersList"></div>
+  </div>
+
   <div class="card">
     <div class="section-title">Последние заказы</div>
     <div id="historyList"></div>
@@ -347,6 +352,80 @@ function renderBars() {
       <div class="bar-track"><div class="bar-fill" style="width:${total?Math.round(b.count/total*100):0}%"></div></div>
       <span class="bar-count">${b.count}</span>
     </div>`).join('');
+}
+
+function renderActiveOrders() {
+  var allJobs = Shabashka.getAllJobs();
+  var active = allJobs.filter(function(j) {
+    return j.status === 'selected' || j.status === 'on_the_way' || j.status === 'in_progress';
+  });
+
+  var card = document.getElementById('activeOrdersCard');
+  var list = document.getElementById('activeOrdersList');
+
+  if (!active.length) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  list.innerHTML = active.map(function(j) {
+    var statusInfo = {
+      selected:   { label: 'Ожидает вас', color: '#B07800', bg: '#FFF8E6' },
+      on_the_way: { label: '🚶 Едете к заказчику', color: '#1A7A4A', bg: '#E8F5EE' },
+      in_progress:{ label: '🔨 В работе', color: '#185FA5', bg: '#E6F1FB' },
+    }[j.status] || { label: j.status, color: '#6B6B67', bg: '#F4F3EF' };
+
+    var btnHtml = '';
+    if (j.status === 'selected') {
+      btnHtml = '<button onclick="markOnTheWay(' + j.id + ')" style="margin-top:10px;width:100%;padding:10px;background:#1A7A4A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🚶 Еду к вам</button>';
+    } else if (j.status === 'on_the_way') {
+      btnHtml = '<button onclick="markInProgress(' + j.id + ')" style="margin-top:10px;width:100%;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🔨 Начать работу</button>';
+    } else if (j.status === 'in_progress') {
+      btnHtml = '<button onclick="markDone(' + j.id + ')" style="margin-top:10px;width:100%;padding:10px;background:#E8510A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✅ Завершить</button>';
+    }
+
+    return '<div style="border:1px solid #E5E4E0;border-radius:12px;padding:14px 16px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">' +
+      '<div style="font-size:20px">' + j.emoji + '</div>' +
+      '<div style="flex:1">' +
+      '<div style="font-size:14px;font-weight:700">' + j.title + '</div>' +
+      '<div style="font-size:12px;color:#6B6B67">' + j.company + ' · ' + j.date + '</div>' +
+      '</div>' +
+      '<div style="font-size:13px;font-weight:700;color:#14151A">' + j.pay.toLocaleString('ru') + ' ₽</div>' +
+      '</div>' +
+      '<span style="font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;background:' + statusInfo.bg + ';color:' + statusInfo.color + '">' + statusInfo.label + '</span>' +
+      btnHtml +
+      '</div>';
+  }).join('');
+}
+
+function markOnTheWay(jobId) {
+  Shabashka.updateJobStatus(jobId, 'on_the_way');
+  renderActiveOrders();
+  showProfileToast('Работодатель получил уведомление — вы едете! 🚶');
+}
+
+function markInProgress(jobId) {
+  Shabashka.updateJobStatus(jobId, 'in_progress');
+  renderActiveOrders();
+  showProfileToast('Работа начата! Удачи 💪');
+}
+
+function markDone(jobId) {
+  if (!confirm('Подтвердить завершение заказа?')) return;
+  Shabashka.updateJobStatus(jobId, 'done');
+  renderActiveOrders();
+  renderHistory();
+  showProfileToast('Заказ завершён! Ждите оплату ✅');
+}
+
+function showProfileToast(msg) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;max-width:90vw;text-align:center';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2500);
 }
 
 function renderHistory() {
@@ -653,7 +732,7 @@ document.getElementById('photoInput').addEventListener('change', function (e) {
   reader.readAsDataURL(file);
 });
 
-renderHero(); renderVerification(); renderBars(); renderHistory(); renderReviews();
+renderHero(); renderVerification(); renderBars(); renderActiveOrders(); renderHistory(); renderReviews();
 </script>
 <div class="mobile-bottom-nav" id="mobileNav" style="display:none">
   <button class="mobile-nav-btn" onclick="location.href='/'"><i class="ph-bold ph-house" style="font-size:22px"></i><span style="font-size:10px">Главная</span></button>
