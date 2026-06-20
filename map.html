@@ -270,6 +270,7 @@ function renderMarkers() {
   document.getElementById('countBadge').textContent = jobs.length + ' заказов рядом';
 
   jobs.forEach(j => {
+    if (!j.lat || !j.lng) return; // пропускаем без координат
     const price = j.pay.toLocaleString('ru') + ' ₽';
     const html = '<div class="job-pin' + (j.urgent ? ' urgent' : '') + '">' +
       '<div class="job-pin-bubble">' +

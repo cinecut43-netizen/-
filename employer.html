@@ -1042,14 +1042,36 @@ const CAT_MAP = [
   { cat: 'other', emoji: '⚡' },  // ⚡ Прочее
 ];
 
-function submitOrder() {
-  const title = document.getElementById('newTitle').value;
+async function submitOrder() {
+  const title = document.getElementById('newTitle').value.trim();
   const pay = document.getElementById('newPay').value;
   if (!title || !pay) { alert('Заполните название и оплату'); return; }
 
   const catIndex = document.getElementById('newCat').selectedIndex;
   const catInfo = CAT_MAP[catIndex] || CAT_MAP[4];
   const user = Shabashka.getUser();
+  const addr = document.getElementById('newAddr').value.trim();
+
+  const submitBtn = document.querySelector('#postModal .modal-submit');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Размещаем…'; }
+
+  // Геокодируем адрес через Nominatim (OpenStreetMap) — бесплатно, без ключа
+  let lat = null, lng = null;
+  if (addr) {
+    try {
+      const query = encodeURIComponent(addr + ', Россия');
+      const res = await fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ru', {
+        headers: { 'User-Agent': 'Shabashka/1.0' }
+      });
+      const data = await res.json();
+      if (data && data.length > 0) {
+        lat = parseFloat(data[0].lat);
+        lng = parseFloat(data[0].lon);
+      }
+    } catch(e) {
+      // Если геокодирование не удалось — создаём заказ без координат
+    }
+  }
 
   Shabashka.addJob({
     cat: catInfo.cat,
@@ -1062,14 +1084,18 @@ function submitOrder() {
     date: 'Сегодня',
     urgent: document.getElementById('newUrgent').checked,
     allowBargain: document.getElementById('newAllowBargain').checked,
-    location: document.getElementById('newAddr').value || 'Адрес не указан',
+    location: addr || 'Адрес не указан',
+    lat: lat,
+    lng: lng,
     desc: document.getElementById('newDesc').value,
     requirements: '—',
   });
 
   ORDERS = loadOrders();
   closeModal('postModal');
-  alert('Заказ размещён! Он уже виден исполнителям на главной странице.');
+
+  const mapHint = lat ? '' : ' Адрес не удалось определить на карте — уточните его точнее.';
+  alert('Заказ размещён! Он уже виден исполнителям на главной странице.' + mapHint);
   renderPage();
 }
 
