@@ -406,9 +406,100 @@
   .empty { text-align: center; padding: 60px 20px; color: var(--gray); }
   .empty-icon { font-size: 40px; margin-bottom: 12px; }
 
-  @media (max-width: 700px) {
+  /* ===== МОБИЛЬНЫЕ КАРТОЧКИ ЗАКАЗОВ ===== */
+  @media (max-width: 600px) {
+    /* Убираем отступы главного контейнера */
+    .app { flex-direction: column; }
     aside { display: none; }
-    main { padding: 16px; }
+    main { padding: 0; max-width: 100%; }
+
+    /* Поиск */
+    .search-bar { margin: 10px 12px; flex-direction: row; gap: 8px; }
+    .search-input { font-size: 16px; flex: 1; }
+    .sort-select { display: none; }
+
+    /* Нативная мобильная карточка */
+    .m-job-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px;
+      margin: 0 12px 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      cursor: pointer;
+      active-background: #fafaf8;
+    }
+    .m-job-card:active { transform: scale(0.99); }
+    .m-job-header {
+      display: flex; align-items: flex-start;
+      gap: 11px; margin-bottom: 10px;
+    }
+    .m-job-emoji {
+      width: 46px; height: 46px; border-radius: 13px;
+      background: #FFF0E8; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .m-job-info { flex: 1; min-width: 0; }
+    .m-job-title {
+      font-size: 15px; font-weight: 700; line-height: 1.3;
+      margin-bottom: 3px; color: #14151A;
+    }
+    .m-job-company { font-size: 12px; color: #6B6B67; }
+    .m-job-price { text-align: right; flex-shrink: 0; }
+    .m-pay { font-size: 17px; font-weight: 800; color: #14151A; letter-spacing: -0.3px; }
+    .m-pay-label { font-size: 10.5px; color: #9A9A96; margin-top: 1px; }
+
+    .m-job-tags {
+      display: flex; gap: 5px; flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .m-tag {
+      font-size: 11.5px; padding: 4px 9px;
+      border-radius: 20px; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 3px;
+    }
+    .m-tag-hot { background: #FFF0E8; color: #B33D06; }
+    .m-tag-blue { background: #E6F1FB; color: #185FA5; }
+    .m-tag-gray { background: #F4F3EF; color: #6B6B67; }
+
+    .m-job-footer {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 8px;
+    }
+    .m-responses {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: #6B6B67;
+    }
+    .m-avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; color: #fff;
+      margin-right: -6px; border: 2px solid #fff;
+    }
+    .m-apply-btn {
+      padding: 9px 18px; background: #E8510A; color: #fff;
+      border: none; border-radius: 10px; font-size: 13.5px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      min-height: 38px; white-space: nowrap;
+    }
+    .m-fav-btn {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: #F4F3EF; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+
+    /* Секция "Срочные" */
+    .m-section-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 14px 12px 8px;
+    }
+    .m-section-title { font-size: 17px; font-weight: 800; color: #14151A; }
+    .m-section-link { font-size: 13px; color: #E8510A; font-weight: 600; }
+
+    /* Скрываем десктопные карточки на мобильном */
+    .job-card { display: none; }
+    .results-count { padding: 0 12px; font-size: 12px; color: #6B6B67; margin-bottom: 4px; display: block; }
   }
 
   /* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
@@ -535,6 +626,65 @@
 </style>
 </head>
 <body>
+
+<!-- НАТИВНАЯ МОБИЛЬНАЯ ШАПКА (только на телефоне) -->
+<div id="mobileAppHeader" style="display:none">
+  <div style="background:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:100;border-bottom:1px solid #F0EFE9">
+    <!-- Топ: лого + уведомления + аватар -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:21px;font-weight:900;letter-spacing:-0.5px;color:#14151A">Шаба<span style="color:#E8510A">шка</span></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="window.location.href='/chat'" style="position:relative;width:36px;height:36px;border-radius:50%;background:#F4F3EF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
+          <i class="ph-bold ph-chat-circle-dots" style="font-size:18px;color:#6B6B67"></i>
+          <span id="mobileHeaderChatBadge" style="display:none;position:absolute;top:0;right:0;width:14px;height:14px;background:#E8510A;border-radius:50%;border:2px solid #fff"></span>
+        </button>
+        <button onclick="window.location.href='/profile'" style="width:36px;height:36px;border-radius:50%;background:#E8510A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff" id="mobileAvatar">ДК</button>
+      </div>
+    </div>
+    <!-- Поиск -->
+    <div style="display:flex;align-items:center;gap:8px;background:#F4F3EF;border-radius:12px;padding:10px 14px;margin-bottom:14px">
+      <i class="ph-bold ph-magnifying-glass" style="font-size:16px;color:#9A9A96;flex-shrink:0"></i>
+      <input type="text" placeholder="Поиск заказов..." id="mobileSearch"
+        oninput="document.getElementById('searchInput').value=this.value;filterSearch()"
+        style="border:none;background:none;font-size:15px;outline:none;width:100%;color:#14151A;font-family:inherit">
+    </div>
+    <!-- Категории — квадратные иконки -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none;-ms-overflow-style:none" id="mobileCatGrid">
+      <div class="m-cat-item active" data-cat="all" onclick="mobileCatClick('all',this)">
+        <div class="m-cat-icon m-cat-active"><i class="ph-bold ph-squares-four" style="font-size:20px;color:#fff"></i></div>
+        <span class="m-cat-label">Все</span>
+      </div>
+      <div class="m-cat-item" data-cat="move" onclick="mobileCatClick('move',this)">
+        <div class="m-cat-icon"><i class="ph-bold ph-package" style="font-size:20px;color:#6B6B67"></i></div>
+        <span class="m-cat-label">Переезд</span>
+      </div>
+      <div class="m-cat-item" data-cat="build" onclick="mobileCatClick('build',this)">
+        <div class="m-cat-icon"><i class="ph-bold ph-hammer" style="font-size:20px;color:#6B6B67"></i></div>
+        <span class="m-cat-label">Стройка</span>
+      </div>
+      <div class="m-cat-item" data-cat="clean" onclick="mobileCatClick('clean',this)">
+        <div class="m-cat-icon"><i class="ph-bold ph-broom" style="font-size:20px;color:#6B6B67"></i></div>
+        <span class="m-cat-label">Уборка</span>
+      </div>
+      <div class="m-cat-item" data-cat="event" onclick="mobileCatClick('event',this)">
+        <div class="m-cat-icon"><i class="ph-bold ph-confetti" style="font-size:20px;color:#6B6B67"></i></div>
+        <span class="m-cat-label">Ивент</span>
+      </div>
+      <div class="m-cat-item" data-cat="other" onclick="mobileCatClick('other',this)">
+        <div class="m-cat-icon"><i class="ph-bold ph-lightning" style="font-size:20px;color:#6B6B67"></i></div>
+        <span class="m-cat-label">Прочее</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.m-cat-item { display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;width:58px; }
+.m-cat-icon { width:52px;height:52px;border-radius:16px;background:#F4F3EF;display:flex;align-items:center;justify-content:center;transition:background 0.12s; }
+.m-cat-icon.m-cat-active { background:#E8510A; }
+.m-cat-label { font-size:10.5px;font-weight:500;color:#6B6B67;text-align:center;line-height:1.2; }
+.m-cat-item.active .m-cat-label { color:#E8510A;font-weight:700; }
+</style>
 
 <div id="shabashka-nav"></div>
 <nav>
@@ -702,48 +852,100 @@ let payMin = 0, payMax = Infinity;
 
 function renderJobs() {
   const list = document.getElementById('jobsList');
-  document.getElementById('resultsCount').textContent = `Показано ${filtered.length} заказов`;
+  const isMobile = window.innerWidth <= 600;
+
   if (!filtered.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>Заказов не найдено.<br>Попробуйте изменить фильтры.</p></div>`;
+    document.getElementById('resultsCount').textContent = 'Заказов не найдено';
+    list.innerHTML = `<div class="empty" style="text-align:center;padding:60px 20px;color:var(--gray)">
+      <div style="font-size:48px;margin-bottom:12px">🔍</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--dark)">Заказов не найдено</div>
+      <div style="font-size:14px">Попробуйте изменить фильтры</div>
+    </div>`;
     return;
   }
-  list.innerHTML = filtered.map(j => `
-    <div class="job-card" onclick="openDetail(${j.id})">
-      <div class="job-top">
-        <div style="display:flex;gap:12px;align-items:flex-start;flex:1">
-          <div class="job-emoji">${j.emoji}</div>
-          <div class="job-info">
-            <div class="job-title">${j.title}</div>
-            <div class="job-company">${j.company}${(function(){ var r = Shabashka.getCompanyRating(j.company); return r ? ' <span style="font-size:11px;color:#E8510A">⭐ ' + r.rating + '</span>' : ''; })()}</div>
+
+  document.getElementById('resultsCount').textContent = `${filtered.length} заказов`;
+
+  if (isMobile) {
+    // ===== МОБИЛЬНЫЙ UI — нативные карточки =====
+    list.innerHTML = filtered.map(j => {
+      const isFav = Shabashka.isFavJob(j.id);
+      const rating = Shabashka.getCompanyRating(j.company);
+      const ratingHtml = rating
+        ? `<span style="color:#E8510A;font-size:11px;font-weight:600">⭐ ${rating.rating}</span>`
+        : '';
+      return `<div class="m-job-card" onclick="openDetail(${j.id})">
+        <div class="m-job-header">
+          <div class="m-job-emoji">${j.emoji}</div>
+          <div class="m-job-info">
+            <div class="m-job-title">${j.title}</div>
+            <div class="m-job-company">${j.company} ${ratingHtml}</div>
+          </div>
+          <div class="m-job-price">
+            <div class="m-pay">${j.pay.toLocaleString('ru')} ₽</div>
+            <div class="m-pay-label">${j.payLabel}</div>
           </div>
         </div>
-        <div class="job-pay">
-          <div class="pay-amount">${j.pay.toLocaleString('ru')} ₽</div>
-          <div class="pay-label">${j.payLabel}</div>
+        <div class="m-job-tags">
+          ${j.urgent ? '<span class="m-tag m-tag-hot">🔥 Срочно</span>' : ''}
+          ${j.allowBargain ? '<span class="m-tag m-tag-blue">💬 Торг</span>' : ''}
+          <span class="m-tag m-tag-gray"><i class="ph-bold ph-calendar" style="font-size:11px;vertical-align:-1px"></i> ${j.date}</span>
+          <span class="m-tag m-tag-gray"><i class="ph-bold ph-map-pin" style="font-size:11px;vertical-align:-1px"></i> ${j.location}</span>
         </div>
-      </div>
-      <div class="job-tags">
-        ${j.urgent ? '<span class="tag urgent">🔥 Срочно</span>' : ''}
-        ${j.allowBargain ? '<span class="tag" style="background:#E6F1FB;color:#185FA5">💬 Торг</span>' : ''}
-        <span class="tag date">📅 ${j.date}</span>
-        <span class="tag">📍 ${j.location}</span>
-      </div>
-      <div class="job-footer">
-        <div class="responses-bar">
-          <div class="avatar-stack">
-            ${j.colors.map((c,i) => `<div class="avatar-mini" style="background:${c}">${String.fromCharCode(65+i)}</div>`).join('')}
+        <div class="m-job-footer">
+          <div class="m-responses">
+            ${j.colors.slice(0,3).map((c,i) => `<div class="m-avatar" style="background:${c}">${String.fromCharCode(65+i)}</div>`).join('')}
+            <span>${j.responses} откл.</span>
           </div>
-          ${j.responses} откликов
+          <div style="display:flex;gap:8px">
+            <button class="m-fav-btn" onclick="event.stopPropagation();toggleFav(${j.id},this)" id="fav-${j.id}">
+              <i class="ph-bold ${isFav ? 'ph-heart-fill' : 'ph-heart'}" style="color:${isFav ? '#E8510A' : '#C0BFB9'}"></i>
+            </button>
+            <button class="m-apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="fav-btn" id="fav-${j.id}" onclick="event.stopPropagation();toggleFav(${j.id},this)" title="Сохранить">
-            <i class="ph-bold ${Shabashka.isFavJob(j.id) ? 'ph-heart-fill' : 'ph-heart'}" style="color:${Shabashka.isFavJob(j.id) ? '#E8510A' : '#9A9A96'}"></i>
-          </button>
-          <button class="apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
+      </div>`;
+    }).join('');
+  } else {
+    // ===== ДЕСКТОПНЫЙ UI — как раньше =====
+    list.innerHTML = filtered.map(j => `
+      <div class="job-card" onclick="openDetail(${j.id})">
+        <div class="job-top">
+          <div style="display:flex;gap:12px;align-items:flex-start;flex:1">
+            <div class="job-emoji">${j.emoji}</div>
+            <div class="job-info">
+              <div class="job-title">${j.title}</div>
+              <div class="job-company">${j.company}${(function(){ var r = Shabashka.getCompanyRating(j.company); return r ? ' <span style="font-size:11px;color:#E8510A">⭐ ' + r.rating + '</span>' : ''; })()}</div>
+            </div>
+          </div>
+          <div class="job-pay">
+            <div class="pay-amount">${j.pay.toLocaleString('ru')} ₽</div>
+            <div class="pay-label">${j.payLabel}</div>
+          </div>
+        </div>
+        <div class="job-tags">
+          ${j.urgent ? '<span class="tag urgent">🔥 Срочно</span>' : ''}
+          ${j.allowBargain ? '<span class="tag" style="background:#E6F1FB;color:#185FA5">💬 Торг</span>' : ''}
+          <span class="tag date">📅 ${j.date}</span>
+          <span class="tag">📍 ${j.location}</span>
+        </div>
+        <div class="job-footer">
+          <div class="responses-bar">
+            <div class="avatar-stack">
+              ${j.colors.map((c,i) => `<div class="avatar-mini" style="background:${c}">${String.fromCharCode(65+i)}</div>`).join('')}
+            </div>
+            ${j.responses} откликов
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="fav-btn" id="fav-${j.id}" onclick="event.stopPropagation();toggleFav(${j.id},this)" title="Сохранить">
+              <i class="ph-bold ${Shabashka.isFavJob(j.id) ? 'ph-heart-fill' : 'ph-heart'}" style="color:${Shabashka.isFavJob(j.id) ? '#E8510A' : '#9A9A96'}"></i>
+            </button>
+            <button class="apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  }
 }
 
 function openDetail(id) {
@@ -1015,23 +1217,62 @@ function checkMobile() {
   const isMobile = window.innerWidth <= 600;
   const mobileCats = document.getElementById('mobileCats');
   const mobileNav = document.getElementById('mobileBottomNav');
-  if (mobileCats) mobileCats.style.display = isMobile ? 'flex' : 'none';
+  const mobileHeader = document.getElementById('mobileAppHeader');
+  const desktopNav = document.getElementById('shabashka-nav');
+
+  // Мобильная нативная шапка
+  if (mobileHeader) mobileHeader.style.display = isMobile ? 'block' : 'none';
+  // Десктопная шапка — скрываем на мобильном (нативная шапка её заменяет)
+  if (desktopNav) desktopNav.style.display = isMobile ? 'none' : 'block';
+  if (mobileCats) mobileCats.style.display = 'none'; // заменена нативной шапкой
   if (mobileNav) mobileNav.style.display = isMobile ? 'flex' : 'none';
 
-  // Обновляем бейдж непрочитанных сообщений
+  // Заполняем аватар
+  if (isMobile) {
+    const u = Shabashka.getUser();
+    const avatarEl = document.getElementById('mobileAvatar');
+    if (avatarEl && u && u.initials) avatarEl.textContent = u.initials;
+    // Бейдж непрочитанных
+    const unread = Shabashka.getUnreadCount();
+    const badge = document.getElementById('mobileHeaderChatBadge');
+    if (badge) badge.style.display = unread > 0 ? 'block' : 'none';
+  }
+
+  // Перерисовываем карточки при смене ориентации
+  renderJobs();
+
+  // Обновляем бейдж чата в нижней навигации
   const unread = Shabashka.getUnreadCount();
-  const badge = document.getElementById('chatBadgeMobile');
-  if (badge) {
+  const chatBadge = document.getElementById('chatBadgeMobile');
+  if (chatBadge) {
     if (unread > 0) {
-      badge.textContent = unread > 9 ? '9+' : unread;
-      badge.style.display = 'block';
+      chatBadge.textContent = unread > 9 ? '9+' : unread;
+      chatBadge.style.display = 'block';
     } else {
-      badge.style.display = 'none';
+      chatBadge.style.display = 'none';
     }
   }
 }
 checkMobile();
 window.addEventListener('resize', checkMobile);
+
+function mobileCatClick(cat, el) {
+  // Обновляем активную иконку
+  document.querySelectorAll('.m-cat-item').forEach(function(item) {
+    item.classList.remove('active');
+    var icon = item.querySelector('.m-cat-icon');
+    if (icon) { icon.classList.remove('m-cat-active'); }
+    var i = item.querySelector('i');
+    if (i) i.style.color = '#6B6B67';
+  });
+  el.classList.add('active');
+  var activeIcon = el.querySelector('.m-cat-icon');
+  if (activeIcon) activeIcon.classList.add('m-cat-active');
+  var activeI = el.querySelector('i');
+  if (activeI) activeI.style.color = '#fff';
+  // Применяем фильтр
+  filterCat(cat, el);
+}
 
 function syncMobileCat(btn) {
   document.querySelectorAll('.mobile-cat-btn').forEach(b => b.classList.remove('active'));
