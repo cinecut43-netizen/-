@@ -126,7 +126,17 @@
         .sb-burger { display: block; }
       }
       @media (max-width: 600px) {
-        .sb-bar { display: none; }
+        /* Оставляем шапку с логотипом, скрываем лишнее */
+        .sb-bar {
+          height: 48px;
+          padding: 0 14px;
+        }
+        .sb-links { display: none; }
+        .sb-burger { display: none; }
+        .sb-right { gap: 6px; }
+        .sb-login-btn { font-size: 12px; padding: 6px 12px; }
+        .sb-avatar { width: 28px; height: 28px; font-size: 11px; }
+        .sb-logo { font-size: 17px; }
         .sb-mobile-panel { display: none !important; }
       }
     `;
