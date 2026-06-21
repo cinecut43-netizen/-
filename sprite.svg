@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-balance" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/><path d="M9 8H14C15.7 8 17 9.3 17 11C17 12.7 15.7 14 14 14H9V8Z"/><path d="M9 14H14"/><path d="M9 8V18"/><path d="M7 14H14"/>
+  </g>
+  </symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 16V11C18 7.7 15.3 5 12 5C8.7 5 6 7.7 6 11V16L4 18H20L18 16Z"/><path d="M10 20H14"/><circle cx="17.5" cy="6.5" r="2.2" fill="#FF7A00" stroke="none"/>
+  </g>
+  </symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3V7"/><path d="M16 3V7"/><path d="M4 10H20"/><circle cx="8" cy="14" r="1" fill="#FF7A00" stroke="none"/><circle cx="12" cy="14" r="1" fill="#FF7A00" stroke="none"/><circle cx="16" cy="14" r="1" fill="#FF7A00" stroke="none"/>
+  </g>
+  </symbol>
+  <symbol id="icon-chat" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 6.5C4 5.1 5.1 4 6.5 4H16.5C17.9 4 19 5.1 19 6.5V13.5C19 14.9 17.9 16 16.5 16H10L5 20V16H6.5"/><path d="M10 9H15"/><path d="M10 12H14"/>
+  </g>
+  </symbol>
+  <symbol id="icon-create-order" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/><path d="M12 8V16"/><path d="M8 12H16"/>
+  </g>
+  </symbol>
+  <symbol id="icon-history" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8"/><path d="M12 7V12L15 15"/>
+  </g>
+  </symbol>
+  <symbol id="icon-home" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11.5L12 5L20 11.5V20H15V14H9V20H4V11.5Z"/>
+  </g>
+  </symbol>
+  <symbol id="icon-location" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21C12 21 19 14.5 19 9.5C19 5.6 15.9 3 12 3C8.1 3 5 5.6 5 9.5C5 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5" fill="#FF7A00" stroke="none"/>
+  </g>
+  </symbol>
+  <symbol id="icon-logout" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 6H5V18H10"/><path d="M14 8L18 12L14 16"/><path d="M18 12H9"/>
+  </g>
+  </symbol>
+  <symbol id="icon-my-orders" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5" y="7" width="14" height="11" rx="2"/><path d="M9 7V5H15V7"/><path d="M5 12H19"/><path d="M12 12V15"/>
+  </g>
+  </symbol>
+  <symbol id="icon-orders" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 8H15"/><path d="M9 12H15"/><path d="M9 16H13"/>
+  </g>
+  </symbol>
+  <symbol id="icon-payments" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="6" width="16" height="12" rx="2"/><path d="M4 10H20"/><path d="M14 15H18"/>
+  </g>
+  </symbol>
+  <symbol id="icon-profile" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/><path d="M4 20C5 16.5 8 14 12 14C16 14 19 16.5 20 20"/>
+  </g>
+  </symbol>
+  <symbol id="icon-responses" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12C21 16.4 17 20 12 20C10.8 20 9.7 19.8 8.7 19.4L4 21L5.5 16.8C4.5 15.5 4 13.8 4 12C4 7.6 8 4 12 4C17 4 21 7.6 21 12Z"/><path d="M9 12H15"/><path d="M9 9H17"/>
+  </g>
+  </symbol>
+  <symbol id="icon-safe-deal" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3L19 6V11C19 15.5 16 19.5 12 21C8 19.5 5 15.5 5 11V6L12 3Z"/><path d="M9 12L11 14L15.5 9.5"/>
+  </g>
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="7"/><path d="M16 16L21 21"/>
+  </g>
+  </symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/><path d="M19 12A7 7 0 0 0 18.8 10.5L21 8.8L19 5.3L16.4 6.4A7 7 0 0 0 14 5L13.6 2H10.4L10 5A7 7 0 0 0 7.6 6.4L5 5.3L3 8.8L5.2 10.5A7 7 0 0 0 5.2 13.5L3 15.2L5 18.7L7.6 17.6A7 7 0 0 0 10 19L10.4 22H13.6L14 19A7 7 0 0 0 16.4 17.6L19 18.7L21 15.2L18.8 13.5A7 7 0 0 0 19 12Z"/>
+  </g>
+  </symbol>
+  <symbol id="icon-stats" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19V5"/><path d="M4 19H20"/><path d="M8 16V11"/><path d="M12 16V7"/><path d="M16 16V13"/>
+  </g>
+  </symbol>
+  <symbol id="icon-support" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12A7 7 0 0 1 19 12V17C19 18.1 18.1 19 17 19H15"/><path d="M5 12V16H8V12H5Z"/><path d="M19 12V16H16V12H19Z"/><path d="M12 19H15"/>
+  </g>
+  </symbol>
+  <symbol id="icon-wallet" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 7C4 5.9 4.9 5 6 5H18C19.1 5 20 5.9 20 7V17C20 18.1 19.1 19 18 19H6C4.9 19 4 18.1 4 17V7Z"/><path d="M16 11H21V15H16C14.9 15 14 14.1 14 13C14 11.9 14.9 11 16 11Z"/>
+  </g>
+  </symbol>
+  <symbol id="icon-workers" viewBox="0 0 24 24">
+
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 14C15.3 14 18 16.7 18 20H6C6 16.7 8.7 14 12 14Z"/><circle cx="12" cy="8" r="4"/><path d="M8 5H16"/><path d="M10 4H14"/>
+  </g>
+  </symbol>
+</svg>

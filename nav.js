@@ -217,33 +217,36 @@
 
       // Навигация исполнителя
       var workerNav = [
-        { href: '/',           icon: 'ph-house',             label: 'Главная',   page: 'index' },
-        { href: '/map',        icon: 'ph-map-pin',           label: 'Карта',     page: 'map' },
-        { href: '/chat',       icon: 'ph-chat-circle-dots',  label: 'Чат',       page: 'chat', badge: true },
-        { href: '/favorites',  icon: 'ph-heart',             label: 'Избранное', page: 'favorites' },
-        { href: '/profile',    icon: 'ph-user-circle',       label: 'Профиль',   page: 'profile' },
+        { href: '/',           icon: 'home',     label: 'Главная',   page: 'index' },
+        { href: '/map',        icon: 'location', label: 'Карта',     page: 'map' },
+        { href: '/chat',       icon: 'chat',     label: 'Чат',       page: 'chat', badge: true },
+        { href: '/favorites',  icon: 'orders',   label: 'Избранное', page: 'favorites' },
+        { href: '/profile',    icon: 'profile',  label: 'Профиль',   page: 'profile' },
       ];
 
       // Навигация работодателя
       var employerNav = [
-        { href: '/employer',   icon: 'ph-chart-bar',         label: 'Главная',   page: 'employer' },
-        { href: '/workers',    icon: 'ph-users',             label: 'Исполн.',   page: 'workers' },
-        { href: '/chat',       icon: 'ph-chat-circle-dots',  label: 'Чат',       page: 'chat', badge: true },
-        { href: '/map',        icon: 'ph-map-pin',           label: 'Карта',     page: 'map' },
-        { href: '/profile',    icon: 'ph-user-circle',       label: 'Профиль',   page: 'profile' },
+        { href: '/employer',   icon: 'home',     label: 'Главная',   page: 'employer' },
+        { href: '/workers',    icon: 'workers',  label: 'Исполн.',   page: 'workers' },
+        { href: '/chat',       icon: 'chat',     label: 'Чат',       page: 'chat', badge: true },
+        { href: '/map',        icon: 'location', label: 'Карта',     page: 'map' },
+        { href: '/profile',    icon: 'profile',  label: 'Профиль',   page: 'profile' },
       ];
 
       var navItems = user.role === 'employer' ? employerNav : workerNav;
 
       bottomNav.innerHTML = navItems.map(function(item) {
         var isActive = item.page === activePage;
+        var color = isActive ? '#E8510A' : '#9A9A96';
         var badgeHtml = '';
         if (item.badge && unread > 0) {
           badgeHtml = '<span style="position:absolute;top:-2px;right:-4px;background:#E8510A;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:10px;min-width:15px;text-align:center;line-height:1.4">' + (unread > 9 ? '9+' : unread) + '</span>';
         }
-        return '<a href="' + item.href + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:' + (isActive ? '#E8510A' : '#9A9A96') + ';flex:1;padding:8px 4px;min-height:52px;justify-content:center">' +
+        return '<a href="' + item.href + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:' + color + ';flex:1;padding:8px 4px;min-height:52px;justify-content:center">' +
           '<span style="position:relative;display:inline-flex">' +
-          '<i class="ph-bold ' + item.icon + '" style="font-size:24px"></i>' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="color:' + color + '">' +
+          '<use href="/icons/sprite.svg#icon-' + item.icon + '" stroke="' + color + '"/>' +
+          '</svg>' +
           badgeHtml +
           '</span>' +
           '<span style="font-size:9.5px;font-weight:' + (isActive?'700':'500') + '">' + item.label + '</span>' +
