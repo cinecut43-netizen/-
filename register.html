@@ -171,9 +171,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 </head>
 <body>
 <script>
-if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashka_user')) {
-  window.location.replace('/coming-soon');
-}
+// register.html - страница регистрации, доступна всегда
 </script>
 <script src="/splash.js"></script>
 
@@ -518,7 +516,7 @@ function attachHandlers() {
       state.name = nameInput.value.trim();
       if (companyInput) state.company = companyInput.value.trim();
 
-      // Сохраняем данные пользователя и статус «входа» через общий механизм сайта
+      // Сохраняем данные пользователя
       if (window.Shabashka && Shabashka.completeRegistration) {
         const notifyConsent = document.getElementById('consentNotify');
         Shabashka.completeRegistration({
@@ -529,8 +527,16 @@ function attachHandlers() {
         });
       }
 
-      state.step = 4;
-      render();
+      // Сохраняем доступ чтобы coming-soon не мешал
+      localStorage.setItem('shabashka_access', '1');
+      localStorage.setItem('shabashka_onboarding_done', '1');
+
+      // Сразу переходим без лишнего шага
+      if (state.role === 'employer') {
+        window.location.href = '/employer';
+      } else {
+        window.location.href = '/';
+      }
     });
   }
 
