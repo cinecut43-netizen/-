@@ -1560,19 +1560,6 @@ function markOnTheWay(jobId) {
   window.addEventListener('resize', show);
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
-  var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(m) {
-      m.addedNodes.forEach(function(node) {
-        if (node.nodeType === 1) twemoji.parse(node, { folder: 'svg', ext: '.svg' });
-      });
-    });
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-});
-</script>
+
 </body>
 </html>

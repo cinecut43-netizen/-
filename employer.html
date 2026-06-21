@@ -283,11 +283,18 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
-<link rel="icon" type="image/png" href="/logo-v2.png">
-<link rel="apple-touch-icon" href="/logo-v2.png">
-<link rel="shortcut icon" href="/logo-v2.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/favicon-192.png">
+<link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
+<script>
+if (!localStorage.getItem('shabashka_access')) {
+  window.location.replace('/coming-soon');
+}
+</script>
 <script src="/splash.js"></script>
 
 <div id="shabashka-nav"></div>
@@ -932,20 +939,90 @@ function orderRow(o) {
 
 function respItem(r) {
   const bargainBadge = r.proposedPay
-    ? `<div style="font-size:12.5px;font-weight:700;color:var(--orange-dark);margin-top:2px">Предлагает: ${r.proposedPay.toLocaleString('ru')} ₽</div>`
+    ? `<div style="font-size:12.5px;font-weight:700;color:var(--orange-dark);margin-top:2px">💬 Предлагает: ${r.proposedPay.toLocaleString('ru')} ₽</div>`
     : '';
-  return `<div class="resp-item">
+  return `<div class="resp-item" onclick="openWorkerProfile(${r.id})" style="cursor:pointer">
     <div class="resp-avatar" style="background:${r.workerColor}">${r.workerName[0]}</div>
-    <div style="flex:1">
+    <div style="flex:1;min-width:0">
       <div class="resp-name">${r.workerName}</div>
       <div class="resp-rating">${r.workerRating}</div>
       ${bargainBadge}
+      <div style="font-size:12px;color:var(--gray);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">"${r.message}"</div>
     </div>
-    <div class="resp-actions">
+    <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
       <button class="btn-sm btn-sm-green" onclick="event.stopPropagation();acceptResp(${r.id})">✓ Принять</button>
       <button class="btn-sm btn-sm-gray" onclick="event.stopPropagation();declineResp(${r.id})">Отклонить</button>
     </div>
   </div>`;
+}
+
+function openWorkerProfile(respId) {
+  const r = Shabashka.getAllResponses().find(function(x){ return x.id === respId; });
+  if (!r) return;
+
+  const reviews = ['Отличный работник, всё сделал быстро и аккуратно. Рекомендую!',
+    'Пришёл вовремя, работу выполнил качественно.', 'Очень ответственный, буду обращаться снова.'];
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+  overlay.innerHTML = `<div style="background:#fff;width:100%;border-radius:20px 20px 0 0;padding:24px;max-height:85vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:#E2E1DB;border-radius:2px;margin:0 auto 20px"></div>
+
+    <!-- Шапка профиля -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div style="width:64px;height:64px;border-radius:50%;background:${r.workerColor};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;flex-shrink:0">${r.workerName[0]}</div>
+      <div style="flex:1">
+        <div style="font-size:18px;font-weight:800;color:#14151A">${r.workerName}</div>
+        <div style="font-size:13px;color:#6B6B67;margin-top:2px">${r.workerRating}</div>
+        <div style="display:inline-flex;align-items:center;gap:4px;background:#E8F5EE;color:#1A7A4A;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:4px">
+          <span>✓</span> Верифицирован
+        </div>
+      </div>
+    </div>
+
+    <!-- Статистика -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
+      <div style="background:#F4F3EF;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:#14151A">47</div>
+        <div style="font-size:11px;color:#6B6B67;margin-top:2px">заказов</div>
+      </div>
+      <div style="background:#F4F3EF;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:#E8510A">4.9</div>
+        <div style="font-size:11px;color:#6B6B67;margin-top:2px">рейтинг</div>
+      </div>
+      <div style="background:#F4F3EF;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:#1A7A4A">98%</div>
+        <div style="font-size:11px;color:#6B6B67;margin-top:2px">выполнено</div>
+      </div>
+    </div>
+
+    <!-- Сообщение при отклике -->
+    <div style="background:#FFF8E6;border-radius:12px;padding:14px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:600;color:#B07800;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Сообщение при отклике</div>
+      <div style="font-size:14px;color:#14151A;line-height:1.5">"${r.message}"</div>
+      ${r.proposedPay ? `<div style="margin-top:8px;font-size:13px;font-weight:700;color:#E8510A">Предлагает цену: ${r.proposedPay.toLocaleString('ru')} ₽</div>` : ''}
+    </div>
+
+    <!-- Отзывы -->
+    <div style="font-size:14px;font-weight:700;color:#14151A;margin-bottom:12px">⭐ Последние отзывы</div>
+    ${reviews.map(function(rev, i) {
+      return `<div style="padding:12px;border:1px solid #E2E1DB;border-radius:12px;margin-bottom:8px">
+        <div style="display:flex;gap:4px;margin-bottom:6px">${'⭐'.repeat(5)}</div>
+        <div style="font-size:13px;color:#14151A;line-height:1.5">${rev}</div>
+        <div style="font-size:11px;color:#9A9A96;margin-top:6px">${['Иван П.', 'Мария С.', 'ООО СтройКо'][i]} · ${['3 дня назад', 'неделю назад', '2 недели назад'][i]}</div>
+      </div>`;
+    }).join('')}
+
+    <!-- Кнопки -->
+    <div style="display:flex;gap:10px;margin-top:16px;padding-bottom:env(safe-area-inset-bottom,0px)">
+      <button onclick="this.closest('div[style*=fixed]').remove();declineResp(${r.id})" style="flex:1;padding:13px;background:#F4F3EF;color:#14151A;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Отклонить</button>
+      <button onclick="this.closest('div[style*=fixed]').remove();acceptResp(${r.id})" style="flex:2;padding:13px;background:#E8510A;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✓ Принять исполнителя</button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
 }
 
 function repeatOrder(id) {
@@ -1061,6 +1138,83 @@ function advanceOrder(id, nextStatus) {
   ORDERS = loadOrders();
   closeModal('detailModal');
   renderPage();
+
+  // После завершения — предлагаем оценить исполнителя
+  if (nextStatus === 'done') {
+    const order = ORDERS.find(function(o){ return o.id === id; });
+    setTimeout(function(){ openRateWorkerModal(id, order); }, 400);
+  }
+}
+
+function openRateWorkerModal(jobId, order) {
+  // Находим принятого исполнителя
+  const responses = Shabashka.getAllResponses();
+  const accepted = responses.find(function(r){ return r.jobId === jobId && r.status === 'accepted'; });
+  const workerName = accepted ? accepted.workerName : 'Исполнитель';
+  const workerColor = accepted ? (accepted.workerColor || '#E8510A') : '#E8510A';
+
+  let selectedRating = 5;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'rateWorkerOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+
+  overlay.innerHTML = `<div style="background:#fff;width:100%;max-width:400px;border-radius:20px;padding:24px">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:8px">⭐</div>
+      <div style="font-size:18px;font-weight:800;color:#14151A">Оцените исполнителя</div>
+      <div style="font-size:13px;color:#6B6B67;margin-top:4px">Заказ «${order ? order.title : ''}» завершён</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;background:#F4F3EF;border-radius:14px;padding:14px;margin-bottom:20px">
+      <div style="width:48px;height:48px;border-radius:50%;background:${workerColor};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0">${workerName[0]}</div>
+      <div>
+        <div style="font-size:15px;font-weight:700">${workerName}</div>
+        <div style="font-size:12px;color:#6B6B67">Исполнитель</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:16px" id="rateStars">
+      ${[1,2,3,4,5].map(function(s){
+        return `<button onclick="setRating(${s})" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .1s" id="star${s}">⭐</button>`;
+      }).join('')}
+    </div>
+
+    <textarea id="rateText" placeholder="Напишите отзыв (необязательно)..." style="width:100%;padding:12px;border:1.5px solid #E2E1DB;border-radius:12px;font-size:14px;font-family:inherit;outline:none;resize:none;height:80px;margin-bottom:16px;color:#14151A"></textarea>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('rateWorkerOverlay').remove()" style="flex:1;padding:13px;background:#F4F3EF;color:#14151A;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Пропустить</button>
+      <button onclick="submitWorkerRating(${jobId}, '${workerName}')" style="flex:2;padding:13px;background:#E8510A;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Отправить оценку</button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+  setRating(5);
+}
+
+var currentWorkerRating = 5;
+
+function setRating(n) {
+  currentWorkerRating = n;
+  [1,2,3,4,5].forEach(function(i) {
+    var btn = document.getElementById('star' + i);
+    if (btn) {
+      btn.style.opacity = i <= n ? '1' : '0.25';
+      btn.style.transform = i === n ? 'scale(1.2)' : 'scale(1)';
+    }
+  });
+}
+
+function submitWorkerRating(jobId, workerName) {
+  var text = document.getElementById('rateText') ? document.getElementById('rateText').value : '';
+  Shabashka.submitReview && Shabashka.submitReview(jobId, currentWorkerRating, text, null);
+  document.getElementById('rateWorkerOverlay').remove();
+
+  var t = document.createElement('div');
+  t.textContent = '✅ Отзыв отправлен. Спасибо!';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A7A4A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2500);
 }
 
 function cancelOrder(id) {
@@ -1309,5 +1463,6 @@ function syncEmployerNav(page) {
     <div class="footer-copy">© 2025 Шабашка · 18+</div>
   </div>
 </footer>
+
 </body>
 </html>

@@ -181,11 +181,18 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
-<link rel="icon" type="image/png" href="/logo-v2.png">
-<link rel="apple-touch-icon" href="/logo-v2.png">
-<link rel="shortcut icon" href="/logo-v2.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/favicon-192.png">
+<link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
+<script>
+if (!localStorage.getItem('shabashka_access')) {
+  window.location.replace('/coming-soon');
+}
+</script>
 <script src="/splash.js"></script>
 
 <!-- МОБИЛЬНАЯ ШАПКА ЧАТА -->
@@ -655,5 +662,6 @@ renderQuickReplies();
     <div class="footer-copy">© 2025 Шабашка · 18+</div>
   </div>
 </footer>
+
 </body>
 </html>
