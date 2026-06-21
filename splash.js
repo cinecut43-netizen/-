@@ -15,8 +15,8 @@
   s.textContent =
     '#shb-splash{position:fixed;inset:0;background:#14151A;z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease}' +
     '.shb-inner{display:flex;flex-direction:column;align-items:center;gap:44px}' +
-    '.shb-logo{display:flex;flex-direction:column;align-items:center;gap:18px;animation:shb-up .6s cubic-bezier(.34,1.56,.64,1) both}' +
-    '.shb-icon{width:120px;height:120px;border-radius:0;object-fit:contain;background:transparent}' +
+    '.shb-logo{display:flex;flex-direction:column;align-items:center;gap:16px;animation:shb-up .6s cubic-bezier(.34,1.56,.64,1) both}' +
+    '.shb-icon{width:120px;height:120px;object-fit:contain;border-radius:28px}' +
     '.shb-name{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:44px;font-weight:900;letter-spacing:-1.5px;color:#fff;margin:0}' +
     '.shb-name span{color:#E8510A}' +
     '.shb-tag{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:rgba(255,255,255,.35);letter-spacing:3px;margin:0}' +
@@ -39,14 +39,9 @@
     setTimeout(function(){ splash.parentNode && splash.parentNode.removeChild(splash); }, 550);
   }
 
-  // Ждём загрузки картинки, потом ещё 1 секунду показываем
   var img = splash.querySelector('.shb-icon');
   img.onload = function() { setTimeout(hide, 1000); };
-  img.onerror = function() { setTimeout(hide, 500); };
-
-  // Страница загружена — ждём ещё 1.5 сек
-  window.addEventListener('load', function() { setTimeout(hide, 1500); });
-
-  // Максимум 4 секунды в любом случае
-  setTimeout(hide, 4000);
+  img.onerror = function() { setTimeout(hide, 300); };
+  window.addEventListener('load', function() { setTimeout(hide, 1200); });
+  setTimeout(hide, 3500);
 })();
