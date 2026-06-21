@@ -13,10 +13,10 @@
 
   var s = document.createElement('style');
   s.textContent =
-    '#shb-splash{position:fixed;inset:0;background:#14151A;z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease}' +
+    '#shb-splash{position:fixed;inset:0;background:#1A1A18;z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease}' +
     '.shb-inner{display:flex;flex-direction:column;align-items:center;gap:44px}' +
     '.shb-logo{display:flex;flex-direction:column;align-items:center;gap:16px;animation:shb-up .6s cubic-bezier(.34,1.56,.64,1) both}' +
-    '.shb-icon{width:120px;height:120px;object-fit:contain;border-radius:28px}' +
+    '.shb-icon{width:140px;height:140px;object-fit:contain;border-radius:0;background:transparent}' +
     '.shb-name{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:44px;font-weight:900;letter-spacing:-1.5px;color:#fff;margin:0}' +
     '.shb-name span{color:#E8510A}' +
     '.shb-tag{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:rgba(255,255,255,.35);letter-spacing:3px;margin:0}' +
