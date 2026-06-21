@@ -5,6 +5,11 @@
 /* ===== БАЗОВЫЕ ИСПРАВЛЕНИЯ ===== */
 @media (max-width: 600px) {
 
+  /* Переключатель роли — скрываем на мобильном, роль меняется через меню */
+  .sb-role-toggle { display: none !important; }
+  .sb-links { display: none !important; }
+  .sb-burger { display: none !important; }
+
   /* Предотвращаем zoom при фокусе на input в iOS */
   input, textarea, select {
     font-size: 16px !important;

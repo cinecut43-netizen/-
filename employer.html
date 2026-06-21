@@ -175,7 +175,13 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 @media (max-width: 600px) {
   body { padding-bottom: 70px; }
 
-  /* Верхняя панель */
+  /* Скрываем верхнюю nav полностью — заменяем компактной */
+  #shabashka-nav .sb-bar { height: 50px; padding: 0 12px; }
+  #shabashka-nav .sb-role-toggle { display: none; }
+  #shabashka-nav .sb-links { display: none; }
+  #shabashka-nav .sb-burger { display: none; }
+
+  /* Верхняя панель работодателя */
   nav { padding: 0 12px; height: 50px; }
   .nav-company { display: none; }
   .post-btn { padding: 8px 12px; font-size: 13px; }
@@ -276,6 +282,8 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 .site-footer .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.18); }
 @media (max-width: 600px) { .site-footer .footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; } }
 </style>
+<meta name="color-scheme" content="light only">
+<style>:root { color-scheme: light only; }</style>
 </head>
 <body>
 
