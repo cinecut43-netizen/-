@@ -636,11 +636,37 @@
       </div>
     </div>
     <!-- Поиск -->
-    <div style="display:flex;align-items:center;gap:8px;background:#F4F3EF;border-radius:12px;padding:10px 14px;margin-bottom:14px">
-      <i class="ph-bold ph-magnifying-glass" style="font-size:16px;color:#9A9A96;flex-shrink:0"></i>
-      <input type="text" placeholder="Поиск заказов..." id="mobileSearch"
-        oninput="document.getElementById('searchInput').value=this.value;filterSearch()"
-        style="border:none;background:none;font-size:15px;outline:none;width:100%;color:#14151A;font-family:inherit">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <div style="flex:1;display:flex;align-items:center;gap:8px;background:#F4F3EF;border-radius:12px;padding:10px 14px">
+        <i class="ph-bold ph-magnifying-glass" style="font-size:16px;color:#9A9A96;flex-shrink:0"></i>
+        <input type="text" placeholder="Поиск заказов..." id="mobileSearch"
+          oninput="document.getElementById('searchInput').value=this.value;filterSearch()"
+          style="border:none;background:none;font-size:15px;outline:none;width:100%;color:#14151A;font-family:inherit">
+      </div>
+      <button onclick="toggleMobileFilter()" id="mobileFilterBtn" style="width:44px;height:44px;border-radius:12px;background:#F4F3EF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0">
+        <i class="ph-bold ph-sliders" style="font-size:20px;color:#6B6B67"></i>
+        <span id="mobileFilterDot" style="display:none;position:absolute;top:6px;right:6px;width:8px;height:8px;background:#E8510A;border-radius:50%"></span>
+      </button>
+    </div>
+
+    <!-- Панель фильтров (скрыта по умолчанию) -->
+    <div id="mobileFilterPanel" style="display:none;padding-bottom:14px;border-bottom:1px solid #F0EFE9;margin-bottom:2px">
+      <div style="font-size:13px;font-weight:700;color:#14151A;margin-bottom:10px">Фильтры</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#6B6B67;margin-bottom:6px">Оплата (₽ за день)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="mobilePayMin" placeholder="от" oninput="syncPayFilter()"
+            style="flex:1;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A">
+          <span style="color:#9A9A96;font-size:14px">—</span>
+          <input type="number" id="mobilePayMax" placeholder="до" oninput="syncPayFilter()"
+            style="flex:1;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A">
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="toggleUrgentFilter(this)" id="mobileUrgentBtn" style="padding:8px 14px;background:#F4F3EF;border:1.5px solid transparent;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:#6B6B67">🔥 Только срочные</button>
+        <button onclick="toggleBargainFilter(this)" id="mobileBargainBtn" style="padding:8px 14px;background:#F4F3EF;border:1.5px solid transparent;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:#6B6B67">💬 С торгом</button>
+      </div>
+      <button onclick="resetMobileFilters()" style="margin-top:10px;padding:8px;background:none;border:none;font-size:13px;color:#9A9A96;cursor:pointer;font-family:inherit">Сбросить фильтры</button>
     </div>
     <!-- Категории — квадратные иконки -->
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none;-ms-overflow-style:none" id="mobileCatGrid">
@@ -1155,7 +1181,65 @@ function switchMode(mode) {
 function filterCat(cat, btn) {
   currentCat = cat;
   document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
+  applyFilters();
+}
+
+var mobileUrgentOnly = false;
+var mobileBargainOnly = false;
+
+function toggleMobileFilter() {
+  var panel = document.getElementById('mobileFilterPanel');
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  var btn = document.getElementById('mobileFilterBtn');
+  btn.style.background = isOpen ? '#F4F3EF' : '#E8510A';
+  btn.querySelector('i').style.color = isOpen ? '#6B6B67' : '#fff';
+}
+
+function syncPayFilter() {
+  payMin = parseInt(document.getElementById('mobilePayMin').value) || 0;
+  payMax = parseInt(document.getElementById('mobilePayMax').value) || Infinity;
+  updateFilterDot();
+  applyFilters();
+}
+
+function toggleUrgentFilter(btn) {
+  mobileUrgentOnly = !mobileUrgentOnly;
+  btn.style.background = mobileUrgentOnly ? '#FFF0E8' : '#F4F3EF';
+  btn.style.borderColor = mobileUrgentOnly ? '#E8510A' : 'transparent';
+  btn.style.color = mobileUrgentOnly ? '#E8510A' : '#6B6B67';
+  updateFilterDot();
+  applyFilters();
+}
+
+function toggleBargainFilter(btn) {
+  mobileBargainOnly = !mobileBargainOnly;
+  btn.style.background = mobileBargainOnly ? '#E6F1FB' : '#F4F3EF';
+  btn.style.borderColor = mobileBargainOnly ? '#185FA5' : 'transparent';
+  btn.style.color = mobileBargainOnly ? '#185FA5' : '#6B6B67';
+  updateFilterDot();
+  applyFilters();
+}
+
+function updateFilterDot() {
+  var active = payMin > 0 || payMax < Infinity || mobileUrgentOnly || mobileBargainOnly;
+  var dot = document.getElementById('mobileFilterDot');
+  if (dot) dot.style.display = active ? 'block' : 'none';
+}
+
+function resetMobileFilters() {
+  payMin = 0; payMax = Infinity;
+  mobileUrgentOnly = false; mobileBargainOnly = false;
+  var mn = document.getElementById('mobilePayMin');
+  var mx = document.getElementById('mobilePayMax');
+  if (mn) mn.value = '';
+  if (mx) mx.value = '';
+  var ub = document.getElementById('mobileUrgentBtn');
+  var bb = document.getElementById('mobileBargainBtn');
+  if (ub) { ub.style.background='#F4F3EF'; ub.style.borderColor='transparent'; ub.style.color='#6B6B67'; }
+  if (bb) { bb.style.background='#F4F3EF'; bb.style.borderColor='transparent'; bb.style.color='#6B6B67'; }
+  updateFilterDot();
   applyFilters();
 }
 
@@ -1188,6 +1272,8 @@ function applyFilters() {
   filtered = JOBS.filter(j => {
     if (currentCat !== 'all' && j.cat !== currentCat) return false;
     if (j.pay < payMin || j.pay > payMax) return false;
+    if (mobileUrgentOnly && !j.urgent) return false;
+    if (mobileBargainOnly && !j.allowBargain) return false;
     if (searchQuery && !j.title.toLowerCase().includes(searchQuery) && !j.desc.toLowerCase().includes(searchQuery)) return false;
     return true;
   });
