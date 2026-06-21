@@ -1,0 +1,37 @@
+{
+  "name": "Шабашка — подработка рядом",
+  "short_name": "Шабашка",
+  "description": "Биржа разовых заказов. Найди подработку или исполнителя за 1 час.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0F1014",
+  "theme_color": "#E8510A",
+  "lang": "ru",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Найти заказ",
+      "short_name": "Заказы",
+      "description": "Открыть список актуальных заказов",
+      "url": "/",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Мои сообщения",
+      "short_name": "Чат",
+      "description": "Открыть переписку с работодателями",
+      "url": "/chat",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}
