@@ -576,36 +576,6 @@
     /* Модалка на весь экран */
     .modal { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; margin: 0; overflow-y: auto; }
     .modal-overlay { align-items: flex-end; }
-
-    /* Нижняя навигация */
-    .mobile-bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: var(--white);
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      z-index: 200;
-    }
-    .mobile-nav-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      font-size: 10px;
-      color: var(--gray);
-      border: none;
-      background: none;
-      cursor: pointer;
-      padding: 8px 12px;
-      font-family: inherit;
-    }
-    .mobile-nav-btn.active { color: var(--orange); }
-    .mobile-nav-icon { font-size: 24px; }
   }
 </style>
 <script src="/data.js"></script>
@@ -1215,43 +1185,24 @@ if (Shabashka.getUser().role === 'employer') {
 // Показываем мобильные элементы на узких экранах
 function checkMobile() {
   const isMobile = window.innerWidth <= 600;
-  const mobileCats = document.getElementById('mobileCats');
-  const mobileNav = document.getElementById('mobileBottomNav');
   const mobileHeader = document.getElementById('mobileAppHeader');
   const desktopNav = document.getElementById('shabashka-nav');
 
-  // Мобильная нативная шапка
   if (mobileHeader) mobileHeader.style.display = isMobile ? 'block' : 'none';
-  // Десктопная шапка — скрываем на мобильном (нативная шапка её заменяет)
   if (desktopNav) desktopNav.style.display = isMobile ? 'none' : 'block';
-  if (mobileCats) mobileCats.style.display = 'none'; // заменена нативной шапкой
-  if (mobileNav) mobileNav.style.display = isMobile ? 'flex' : 'none';
 
-  // Заполняем аватар
+  // Аватар в мобильной шапке
   if (isMobile) {
     const u = Shabashka.getUser();
     const avatarEl = document.getElementById('mobileAvatar');
     if (avatarEl && u && u.initials) avatarEl.textContent = u.initials;
-    // Бейдж непрочитанных
+    // Бейдж чата
     const unread = Shabashka.getUnreadCount();
     const badge = document.getElementById('mobileHeaderChatBadge');
     if (badge) badge.style.display = unread > 0 ? 'block' : 'none';
   }
 
-  // Перерисовываем карточки при смене ориентации
   renderJobs();
-
-  // Обновляем бейдж чата в нижней навигации
-  const unread = Shabashka.getUnreadCount();
-  const chatBadge = document.getElementById('chatBadgeMobile');
-  if (chatBadge) {
-    if (unread > 0) {
-      chatBadge.textContent = unread > 9 ? '9+' : unread;
-      chatBadge.style.display = 'block';
-    } else {
-      chatBadge.style.display = 'none';
-    }
-  }
 }
 checkMobile();
 window.addEventListener('resize', checkMobile);
@@ -1307,26 +1258,6 @@ function markOnTheWay(jobId) {
 </script>
 
 <!-- Нижняя навигация для мобильных -->
-<div class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
-  <button class="mobile-nav-btn active" onclick="window.location.href='/'">
-    <i class="ph-bold ph-house mobile-nav-icon"></i>Главная
-  </button>
-  <button class="mobile-nav-btn" onclick="window.location.href='/map'">
-    <i class="ph-bold ph-map-pin mobile-nav-icon"></i>Карта
-  </button>
-  <button class="mobile-nav-btn" onclick="window.location.href='/favorites'">
-    <i class="ph-bold ph-heart mobile-nav-icon"></i>Избранное
-  </button>
-  <button class="mobile-nav-btn" onclick="window.location.href='/chat'">
-    <span style="position:relative;display:inline-flex">
-      <i class="ph-bold ph-chat-circle-dots mobile-nav-icon"></i>
-      <span id="chatBadgeMobile" style="display:none;position:absolute;top:-4px;right:-6px;background:#E8510A;color:#fff;font-size:10px;font-weight:700;padding:1px 4px;border-radius:10px;line-height:1.4;min-width:15px;text-align:center"></span>
-    </span>Чат
-  </button>
-  <button class="mobile-nav-btn" onclick="window.location.href='/profile'">
-    <i class="ph-bold ph-user-circle mobile-nav-icon"></i>Профиль
-  </button>
-</div>
 <script src="/pwa.js"></script>
 <footer class="site-footer">
   <div class="footer-inner">
