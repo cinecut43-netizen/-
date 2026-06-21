@@ -620,6 +620,14 @@ if (!localStorage.getItem('shabashka_access')) {
 </script>
 <script src="/splash.js"></script>
 <script>
+// Сбрасываем старый SW кэш
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r){ r.update(); });
+  });
+}
+</script>
+<script>
 // Редирект на онбординг при первом визите
 (function(){
   if (!localStorage.getItem('shabashka_onboarding_done') && !localStorage.getItem('shabashka_user')) {
