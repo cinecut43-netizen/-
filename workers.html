@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Найти исполнителя — Шабашка</title>
 <meta name="description" content="Поиск проверенных исполнителей в Москве. Грузчики, уборщицы, строители, промоутеры. Рейтинг, отзывы, быстрый отклик.">
 <style>
@@ -196,8 +195,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
+<link rel="icon" type="image/png" href="/logo-v2.png">
+<link rel="apple-touch-icon" href="/logo-v2.png">
+<link rel="shortcut icon" href="/logo-v2.png">
 </head>
 <body>
+<script src="/splash.js"></script>
 <div id="shabashka-nav"></div>
 
 <div class="page-header">
@@ -276,7 +279,7 @@ function applyFilters() {
 function render(workers) {
   document.getElementById('resultsCount').textContent = workers.length + ' ' + plural(workers.length, 'исполнитель', 'исполнителя', 'исполнителей');
   if (!workers.length) {
-    document.getElementById('workersList').innerHTML = '<div class="empty-state"><i class="ph-bold ph-users" style="color:#E5E4E0"></i><h3>Никого не найдено</h3><p>Попробуй изменить фильтры или сброси поиск</p></div>';
+    document.getElementById('workersList').innerHTML = '<div class="empty-state-v2"><div class="es-icon es-gray">🔍</div><div class="es-title">Никого не найдено</div><div class="es-sub">Попробуйте изменить фильтры или сбросить поиск</div><button class="es-btn" onclick="document.getElementById(\'searchInput\').value=\'\';renderWorkers()">Сбросить фильтры</button></div>';
     return;
   }
   document.getElementById('workersList').innerHTML = workers.map(workerCard).join('');

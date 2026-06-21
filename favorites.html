@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Избранное — Шабашка</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -96,8 +95,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
+<link rel="icon" type="image/png" href="/logo-v2.png">
+<link rel="apple-touch-icon" href="/logo-v2.png">
+<link rel="shortcut icon" href="/logo-v2.png">
 </head>
 <body>
+<script src="/splash.js"></script>
 <div id="shabashka-nav"></div>
 
 <div class="page-header">
@@ -134,11 +137,11 @@ function render() {
 function renderJobs() {
   var jobs = Shabashka.getSavedJobs();
   if (!jobs.length) {
-    document.getElementById('mainContent').innerHTML = '<div class="empty-state">' +
-      '<i class="ph-bold ph-heart"></i>' +
-      '<h3>Нет сохранённых заказов</h3>' +
-      '<p>Нажми ♡ на карточке заказа, чтобы сохранить его сюда</p>' +
-      '<a href="/"><i class="ph-bold ph-magnifying-glass"></i> Найти заказы</a>' +
+    document.getElementById('mainContent').innerHTML = '<div class="empty-state-v2">' +
+      '<div class="es-icon es-orange">❤️</div>' +
+      '<div class="es-title">Нет сохранённых заказов</div>' +
+      '<div class="es-sub">Нажмите ♡ на карточке заказа чтобы сохранить его сюда</div>' +
+      '<a href="/" class="es-btn">Найти заказы</a>' +
       '</div>';
     return;
   }
@@ -164,11 +167,11 @@ function renderJobs() {
 function renderWorkers() {
   var workers = Shabashka.getSavedWorkers();
   if (!workers.length) {
-    document.getElementById('mainContent').innerHTML = '<div class="empty-state">' +
-      '<i class="ph-bold ph-users"></i>' +
-      '<h3>Нет сохранённых исполнителей</h3>' +
-      '<p>Нажми ♡ на карточке исполнителя в поиске, чтобы сохранить его</p>' +
-      '<a href="/workers"><i class="ph-bold ph-magnifying-glass"></i> Найти исполнителей</a>' +
+    document.getElementById('mainContent').innerHTML = '<div class="empty-state-v2">' +
+      '<div class="es-icon es-blue">👥</div>' +
+      '<div class="es-title">Нет сохранённых исполнителей</div>' +
+      '<div class="es-sub">Сохраняйте понравившихся исполнителей чтобы быстро найти их снова</div>' +
+      '<a href="/workers" class="es-btn">Найти исполнителей</a>' +
       '</div>';
     return;
   }

@@ -497,8 +497,18 @@
     .m-section-title { font-size: 17px; font-weight: 800; color: #14151A; }
     .m-section-link { font-size: 13px; color: #E8510A; font-weight: 600; }
 
-    /* Скрываем десктопные карточки на мобильном */
-    .job-card { display: none; }
+    /* Скелетон загрузки */
+.skeleton { background: linear-gradient(90deg, #F4F3EF 25%, #EDECEA 50%, #F4F3EF 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skel-card { background: #fff; border-radius: 16px; padding: 14px; margin: 0 12px 10px; }
+.skel-row { display: flex; gap: 11px; margin-bottom: 10px; }
+.skel-sq { width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0; }
+.skel-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.skel-line { height: 14px; border-radius: 6px; }
+.skel-w-full { width: 100%; }
+.skel-w-60 { width: 60%; }
+.skel-w-40 { width: 40%; }
+.skel-btn { height: 38px; border-radius: 10px; margin-top: 8px; }
     .results-count { padding: 0 12px; font-size: 12px; color: #6B6B67; margin-bottom: 4px; display: block; }
   }
 
@@ -829,6 +839,32 @@ Shabashka.renderNav('index');
 
 let JOBS = Shabashka.JOBS;
 
+// Скелетон на мобильном пока грузятся данные
+(function() {
+  if (window.innerWidth > 600) return;
+  var list = document.getElementById('jobsList');
+  if (!list) return;
+  var skel = '';
+  for (var i = 0; i < 3; i++) {
+    skel += '<div class="skel-card">' +
+      '<div class="skel-row">' +
+        '<div class="skeleton skel-sq"></div>' +
+        '<div class="skel-lines">' +
+          '<div class="skeleton skel-line skel-w-full"></div>' +
+          '<div class="skeleton skel-line skel-w-60"></div>' +
+        '</div>' +
+        '<div style="width:60px;display:flex;flex-direction:column;gap:4px">' +
+          '<div class="skeleton skel-line skel-w-full"></div>' +
+          '<div class="skeleton skel-line skel-w-40"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="skeleton skel-line skel-w-60" style="margin-bottom:8px"></div>' +
+      '<div class="skeleton skel-btn"></div>' +
+    '</div>';
+  }
+  list.innerHTML = skel;
+})();
+
 let filtered = [...JOBS];
 let currentCat = 'all';
 let searchQuery = '';
@@ -840,10 +876,11 @@ function renderJobs() {
 
   if (!filtered.length) {
     document.getElementById('resultsCount').textContent = 'Заказов не найдено';
-    list.innerHTML = `<div class="empty" style="text-align:center;padding:60px 20px;color:var(--gray)">
-      <div style="font-size:48px;margin-bottom:12px">🔍</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--dark)">Заказов не найдено</div>
-      <div style="font-size:14px">Попробуйте изменить фильтры</div>
+    list.innerHTML = `<div class="empty-state-v2">
+      <div class="es-icon es-orange">🔍</div>
+      <div class="es-title">Заказов не найдено</div>
+      <div class="es-sub">Попробуйте изменить фильтры или посмотрите все категории</div>
+      <button class="es-btn" onclick="filterCat('all',document.querySelector('.category-btn'))">Показать все заказы</button>
     </div>`;
     return;
   }
