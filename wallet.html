@@ -157,13 +157,15 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 /* МОБИЛЬНАЯ ВЕРСИЯ */
 @media (max-width: 600px) {
   body { padding-bottom: 70px; }
-  nav { padding: 0 12px; height: 50px; }
-  .wallet-wrap { padding: 12px; }
+  #shabashka-nav { display: none; }
+  nav { display: none !important; }
+  #mobileWalletHeader { display: block !important; }
+  .wallet-wrap { padding: 0 12px 12px; }
   .balance-card { padding: 20px 16px; border-radius: 16px; }
-  .balance-amount { font-size: 32px; }
+  .balance-amount { font-size: 36px; }
   .balance-label { font-size: 12px; }
   .balance-actions { gap: 8px; }
-  .balance-btn { padding: 10px; font-size: 13px; border-radius: 10px; }
+  .balance-btn { padding: 12px; font-size: 13px; border-radius: 12px; flex: 1; }
   .tx-card { padding: 14px 16px; border-radius: 12px; }
   .tx-row { padding: 10px 0; gap: 10px; }
   .tx-icon { width: 32px; height: 32px; font-size: 14px; }
@@ -193,6 +195,16 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 </style>
 </head>
 <body>
+
+<!-- МОБИЛЬНАЯ ШАПКА КОШЕЛЬКА -->
+<div id="mobileWalletHeader" style="display:none;background:#fff;padding:14px 16px 12px;border-bottom:1px solid #F0EFE9;position:sticky;top:0;z-index:100">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:17px;font-weight:800;color:#14151A">Кошелёк</div>
+    <button onclick="showToast('⚙️ Настройки')" style="width:36px;height:36px;border-radius:50%;background:#F4F3EF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <i class="ph-bold ph-gear" style="font-size:17px;color:#6B6B67"></i>
+    </button>
+  </div>
+</div>
 
 <div id="shabashka-nav"></div>
 <nav>

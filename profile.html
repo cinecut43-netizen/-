@@ -158,19 +158,20 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 
 @media (max-width: 600px) {
   body { padding-bottom: 70px; }
-  nav { padding: 0 12px; height: 50px; }
-  .nav-btn { padding: 6px 10px; font-size: 12px; }
-  .page { padding: 12px; }
-  .hero-card { padding: 16px; gap: 14px; }
-  .avatar { width: 72px; height: 72px; font-size: 26px; }
-  .worker-name { font-size: 20px; }
-  .hero-meta { font-size: 13px; }
-  .stat-val { font-size: 22px; }
-  .stat-lbl { font-size: 11px; }
-  .section-card { padding: 14px 16px; }
+  /* Скрываем десктопную шапку и hero-card на мобильном */
+  #shabashka-nav { display: none; }
+  nav { display: none; }
+  .hero-card { display: none; }
+  /* Показываем мобильную шапку */
+  #mobileProfileHeader { display: block !important; }
+  .page { padding: 10px 12px; }
+  .card { border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+  .section-title { font-size: 14px; }
+  .verify-item { padding: 10px 0; font-size: 13px; }
+  .review-card { padding: 12px; border-radius: 12px; }
+  .review-photo { width: 60px; height: 60px; }
+  .badge { font-size: 11px; padding: 4px 8px; }
   .skill-chip { font-size: 12px; padding: 5px 10px; }
-  .review-card { padding: 14px; }
-  .review-photo { width: 70px; height: 70px; }
 }
 </style>
 <script src="/data.js"></script>
@@ -191,6 +192,55 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 </style>
 </head>
 <body>
+
+<!-- НАТИВНАЯ МОБИЛЬНАЯ ШАПКА ПРОФИЛЯ -->
+<div id="mobileProfileHeader" style="display:none">
+  <div style="background:#fff;padding:14px 16px 0;border-bottom:1px solid #F0EFE9">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:800;color:#14151A">Профиль</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="openEdit()" style="width:36px;height:36px;border-radius:50%;background:#F4F3EF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
+          <i class="ph-bold ph-pencil" style="font-size:17px;color:#6B6B67"></i>
+        </button>
+        <a href="/pro" style="width:36px;height:36px;border-radius:50%;background:#FFF0E8;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none">
+          <i class="ph-bold ph-lightning" style="font-size:17px;color:#E8510A"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- АВАТАР И ИМЯУ -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding-bottom:20px">
+      <div style="position:relative;margin-bottom:12px" onclick="document.getElementById('photoInput').click()">
+        <div id="mobileAvatarBox" style="width:80px;height:80px;border-radius:50%;background:#E8510A;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;cursor:pointer">ДК</div>
+        <div id="mobileVerifiedBadge" style="display:none;position:absolute;bottom:0;right:0;width:24px;height:24px;background:#1A7A4A;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff">✓</div>
+        <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);color:#fff;font-size:9px;padding:2px 6px;border-radius:10px;white-space:nowrap">Изменить</div>
+      </div>
+      <div id="mobileProfileName" style="font-size:20px;font-weight:800;color:#14151A;margin-bottom:4px">Дмитрий Козлов</div>
+      <div id="mobileProBadgeWrap" style="margin-bottom:8px"></div>
+      <div id="mobileProfileMeta" style="font-size:12.5px;color:#6B6B67;text-align:center"></div>
+    </div>
+
+    <!-- СТАТИСТИКА -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #F0EFE9;padding-top:14px;margin-bottom:14px">
+      <div style="text-align:center">
+        <div id="mobileStatOrders" style="font-size:20px;font-weight:800;color:#14151A">47</div>
+        <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">заказов</div>
+      </div>
+      <div style="text-align:center;border-left:1px solid #F0EFE9">
+        <div style="font-size:20px;font-weight:800;color:#14151A">4.9</div>
+        <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">рейтинг</div>
+      </div>
+      <div style="text-align:center;border-left:1px solid #F0EFE9">
+        <div style="font-size:20px;font-weight:800;color:#14151A">98%</div>
+        <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">выполнено</div>
+      </div>
+      <div style="text-align:center;border-left:1px solid #F0EFE9">
+        <div style="font-size:20px;font-weight:800;color:#14151A">&lt;1ч</div>
+        <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">ответ</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="shabashka-nav"></div>
 <nav>
@@ -511,13 +561,41 @@ function renderHero() {
   const fullyVerified = u.verified.phone && u.verified.passport;
   verifiedBadge.style.display = fullyVerified ? 'flex' : 'none';
 
-  // PRO бейдж и кнопка
+  // PRO бейдж и кнопка (десктоп)
   const proWrap = document.getElementById('proBadgeWrap');
   if (proWrap) {
     if (isPro) {
       proWrap.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#F5A623,#E8510A);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:0.3px"><i class="ph-bold ph-lightning" style="font-size:13px"></i> PRO</span>`;
     } else {
       proWrap.innerHTML = `<a href="/pro" style="display:inline-flex;align-items:center;gap:5px;background:#FEF6E4;color:#E8510A;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;text-decoration:none;border:1px solid #F5A623"><i class="ph-bold ph-lightning" style="font-size:13px"></i> Подключить PRO</a>`;
+    }
+  }
+
+  // Заполняем МОБИЛЬНУЮ шапку
+  const mobileAvatar = document.getElementById('mobileAvatarBox');
+  if (mobileAvatar) {
+    mobileAvatar.innerHTML = u.photo
+      ? `<img src="${u.photo}" alt="${u.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
+      : u.initials;
+  }
+  const mobileName = document.getElementById('mobileProfileName');
+  if (mobileName) mobileName.textContent = u.name;
+
+  const mobileVerif = document.getElementById('mobileVerifiedBadge');
+  if (mobileVerif) mobileVerif.style.display = fullyVerified ? 'flex' : 'none';
+
+  const mobileStatOrders = document.getElementById('mobileStatOrders');
+  if (mobileStatOrders) mobileStatOrders.textContent = u.completedOrders;
+
+  const mobileMeta = document.getElementById('mobileProfileMeta');
+  if (mobileMeta) mobileMeta.textContent = `📍 ${u.city} · 🎂 ${u.age} лет`;
+
+  const mobileProWrap = document.getElementById('mobileProBadgeWrap');
+  if (mobileProWrap) {
+    if (isPro) {
+      mobileProWrap.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#F5A623,#E8510A);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px"><i class="ph-bold ph-lightning" style="font-size:12px"></i> PRO</span>`;
+    } else {
+      mobileProWrap.innerHTML = `<a href="/pro" style="display:inline-flex;align-items:center;gap:5px;background:#FEF6E4;color:#E8510A;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-decoration:none"><i class="ph-bold ph-lightning" style="font-size:12px"></i> Подключить PRO</a>`;
     }
   }
 }

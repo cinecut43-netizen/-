@@ -141,15 +141,18 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 @media (max-width: 600px) {
   .sidebar { display: none; }
   body { padding-bottom: 70px; }
-  nav { padding: 0 12px; height: 50px; }
-  .chat-layout { height: calc(100vh - 50px - 60px); }
+  nav { display: none !important; }
+  #shabashka-nav { display: none; }
+  .chat-layout { height: calc(100dvh - 108px - 60px) !important; }
   .chat-header { padding: 10px 14px; }
-  .chat-messages { padding: 12px; }
-  .bubble { max-width: 85%; font-size: 14px; padding: 8px 12px; }
-  .chat-input-bar { padding: 8px 12px; gap: 8px; }
-  .chat-input { font-size: 15px; }
+  .chat-messages { padding: 10px 12px; }
+  .bubble { max-width: 88%; font-size: 14px; padding: 8px 12px; }
+  .chat-input-bar { padding: 8px 12px; gap: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .chat-input { font-size: 16px; }
   .send-btn { width: 40px; height: 40px; font-size: 18px; }
   .ai-btn { padding: 8px 12px; font-size: 12px; }
+  /* Мобильный список чатов */
+  #mobileChatList { display: flex !important; }
 }
 .mobile-bottom-nav { position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #E5E4E0;display:none;align-items:center;justify-content:space-around;z-index:200; }
 .mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 12px;color:#6B6B67;font-family:inherit; }
@@ -173,6 +176,19 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 </style>
 </head>
 <body>
+
+<!-- МОБИЛЬНАЯ ШАПКА ЧАТА -->
+<div id="mobileChatHeader" style="display:none;background:#fff;border-bottom:1px solid #F0EFE9;position:sticky;top:0;z-index:100">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px">
+    <div style="font-size:17px;font-weight:800;color:#14151A">Сообщения</div>
+    <div id="mobileChatStatus" style="font-size:12px;color:#6B6B67;display:flex;align-items:center;gap:4px">
+      <div style="width:7px;height:7px;border-radius:50%;background:#1A7A4A"></div>
+      онлайн
+    </div>
+  </div>
+  <!-- Горизонтальный список чатов -->
+  <div id="mobileChatList" style="display:none;gap:12px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none"></div>
+</div>
 
 <div id="shabashka-nav"></div>
 <nav>
@@ -497,6 +513,27 @@ CONVOS.forEach(function(c) {
 });
 syncUnreadCount();
 renderSidebar();
+
+// Мобильная инициализация чата
+(function initMobileChat() {
+  var isMobile = window.innerWidth <= 600;
+  var mobileHeader = document.getElementById('mobileChatHeader');
+  if (mobileHeader) mobileHeader.style.display = isMobile ? 'block' : 'none';
+  if (!isMobile) return;
+
+  var listEl = document.getElementById('mobileChatList');
+  if (!listEl) return;
+  listEl.innerHTML = CONVOS.map(function(c) {
+    var isActive = c.id === currentConvo;
+    return '<div onclick="selectConvo(' + c.id + ')" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;min-width:48px">' +
+      '<div style="width:44px;height:44px;border-radius:50%;background:' + (c.color||'#E8510A') + ';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;border:' + (isActive?'2.5px solid #E8510A':'2.5px solid transparent') + ';position:relative;box-sizing:border-box">' +
+      c.name[0] +
+      (c.unread > 0 ? '<span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;background:#E8510A;border-radius:50%;border:2px solid #fff;font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 2px">' + c.unread + '</span>' : '') +
+      '</div>' +
+      '<div style="font-size:9.5px;color:' + (isActive?'#E8510A':'#6B6B67') + ';font-weight:' + (isActive?'700':'500') + ';max-width:48px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + c.name.split(' ')[0] + '</div>' +
+      '</div>';
+  }).join('');
+})();
 
 (function initFromQuery() {
   const jobId = Shabashka.jobIdFromQuery();
