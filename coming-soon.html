@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<title>Шабашка — скоро открытие</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#14151A;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#fff;padding:20px}
+.card{background:#1E1E1C;border-radius:24px;padding:40px 32px;max-width:380px;width:100%;text-align:center}
+.logo{font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:8px}
+.logo span{color:#E8510A}
+.tagline{font-size:14px;color:rgba(255,255,255,.4);letter-spacing:2px;margin-bottom:32px}
+.icon{width:80px;height:80px;background:#E8510A;border-radius:20px;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:36px}
+h2{font-size:22px;font-weight:800;margin-bottom:8px}
+p{font-size:14px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:32px}
+.input{width:100%;padding:14px 16px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:3px;margin-bottom:12px}
+.input::placeholder{color:rgba(255,255,255,.3);letter-spacing:0}
+.input:focus{border-color:#E8510A}
+.btn{width:100%;padding:15px;background:#E8510A;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:active{transform:scale(.98)}
+.error{color:#FF6B6B;font-size:13px;margin-top:8px;display:none}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:32px}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15)}
+.dot:nth-child(2){background:#E8510A}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Шаба<span>шка</span></div>
+  <div class="tagline">работа есть всегда</div>
+  <div class="icon">🚀</div>
+  <h2>Скоро открытие</h2>
+  <p>Мы готовимся к запуску.<br>Введите код доступа чтобы войти.</p>
+  <input type="password" class="input" id="codeInput" placeholder="Код доступа" maxlength="20" onkeydown="if(event.key==='Enter')check()">
+  <button class="btn" onclick="check()">Войти</button>
+  <div class="error" id="err">Неверный код</div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+<script>
+var PASS = 'shabashka2025';
+function check() {
+  var v = document.getElementById('codeInput').value.trim();
+  if (v === PASS) {
+    localStorage.setItem('shabashka_access', '1');
+    window.location.href = '/';
+  } else {
+    var err = document.getElementById('err');
+    err.style.display = 'block';
+    document.getElementById('codeInput').style.borderColor = '#FF6B6B';
+    setTimeout(function(){ 
+      err.style.display = 'none';
+      document.getElementById('codeInput').style.borderColor = 'rgba(255,255,255,.1)';
+    }, 2000);
+  }
+}
+</script>
+</body>
+</html>

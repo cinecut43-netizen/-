@@ -613,6 +613,11 @@
 <link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
+<script>
+if (!localStorage.getItem('shabashka_access')) {
+  window.location.replace('/coming-soon');
+}
+</script>
 <script src="/splash.js"></script>
 <script>
 // Редирект на онбординг при первом визите
