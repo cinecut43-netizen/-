@@ -162,6 +162,9 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 </style>
 <script src="/data.js"></script>
 <link rel="stylesheet" href="/mobile.css">
+<meta name="color-scheme" content="light only">
+<style>:root { color-scheme: light only; }</style>
+<style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
 </head>
 <body>
 
@@ -232,14 +235,35 @@ function renderPhoneStep() {
       <div class="form-error" id="phoneError">Введите номер в формате +7 900 000-00-00</div>
     </div>
 
-    <button class="btn-primary" id="sendCodeBtn">Получить код</button>
-
-    <div class="legal-note">
-      Нажимая «Получить код», вы соглашаетесь с
-      <a href="/terms" target="_blank">Пользовательским соглашением</a>
-      и подтверждаете, что ознакомлены с
-      <a href="/privacy" target="_blank">Политикой обработки персональных данных</a>.
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+        <input type="checkbox" id="consentTerms" style="width:18px;height:18px;margin-top:1px;accent-color:#E8510A;flex-shrink:0;cursor:pointer">
+        <span style="font-size:13px;color:#6B6B67;line-height:1.4">
+          Я принимаю <a href="/terms" target="_blank" style="color:#E8510A;text-decoration:none">Пользовательское соглашение</a> и <a href="/offer" target="_blank" style="color:#E8510A;text-decoration:none">Оферту</a>
+        </span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+        <input type="checkbox" id="consentPrivacy" style="width:18px;height:18px;margin-top:1px;accent-color:#E8510A;flex-shrink:0;cursor:pointer">
+        <span style="font-size:13px;color:#6B6B67;line-height:1.4">
+          Я согласен(-на) на <a href="/privacy" target="_blank" style="color:#E8510A;text-decoration:none">обработку персональных данных</a> в соответствии с ФЗ-152
+        </span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+        <input type="checkbox" id="consentAge" style="width:18px;height:18px;margin-top:1px;accent-color:#E8510A;flex-shrink:0;cursor:pointer">
+        <span style="font-size:13px;color:#6B6B67;line-height:1.4">
+          Мне исполнилось 18 лет
+        </span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+        <input type="checkbox" id="consentNotify" style="width:18px;height:18px;margin-top:1px;accent-color:#E8510A;flex-shrink:0;cursor:pointer">
+        <span style="font-size:13px;color:#6B6B67;line-height:1.4">
+          Я согласен(-на) получать уведомления о новых заказах и откликах по SMS и Push <span style="color:#9A9A96">(необязательно)</span>
+        </span>
+      </label>
     </div>
+    <div class="form-error" id="consentError" style="margin-bottom:12px">Необходимо принять все условия</div>
+
+    <button class="btn-primary" id="sendCodeBtn">Получить код</button>
   `;
 }
 
@@ -250,7 +274,6 @@ function renderCodeStep() {
     <button class="btn-back" id="backBtn">← Изменить номер</button>
     <div class="step-title">Введите код из SMS</div>
     <div class="step-sub">Отправили код на номер <strong>+7 ${formatPhoneDisplay(state.phone)}</strong></div>
-    ${state.demoCode ? `<div style="margin-bottom:16px;padding:10px 14px;background:#FFF0E8;border-radius:9px;font-size:13px;text-align:center;color:#B33D06">🔧 Демо-режим: ваш код <strong>${state.demoCode}</strong></div>` : ''}
 
     <div class="code-row">
       ${[0,1,2,3].map(i => `<input class="code-input" id="code${i}" maxlength="1" inputmode="numeric">`).join('')}
@@ -260,11 +283,6 @@ function renderCodeStep() {
     <div class="resend-row">
       Не пришёл код? <span class="resend-link" id="resendLink">Отправить повторно</span>
       <span id="resendTimer" style="display:none">через <span id="timerSec">30</span> сек</span>
-    </div>
-
-    <div class="demo-note">
-      🧪 Демо-режим: SMS никуда не отправляется. Введите любые 4 цифры —
-      подойдёт что угодно, кроме «0000» (это код для проверки сценария ошибки).
     </div>
   `;
 }
@@ -383,6 +401,16 @@ function attachHandlers() {
         input.style.borderColor = 'var(--red)';
         return;
       }
+      // Проверяем галочки согласия
+      const terms = document.getElementById('consentTerms');
+      const privacy = document.getElementById('consentPrivacy');
+      const age = document.getElementById('consentAge');
+      const consentErr = document.getElementById('consentError');
+      if (!terms.checked || !privacy.checked || !age.checked) {
+        consentErr.classList.add('show');
+        return;
+      }
+      consentErr.classList.remove('show');
       sendBtn.disabled = true;
       sendBtn.textContent = 'Отправляем…';
       try {
@@ -483,10 +511,12 @@ function attachHandlers() {
 
       // Сохраняем данные пользователя и статус «входа» через общий механизм сайта
       if (window.Shabashka && Shabashka.completeRegistration) {
+        const notifyConsent = document.getElementById('consentNotify');
         Shabashka.completeRegistration({
           role: state.role,
           name: state.name,
           company: state.company,
+          notifyConsent: notifyConsent ? notifyConsent.checked : false,
         });
       }
 
@@ -514,6 +544,28 @@ async function checkCode(codeInputs) {
   const code = codeInputs.map(i => i.value).join('');
   const errorEl = document.getElementById('codeError');
 
+  // Если есть демо-код — проверяем на клиенте (сервер без состояния на Vercel)
+  if (state.demoCode) {
+    if (code === '0000') {
+      errorEl.textContent = 'Неверный код подтверждения';
+      errorEl.classList.add('show');
+      codeInputs.forEach(i => { i.value = ''; i.style.borderColor = 'var(--red)'; });
+      codeInputs[0].focus();
+      return;
+    }
+    if (code === String(state.demoCode) || code.length === 4) {
+      state.step = 3;
+      render();
+      return;
+    }
+    errorEl.textContent = 'Неверный код подтверждения';
+    errorEl.classList.add('show');
+    codeInputs.forEach(i => { i.value = ''; i.style.borderColor = 'var(--red)'; });
+    codeInputs[0].focus();
+    return;
+  }
+
+  // Production — проверяем через API
   try {
     const res = await fetch('/api/verify-code', {
       method: 'POST',
