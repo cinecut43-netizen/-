@@ -614,7 +614,7 @@
 </head>
 <body>
 <script>
-if (!localStorage.getItem('shabashka_access')) {
+if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashka_user')) {
   window.location.replace('/coming-soon');
 }
 </script>

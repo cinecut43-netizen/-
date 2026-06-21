@@ -10,8 +10,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Шабашка">
-<link rel="apple-touch-icon" href="/favicon.svg">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Регистрация — Шабашка</title>
 <meta name="description" content="Зарегистрируйся за 2 минуты. Найди подработку или размести заказ прямо сейчас.">
 <meta name="robots" content="index, follow">
@@ -165,8 +163,19 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/favicon-192.png">
+<link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
+<script>
+if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashka_user')) {
+  window.location.replace('/coming-soon');
+}
+</script>
+<script src="/splash.js"></script>
 
 <nav>
   <a class="logo" href="/">Шаба<span>шка</span></a>
@@ -614,5 +623,6 @@ function startResendTimer() {
 render();
 </script>
 <script src="/pwa.js"></script>
+
 </body>
 </html>
