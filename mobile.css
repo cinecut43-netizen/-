@@ -24,7 +24,7 @@
 
   /* Safe area для iPhone X+ (notch + home bar) */
   body {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   /* Запрет горизонтального скролла */

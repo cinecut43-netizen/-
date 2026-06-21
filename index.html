@@ -597,6 +597,7 @@
 .site-footer .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.18); }
 @media (max-width: 600px) { .site-footer .footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; } }
 </style>
+<style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
 </head>
 <body>
 
@@ -1274,5 +1275,50 @@ function markOnTheWay(jobId) {
     <div class="footer-copy">© 2025 Шабашка · 18+</div>
   </div>
 </footer>
+
+<!-- НИЖНЯЯ НАВИГАЦИЯ ДЛЯ МОБИЛЬНЫХ -->
+<div id="appBottomNav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1.5px solid #EDECEA;z-index:300;align-items:stretch;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -2px 12px rgba(0,0,0,0.06)">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#E8510A">
+    <i class="ph-bold ph-house" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:700">Главная</span>
+  </a>
+  <a href="/map" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96">
+    <i class="ph-bold ph-map-pin" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:500">Карта</span>
+  </a>
+  <a href="/chat" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96;position:relative">
+    <span style="position:relative;display:inline-flex">
+      <i class="ph-bold ph-chat-circle-dots" style="font-size:24px"></i>
+      <span id="bottomNavChatBadge" style="display:none;position:absolute;top:-3px;right:-5px;background:#E8510A;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:10px;min-width:14px;text-align:center;line-height:1.4"></span>
+    </span>
+    <span style="font-size:9.5px;font-weight:500">Чат</span>
+  </a>
+  <a href="/favorites" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96">
+    <i class="ph-bold ph-heart" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:500">Избранное</span>
+  </a>
+  <a href="/profile" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96">
+    <i class="ph-bold ph-user-circle" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:500">Профиль</span>
+  </a>
+</div>
+
+<script>
+(function() {
+  var nav = document.getElementById('appBottomNav');
+  function show() {
+    nav.style.display = window.innerWidth <= 600 ? 'flex' : 'none';
+    // Бейдж чата
+    var unread = window.Shabashka ? Shabashka.getUnreadCount() : 0;
+    var badge = document.getElementById('bottomNavChatBadge');
+    if (badge) {
+      badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+      badge.textContent = unread > 9 ? '9+' : unread;
+    }
+  }
+  show();
+  window.addEventListener('resize', show);
+})();
+</script>
 </body>
 </html>
