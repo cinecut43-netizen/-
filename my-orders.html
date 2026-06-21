@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<style>:root{color-scheme:light only}</style>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="icon" type="image/png" href="/logo-v2.png">
+<link rel="apple-touch-icon" href="/logo-v2.png">
+<link rel="stylesheet" href="/mobile.css">
+<title>Мои заказы — Шабашка</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--orange:#E8510A;--dark:#1A1A18;--gray:#6B6B67;--gray-light:#F4F3EF;--border:#E2E1DB;--white:#fff;--green:#1A7A4A;--amber:#B07800}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--gray-light);color:var(--dark);padding-bottom:80px}
+
+/* ШАПКА */
+.page-header{background:var(--white);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between}
+.page-title{font-size:18px;font-weight:800;color:var(--dark)}
+
+/* ТАБЫ */
+.tabs{display:flex;gap:0;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{flex-shrink:0;padding:12px 18px;font-size:14px;font-weight:600;color:var(--gray);border:none;background:none;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--orange);color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:1px 6px;margin-left:5px;min-width:16px}
+
+/* КАРТОЧКА ОТКЛИКА */
+.list{padding:12px}
+.order-card{background:var(--white);border-radius:16px;padding:16px;margin-bottom:10px;border:1px solid var(--border)}
+.order-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.order-emoji{width:48px;height:48px;border-radius:13px;background:#FFF0E8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.order-info{flex:1;min-width:0}
+.order-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:3px;line-height:1.3}
+.order-company{font-size:12.5px;color:var(--gray)}
+.order-price{text-align:right;flex-shrink:0}
+.order-pay{font-size:17px;font-weight:800;color:var(--dark);letter-spacing:-.3px}
+.order-pay-label{font-size:10.5px;color:var(--gray);margin-top:1px}
+
+/* СТАТУС */
+.status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px}
+.status-pending{background:#FFF8E6;color:var(--amber)}
+.status-selected{background:#E8F5EE;color:var(--green)}
+.status-rejected{background:#FFF0F0;color:#B91C1C}
+.status-on-way{background:#E8F5EE;color:var(--green)}
+.status-in-progress{background:#FFF8E6;color:var(--amber)}
+.status-done{background:#E8F5EE;color:var(--green)}
+
+/* МОЁ СООБЩЕНИЕ */
+.my-message{background:var(--gray-light);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--gray);margin-bottom:10px;line-height:1.5}
+.my-price-badge{display:inline-flex;align-items:center;gap:4px;background:#E6F1FB;color:#185FA5;font-size:12px;font-weight:600;padding:3px 8px;border-radius:8px;margin-bottom:8px}
+
+/* ДЕЙСТВИЯ */
+.order-actions{display:flex;gap:8px}
+.btn-chat{flex:1;padding:10px;background:#F4F3EF;color:var(--dark);border:none;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-respond{flex:1;padding:10px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* ДАТА -->
+.order-date{font-size:11.5px;color:var(--gray)}
+
+/* ПУСТОЕ СОСТОЯНИЕ */
+.empty{padding:60px 20px;text-align:center}
+.empty-icon{font-size:48px;margin-bottom:14px}
+.empty-title{font-size:17px;font-weight:700;margin-bottom:6px;color:var(--dark)}
+.empty-sub{font-size:14px;color:var(--gray);margin-bottom:20px;line-height:1.5}
+.empty-btn{padding:12px 24px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+
+/* ИТОГО */
+.summary-card{background:var(--white);border-radius:16px;padding:16px;margin-bottom:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.summary-label{font-size:13px;color:var(--gray)}
+.summary-value{font-size:18px;font-weight:800;color:var(--dark)}
+.summary-value.green{color:var(--green)}
+</style>
+</head>
+<body>
+<script src="/splash.js"></script>
+<script src="/data.js"></script>
+<script src="/nav.js"></script>
+<script src="/icons.js"></script>
+
+<!-- ШАПКА -->
+<div class="page-header">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button onclick="history.back()" style="width:34px;height:34px;border-radius:50%;background:var(--gray-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <i class="ph-bold ph-arrow-left" style="font-size:16px"></i>
+    </button>
+    <div class="page-title">Мои заказы</div>
+  </div>
+  <button onclick="window.location.href='/'" style="padding:7px 14px;background:var(--orange);color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+    + Найти заказ
+  </button>
+</div>
+
+<div id="shabashka-nav" style="display:none"></div>
+
+<!-- ТАБЫ -->
+<div class="tabs" id="tabs">
+  <button class="tab-btn active" data-tab="active" onclick="switchTab('active',this)">
+    Активные <span class="tab-badge" id="activeCount">0</span>
+  </button>
+  <button class="tab-btn" data-tab="pending" onclick="switchTab('pending',this)">
+    Ожидают ответа <span class="tab-badge" id="pendingCount">0</span>
+  </button>
+  <button class="tab-btn" data-tab="done" onclick="switchTab('done',this)">
+    Завершённые
+  </button>
+  <button class="tab-btn" data-tab="rejected" onclick="switchTab('rejected',this)">
+    Отклонённые
+  </button>
+</div>
+
+<div id="content" class="list"></div>
+
+<script>
+Shabashka.renderNav('my-orders');
+
+var currentTab = 'active';
+var user = Shabashka.getUser();
+var myName = user.name;
+
+var STATUS_LABELS = {
+  'pending':     { text: '⏳ Ожидает ответа',   cls: 'status-pending' },
+  'selected':    { text: '🎉 Вас выбрали!',      cls: 'status-selected' },
+  'on_the_way':  { text: '🚶 Вы в пути',         cls: 'status-on-way' },
+  'in_progress': { text: '🔨 В работе',           cls: 'status-in-progress' },
+  'done':        { text: '✅ Завершён',            cls: 'status-done' },
+  'rejected':    { text: '❌ Не выбрали',         cls: 'status-rejected' },
+};
+
+function getMyResponses() {
+  var allResponses = Shabashka.getAllJobs
+    ? []
+    : [];
+
+  // Получаем все отклики текущего пользователя
+  var jobs = Shabashka.getOpenJobs ? Shabashka.getOpenJobs() : [];
+  var allJobs = Shabashka.getAllJobs ? Shabashka.getAllJobs() : jobs;
+
+  var result = [];
+  allJobs.forEach(function(job) {
+    var responses = Shabashka.getResponsesForJob(job.id);
+    var myResp = responses.find(function(r) { return r.workerName === myName; });
+    if (myResp) {
+      // Определяем статус отклика на основе статуса заказа
+      var respStatus = myResp.status;
+      if (myResp.status === 'pending') {
+        if (job.status === 'done' || job.status === 'cancelled') {
+          respStatus = 'rejected';
+        }
+      } else if (myResp.status === 'accepted' || myResp.status === 'selected') {
+        respStatus = job.status === 'done' ? 'done' :
+                     job.status === 'on_the_way' ? 'on_the_way' :
+                     job.status === 'in_progress' ? 'in_progress' : 'selected';
+      }
+      result.push({ job: job, response: myResp, status: respStatus });
+    }
+  });
+
+  return result;
+}
+
+function filterByTab(items, tab) {
+  if (tab === 'active') {
+    return items.filter(function(i) {
+      return ['selected','on_the_way','in_progress'].includes(i.status);
+    });
+  }
+  if (tab === 'pending') {
+    return items.filter(function(i) { return i.status === 'pending'; });
+  }
+  if (tab === 'done') {
+    return items.filter(function(i) { return i.status === 'done'; });
+  }
+  if (tab === 'rejected') {
+    return items.filter(function(i) { return i.status === 'rejected'; });
+  }
+  return items;
+}
+
+function renderCard(item) {
+  var job = item.job;
+  var resp = item.response;
+  var status = item.status;
+  var sl = STATUS_LABELS[status] || { text: status, cls: 'status-pending' };
+
+  var actionBtn = '';
+  if (status === 'selected') {
+    actionBtn = '<button class="btn-respond" onclick="markOnWay(' + job.id + ')">🚶 Я еду</button>';
+  } else if (status === 'done') {
+    var rated = Shabashka.hasEmployerReview && Shabashka.hasEmployerReview(job.id);
+    actionBtn = rated
+      ? '<div style="font-size:12px;color:var(--green);font-weight:600">✅ Отзыв оставлен</div>'
+      : '<button class="btn-respond" onclick="leaveReview(' + job.id + ')">⭐ Оценить работодателя</button>';
+  }
+
+  return '<div class="order-card">' +
+    '<div class="order-top">' +
+      '<div class="order-emoji">' + job.emoji + '</div>' +
+      '<div class="order-info">' +
+        '<div class="order-title">' + job.title + '</div>' +
+        '<div class="order-company">' + job.company + ' · ' + job.location + '</div>' +
+      '</div>' +
+      '<div class="order-price">' +
+        '<div class="order-pay">' + job.pay.toLocaleString('ru') + ' ₽</div>' +
+        '<div class="order-pay-label">' + job.payLabel + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="status-row">' +
+      '<span class="status-pill ' + sl.cls + '">' + sl.text + '</span>' +
+      '<span class="order-date">📅 ' + job.date + '</span>' +
+    '</div>' +
+    (resp.proposedPay ? '<div class="my-price-badge">💬 Ваша цена: ' + resp.proposedPay.toLocaleString('ru') + ' ₽</div>' : '') +
+    '<div class="my-message">"' + resp.message + '"</div>' +
+    '<div class="order-actions">' +
+      '<button class="btn-chat" onclick="goChat(' + job.id + ')"><i class="ph-bold ph-chat-circle-dots" style="font-size:15px"></i> Чат</button>' +
+      actionBtn +
+    '</div>' +
+  '</div>';
+}
+
+function renderSummary(items) {
+  var done = items.filter(function(i){ return i.status === 'done'; });
+  var earned = done.reduce(function(s,i){ return s + Math.round(i.job.pay * 0.9); }, 0);
+  if (!done.length) return '';
+  return '<div class="summary-card">' +
+    '<div><div class="summary-label">Заработано (за вычетом 10%)</div>' +
+    '<div class="summary-value green">' + earned.toLocaleString('ru') + ' ₽</div></div>' +
+    '<div style="text-align:right"><div class="summary-label">Выполнено заказов</div>' +
+    '<div class="summary-value">' + done.length + '</div></div>' +
+  '</div>';
+}
+
+function render() {
+  var all = getMyResponses();
+  var filtered = filterByTab(all, currentTab);
+
+  // Обновляем счётчики
+  document.getElementById('activeCount').textContent = filterByTab(all,'active').length;
+  document.getElementById('pendingCount').textContent = filterByTab(all,'pending').length;
+
+  var html = '';
+
+  if (currentTab === 'done') {
+    html += renderSummary(all);
+  }
+
+  if (!filtered.length) {
+    var emptyTexts = {
+      active:   { icon: '🔨', title: 'Нет активных заказов', sub: 'Здесь появятся заказы когда работодатель вас выберет' },
+      pending:  { icon: '⏳', title: 'Нет ожидающих откликов', sub: 'Откликайтесь на заказы — они появятся здесь' },
+      done:     { icon: '✅', title: 'Нет завершённых заказов', sub: 'Завершённые заказы появятся здесь' },
+      rejected: { icon: '😔', title: 'Отклонённых нет', sub: 'Продолжайте откликаться — удача придёт!' },
+    };
+    var e = emptyTexts[currentTab];
+    html += '<div class="empty">' +
+      '<div class="empty-icon">' + e.icon + '</div>' +
+      '<div class="empty-title">' + e.title + '</div>' +
+      '<div class="empty-sub">' + e.sub + '</div>' +
+      (currentTab === 'pending' ? '<button class="empty-btn" onclick="window.location.href=\'/\'">Найти заказ</button>' : '') +
+    '</div>';
+  } else {
+    html += filtered.map(renderCard).join('');
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  render();
+}
+
+function goChat(jobId) {
+  window.location.href = '/chat?job=' + jobId;
+}
+
+function markOnWay(jobId) {
+  Shabashka.updateJobStatus(jobId, 'on_the_way');
+  render();
+  var t = document.createElement('div');
+  t.textContent = '🚶 Работодатель уведомлён что вы едете';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2500);
+}
+
+function leaveReview(jobId) {
+  window.location.href = '/?review=' + jobId;
+}
+
+render();
+</script>
+
+<!-- НИЖНЯЯ НАВИГАЦИЯ -->
+<div id="appBottomNav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1.5px solid #EDECEA;z-index:300;align-items:stretch;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -2px 12px rgba(0,0,0,0.06)">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96">
+    <i class="ph-bold ph-house" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:500">Главная</span>
+  </a>
+  <a href="/map" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96">
+    <i class="ph-bold ph-map-pin" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:500">Карта</span>
+  </a>
+  <a href="/chat" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96">
+    <i class="ph-bold ph-chat-circle-dots" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:500">Чат</span>
+  </a>
+  <a href="/my-orders" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#E8510A">
+    <i class="ph-bold ph-briefcase" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:700">Заказы</span>
+  </a>
+  <a href="/profile" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#9A9A96">
+    <i class="ph-bold ph-user-circle" style="font-size:24px"></i>
+    <span style="font-size:9.5px;font-weight:500">Профиль</span>
+  </a>
+</div>
+<script>(function(){var n=document.getElementById('appBottomNav');function s(){n.style.display=window.innerWidth<=600?'flex':'none';}s();window.addEventListener('resize',s);})();</script>
+
+</body>
+</html>

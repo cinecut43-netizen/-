@@ -217,7 +217,7 @@
 
       // Навигация исполнителя
       var workerNav = [
-        { href: '/',          icon: 'ph-house',             label: 'Главная',   page: 'index' },
+        { href: '/',           icon: 'ph-house',             label: 'Главная',   page: 'index' },
         { href: '/map',        icon: 'ph-map-pin',           label: 'Карта',     page: 'map' },
         { href: '/chat',       icon: 'ph-chat-circle-dots',  label: 'Чат',       page: 'chat', badge: true },
         { href: '/favorites',  icon: 'ph-heart',             label: 'Избранное', page: 'favorites' },
