@@ -1027,7 +1027,20 @@ function applyAndChat(jobId) {
   filtered = filtered.map(j => JOBS.find(x => x.id === j.id) || j);
   closeModal('detailModal');
   renderJobs();
-  alert('Отклик отправлен! Работодатель свяжется с вами в течение часа.');
+
+  // Toast вместо alert
+  const t = document.createElement('div');
+  t.innerHTML = '✅ Отклик отправлен! Работодатель свяжется с вами.';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:12px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.3)';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
+
+  // Push уведомление для работодателя (если разрешены)
+  const job = Shabashka.getJob(jobId);
+  if (job && window.ShabashkaNotify && Notification.permission === 'granted') {
+    ShabashkaNotify.showResponse(job.title, Shabashka.getUser().name || 'Исполнитель');
+  }
+
   goToChat(jobId);
 }
 
@@ -1163,6 +1176,48 @@ function submitERating() {
 }
 
 renderJobs();
+
+// Запрос разрешения на уведомления — показываем через 5 секунд
+(function() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'default') return;
+  if (localStorage.getItem('notify_asked')) return;
+
+  setTimeout(function() {
+    var banner = document.createElement('div');
+    banner.id = 'notifyBanner';
+    banner.style.cssText = 'position:fixed;bottom:72px;left:12px;right:12px;background:#14151A;color:#fff;border-radius:16px;padding:14px 16px;z-index:400;display:flex;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,0.3)';
+    banner.innerHTML =
+      '<img src="/logo-v2.png" style="width:40px;height:40px;border-radius:10px;flex-shrink:0">' +
+      '<div style="flex:1">' +
+        '<div style="font-size:14px;font-weight:700;margin-bottom:2px">\u0412\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.55)">\u0423\u0437\u043d\u0430\u0432\u0430\u0439\u0442\u0435 \u043e \u043d\u043e\u0432\u044b\u0445 \u0437\u0430\u043a\u0430\u0437\u0430\u0445 \u043f\u0435\u0440\u0432\u044b\u043c\u0438</div>' +
+      '</div>' +
+      '<button onclick="allowNotify()" style="padding:8px 14px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">\u0412\u043a\u043b\u044e\u0447\u0438\u0442\u044c</button>' +
+      '<button onclick="denyNotify()" style="width:28px;height:28px;background:rgba(255,255,255,.1);border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center">\xd7</button>';
+    document.body.appendChild(banner);
+    localStorage.setItem('notify_asked', '1');
+  }, 5000);
+})();
+
+window.allowNotify = function() {
+  Notification.requestPermission().then(function(p) {
+    var banner = document.getElementById('notifyBanner');
+    if (banner) banner.remove();
+    if (p === 'granted') {
+      var t = document.createElement('div');
+      t.textContent = '\uD83D\uDD14 \u0423\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u044b!';
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A7A4A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
+      document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, 2500);
+      if (window.ShabashkaNotify) ShabashkaNotify.startPolling();
+    }
+  });
+};
+window.denyNotify = function() {
+  var b = document.getElementById('notifyBanner');
+  if (b) b.remove();
+};
 
 // Показываем баннер верификации исполнителям у которых паспорт не проверен
 (function() {
