@@ -10,8 +10,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Шабашка">
-<link rel="apple-touch-icon" href="/favicon.svg">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Сообщения — Шабашка</title>
 <meta name="description" content="Переписка с работодателями и исполнителями по заказам.">
 <meta name="robots" content="index, follow">
@@ -110,8 +108,8 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 /* QUICK REPLIES */
 .quick-replies { padding: 8px 20px; display: flex; gap: 8px; overflow-x: auto; flex-shrink: 0; }
 .quick-replies::-webkit-scrollbar { display: none; }
-.quick-btn { white-space: nowrap; padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; background: var(--white); cursor: pointer; color: var(--dark); transition: all 0.1s; }
-.quick-btn:hover { border-color: var(--orange); color: var(--orange); }
+.quick-btn { white-space: nowrap; padding: 8px 16px; border: 1.5px solid #E2E1DB; border-radius: 20px; font-size: 13px; background: #fff; cursor: pointer; color: #14151A; font-family: inherit; font-weight: 500; transition: all 0.15s; flex-shrink: 0; }
+.quick-btn:hover, .quick-btn:active { border-color: #E8510A; color: #E8510A; background: #FFF0E8; }
 
 /* INPUT */
 .input-area { padding: 12px 16px; background: var(--white); border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
@@ -179,8 +177,12 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
+<link rel="icon" type="image/png" href="/logo-v2.png">
+<link rel="apple-touch-icon" href="/logo-v2.png">
+<link rel="shortcut icon" href="/logo-v2.png">
 </head>
 <body>
+<script src="/splash.js"></script>
 
 <!-- МОБИЛЬНАЯ ШАПКА ЧАТА -->
 <div id="mobileChatHeader" style="display:none;background:#fff;border-bottom:1px solid #F0EFE9;position:sticky;top:0;z-index:100">
@@ -288,11 +290,39 @@ const MESSAGES_DB = {
 };
 
 const QUICK = {
-  1: ['Во сколько начинаем?', 'Есть парковка?', 'Оплата наличными или картой?'],
-  2: ['Есть напарник', 'Нет, только один', 'Во сколько подъезжать?'],
-  3: ['Да, устроит', 'Можно чуть раньше?', 'Какой дресс-код?'],
-  4: [],
+  1: ['Во сколько начинаем?', 'Есть парковка?', 'Оплата наличными или картой?', 'Инструменты нужны свои?'],
+  2: ['Есть напарник 👍', 'Только один, сорри', 'Во сколько подъезжать?', 'Какой адрес точно?'],
+  3: ['Да, устроит ✓', 'Можно чуть раньше?', 'Какой дресс-код?', 'Форма будет?'],
+  4: ['Спасибо за работу! 🙏', 'Всё отлично получилось', 'Работали очень хорошо'],
 };
+
+// Умные ответы исходя из последнего сообщения
+function getSmartReplies(convoId) {
+  var msgs = MESSAGES_DB[convoId] || [];
+  var last = msgs.filter(function(m){ return m.type === 'them'; }).pop();
+  if (!last) return QUICK[convoId] || [];
+
+  var text = last.text.toLowerCase();
+  if (text.includes('опыт') || text.includes('умеете') || text.includes('навык')) {
+    return ['Да, есть опыт ✓', 'Несколько лет опыта', 'Впервые, но готов научиться', 'Можем обсудить подробнее'];
+  }
+  if (text.includes('сколько') && (text.includes('час') || text.includes('врем'))) {
+    return ['Примерно 4 часа', 'За день справлюсь', 'Зависит от объёма', 'Уточните задачу'];
+  }
+  if (text.includes('когда') || text.includes('во сколько') || text.includes('время')) {
+    return ['В 9 утра', 'В 10:00', 'Когда скажете', 'После 12:00'];
+  }
+  if (text.includes('цен') || text.includes('оплат') || text.includes('₽')) {
+    return ['Устраивает ✓', 'Могу за меньше', 'Давайте обсудим', 'Наличными удобнее'];
+  }
+  if (text.includes('адрес') || text.includes('где') || text.includes('куда')) {
+    return ['Ок, записал адрес', 'Скину геолокацию', 'Буду вовремя', 'На карте покажите?'];
+  }
+  if (text.includes('спасибо') || text.includes('отлично') || text.includes('хорошо')) {
+    return ['И вам спасибо! 🙏', 'Рад помочь', 'До следующего раза', 'Оставьте отзыв!'];
+  }
+  return QUICK[convoId] || ['Понял, принято ✓', 'Хорошо', 'Уточните пожалуйста', 'Договорились!'];
+}
 
 let currentConvo = 1;
 let typingTimeout = null;
@@ -360,10 +390,12 @@ function renderMessages() {
 }
 
 function renderQuickReplies() {
-  const qs = QUICK[currentConvo] || [];
-  document.getElementById('quickReplies').innerHTML = qs.map(q =>
-    `<button class="quick-btn" onclick="sendQuick('${q}')">${q}</button>`
-  ).join('');
+  var qs = getSmartReplies(currentConvo);
+  var el = document.getElementById('quickReplies');
+  if (!qs.length) { el.innerHTML = ''; return; }
+  el.innerHTML = qs.map(function(q) {
+    return '<button class="quick-btn" onclick="sendQuick(\'' + q.replace(/'/g, "\\'") + '\')">' + q + '</button>';
+  }).join('');
 }
 
 function sendQuick(text) {
@@ -386,6 +418,7 @@ function sendMsg() {
   input.style.height = 'auto';
   renderMessages();
   renderSidebar();
+  renderQuickReplies();
 
   // simulate reply
   if (currentConvo === 1) {
