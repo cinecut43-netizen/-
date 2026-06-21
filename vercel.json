@@ -28,7 +28,7 @@
     { "src": "/favicon.ico", "dest": "/logo-v2.png" },
     { "src": "/favicon.svg", "dest": "/logo-v2.png" },
     { "src": "/logo-v2.png", "dest": "/logo-v2.png" },
-    { "src": "/logo-icon.png", "dest": "/logo-v2.png" },
+    { "src": "/logo-v2.png", "dest": "/logo-v2.png" },
     { "src": "/favicon.png", "dest": "/logo-v2.png" },
     { "src": "/api/ai-chat", "dest": "/api/ai-chat.js" },
     { "src": "/api/admin-login", "dest": "/api/admin-login.js" },
