@@ -13,14 +13,14 @@
 
   var s = document.createElement('style');
   s.textContent =
-    '#shb-splash{position:fixed;inset:0;background:#14151A;z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity .4s ease}' +
+    '#shb-splash{position:fixed;inset:0;background:#14151A;z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease}' +
     '.shb-inner{display:flex;flex-direction:column;align-items:center;gap:44px}' +
-    '.shb-logo{display:flex;flex-direction:column;align-items:center;gap:18px;animation:shb-up .5s cubic-bezier(.34,1.56,.64,1) both}' +
-    '.shb-icon{width:110px;height:110px;border-radius:26px;object-fit:cover;box-shadow:0 12px 40px rgba(232,81,10,.35)}' +
+    '.shb-logo{display:flex;flex-direction:column;align-items:center;gap:18px;animation:shb-up .6s cubic-bezier(.34,1.56,.64,1) both}' +
+    '.shb-icon{width:120px;height:120px;border-radius:28px;object-fit:cover;box-shadow:0 12px 40px rgba(232,81,10,.4)}' +
     '.shb-name{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:44px;font-weight:900;letter-spacing:-1.5px;color:#fff;margin:0}' +
     '.shb-name span{color:#E8510A}' +
     '.shb-tag{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:rgba(255,255,255,.35);letter-spacing:3px;margin:0}' +
-    '.shb-dots{display:flex;gap:10px;animation:shb-up .5s .15s both}' +
+    '.shb-dots{display:flex;gap:10px;animation:shb-up .5s .2s both}' +
     '.shb-dots i{display:block;width:8px;height:8px;border-radius:50%;background:#E8510A;opacity:.4;font-style:normal;animation:shb-p 1.2s ease-in-out infinite}' +
     '.shb-dots i:nth-child(2){animation-delay:.2s}' +
     '.shb-dots i:nth-child(3){animation-delay:.4s}' +
@@ -31,12 +31,22 @@
   document.head.appendChild(s);
   document.body.appendChild(splash);
 
+  var hidden = false;
   function hide() {
+    if (hidden) return;
+    hidden = true;
     splash.classList.add('shb-out');
-    setTimeout(function(){ splash.parentNode && splash.parentNode.removeChild(splash); }, 450);
+    setTimeout(function(){ splash.parentNode && splash.parentNode.removeChild(splash); }, 550);
   }
 
-  if (document.readyState === 'complete') { setTimeout(hide, 700); }
-  else { window.addEventListener('load', function(){ setTimeout(hide, 500); }); }
-  setTimeout(hide, 3000);
+  // Ждём загрузки картинки, потом ещё 1 секунду показываем
+  var img = splash.querySelector('.shb-icon');
+  img.onload = function() { setTimeout(hide, 1000); };
+  img.onerror = function() { setTimeout(hide, 500); };
+
+  // Страница загружена — ждём ещё 1.5 сек
+  window.addEventListener('load', function() { setTimeout(hide, 1500); });
+
+  // Максимум 4 секунды в любом случае
+  setTimeout(hide, 4000);
 })();
