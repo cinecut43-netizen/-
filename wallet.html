@@ -542,12 +542,6 @@ renderBalance();
 renderChart('month');
 renderTx();
 </script>
-<div class="mobile-bottom-nav" id="mobileNav">
-  <button class="mobile-nav-btn" onclick="location.href='/'"><i class="ph-bold ph-house" style="font-size:22px"></i><span style="font-size:10px">Главная</span></button>
-  <button class="mobile-nav-btn active" onclick="location.href='/wallet'"><i class="ph-bold ph-wallet" style="font-size:22px"></i><span style="font-size:10px">Кошелёк</span></button>
-  <button class="mobile-nav-btn" onclick="location.href='/chat'"><i class="ph-bold ph-chat-circle-dots" style="font-size:22px"></i><span style="font-size:10px">Чат</span></button>
-  <button class="mobile-nav-btn" onclick="location.href='/profile'"><i class="ph-bold ph-user-circle" style="font-size:22px"></i><span style="font-size:10px">Профиль</span></button>
-</div>
 <script>(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
 <script src="/pwa.js"></script>
 <footer class="site-footer">

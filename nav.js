@@ -208,6 +208,53 @@
         panel.classList.toggle('sb-open');
       });
     }
+
+    // ===== ЕДИНАЯ НИЖНЯЯ НАВИГАЦИЯ ДЛЯ МОБИЛЬНЫХ =====
+    if (!document.getElementById('sb-bottom-nav')) {
+      var bottomNav = document.createElement('div');
+      bottomNav.id = 'sb-bottom-nav';
+
+      // Навигация исполнителя
+      var workerNav = [
+        { href: '/',          icon: 'ph-house',             label: 'Главная',   page: 'index' },
+        { href: '/map',        icon: 'ph-map-pin',           label: 'Карта',     page: 'map' },
+        { href: '/chat',       icon: 'ph-chat-circle-dots',  label: 'Чат',       page: 'chat', badge: true },
+        { href: '/favorites',  icon: 'ph-heart',             label: 'Избранное', page: 'favorites' },
+        { href: '/profile',    icon: 'ph-user-circle',       label: 'Профиль',   page: 'profile' },
+      ];
+
+      // Навигация работодателя
+      var employerNav = [
+        { href: '/employer',   icon: 'ph-chart-bar',         label: 'Главная',   page: 'employer' },
+        { href: '/workers',    icon: 'ph-users',             label: 'Исполн.',   page: 'workers' },
+        { href: '/chat',       icon: 'ph-chat-circle-dots',  label: 'Чат',       page: 'chat', badge: true },
+        { href: '/map',        icon: 'ph-map-pin',           label: 'Карта',     page: 'map' },
+        { href: '/profile',    icon: 'ph-user-circle',       label: 'Профиль',   page: 'profile' },
+      ];
+
+      var navItems = user.role === 'employer' ? employerNav : workerNav;
+
+      bottomNav.innerHTML = navItems.map(function(item) {
+        var isActive = item.page === activePage;
+        var badgeHtml = '';
+        if (item.badge && unread > 0) {
+          badgeHtml = '<span style="position:absolute;top:-2px;right:-4px;background:#E8510A;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:10px;min-width:15px;text-align:center;line-height:1.4">' + (unread > 9 ? '9+' : unread) + '</span>';
+        }
+        return '<a href="' + item.href + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:' + (isActive ? '#E8510A' : '#9A9A96') + ';flex:1;padding:8px 4px;min-height:52px;justify-content:center">' +
+          '<span style="position:relative;display:inline-flex">' +
+          '<i class="ph-bold ' + item.icon + '" style="font-size:24px"></i>' +
+          badgeHtml +
+          '</span>' +
+          '<span style="font-size:9.5px;font-weight:' + (isActive?'700':'500') + '">' + item.label + '</span>' +
+          '</a>';
+      }).join('');
+
+      // Стили нижней навигации
+      var bnStyle = document.createElement('style');
+      bnStyle.textContent = '#sb-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1.5px solid #EDECEA;z-index:300;align-items:center;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -2px 12px rgba(0,0,0,0.06)}@media(max-width:600px){#sb-bottom-nav{display:flex}}';
+      document.head.appendChild(bnStyle);
+      document.body.appendChild(bottomNav);
+    }
   }
 
   Shabashka.renderNav = renderNav;
