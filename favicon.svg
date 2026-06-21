@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E8510A"/>
-      <stop offset="100%" stop-color="#B33D06"/>
-    </linearGradient>
-  </defs>
-  <circle cx="32" cy="32" r="32" fill="url(#g)"/>
-  <text x="32" y="42" font-family="-apple-system, 'Segoe UI', Arial, sans-serif" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">Ш</text>
+<svg width="32" height="32" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="56" height="56" rx="13" fill="#E8510A"/>
+  <rect x="8"  y="30" width="8" height="18" rx="1.5" fill="white"/>
+  <rect x="24" y="30" width="8" height="18" rx="1.5" fill="white"/>
+  <rect x="40" y="30" width="8" height="18" rx="1.5" fill="white"/>
+  <rect x="8"  y="44" width="40" height="4"  rx="1.5" fill="white"/>
+  <rect x="25.5" y="16" width="5" height="18" rx="2.5" fill="white"/>
+  <rect x="15" y="9"  width="26" height="10" rx="4"   fill="white"/>
+  <rect x="34" y="7"  width="9"  height="7"  rx="2.5" fill="white"/>
 </svg>
