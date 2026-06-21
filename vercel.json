@@ -64,6 +64,7 @@
     { "src": "/manifest.json", "dest": "/manifest.json" },
     { "src": "/sw.js", "dest": "/sw.js" },
     { "src": "/pwa.js", "dest": "/pwa.js" },
+    { "src": "/splash.js", "dest": "/splash.js" },
     { "src": "/mobile.css", "dest": "/mobile.css" },
     { "src": "/icons.js", "dest": "/icons.js" },
     { "src": "/nav.js", "dest": "/nav.js" },
