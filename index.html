@@ -989,11 +989,14 @@ function openDetail(id) {
   document.getElementById('modalContent').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
       <div class="job-emoji" style="width:48px;height:48px;font-size:24px">${j.emoji}</div>
-      <div>
+      <div style="flex:1;min-width:0">
         <h2>${j.title}</h2>
         <div class="modal-meta">${j.company} · ${j.location}</div>
         ${companyRatingHtml}
       </div>
+      <button onclick="shareJob(${j.id})" style="width:38px;height:38px;border-radius:50%;background:#F4F3EF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Поделиться">
+        <i class="ph-bold ph-share-network" style="font-size:18px;color:#6B6B67"></i>
+      </button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
       ${j.urgent ? '<span class="tag urgent">🔥 Срочно</span>' : ''}
@@ -1049,6 +1052,41 @@ function openDetail(id) {
 
 function goToChat(jobId) {
   window.location.href = '/chat?job=' + jobId;
+}
+
+function shareJob(jobId) {
+  const j = JOBS.find(x => x.id === jobId);
+  if (!j) return;
+  const url = 'https://shabashka-jade.vercel.app/?job=' + jobId;
+  const text = j.emoji + ' ' + j.title + ' — ' + j.pay.toLocaleString('ru') + ' ₽ · ' + j.location + '\n\nШабашка — найди подработку за 1 час: ' + url;
+
+  // Нативный шеринг на мобильном
+  if (navigator.share) {
+    navigator.share({
+      title: j.title + ' — Шабашка',
+      text: j.emoji + ' ' + j.title + ' · ' + j.pay.toLocaleString('ru') + ' ₽ · ' + j.location,
+      url: url,
+    }).catch(function(){});
+    return;
+  }
+
+  // Фолбек — показываем меню шеринга
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+  overlay.innerHTML = '<div style="background:#fff;width:100%;border-radius:20px 20px 0 0;padding:20px">' +
+    '<div style="font-size:16px;font-weight:800;margin-bottom:16px;color:#14151A">Поделиться заказом</div>' +
+    '<div style="display:flex;gap:12px;margin-bottom:20px">' +
+      '<a href="https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(j.emoji + ' ' + j.title + ' · ' + j.pay.toLocaleString('ru') + ' ₽') + '" target="_blank" style="flex:1;padding:12px;background:#229ED9;color:#fff;border-radius:12px;text-align:center;text-decoration:none;font-weight:700;font-size:14px">📱 Telegram</a>' +
+      '<a href="https://wa.me/?text=' + encodeURIComponent(text) + '" target="_blank" style="flex:1;padding:12px;background:#25D366;color:#fff;border-radius:12px;text-align:center;text-decoration:none;font-weight:700;font-size:14px">💬 WhatsApp</a>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:8px;background:#F4F3EF;border-radius:10px;padding:10px 14px;margin-bottom:12px">' +
+      '<span style="font-size:12px;color:#6B6B67;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + url + '</span>' +
+      '<button onclick="navigator.clipboard.writeText(\'' + url + '\').then(function(){var b=this.closest(\'div\').querySelector(\'button\');b.textContent=\'✓\';setTimeout(function(){b.textContent=\'Копировать\'},2000)}.bind(this))" style="padding:6px 12px;background:#E8510A;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Копировать</button>' +
+    '</div>' +
+    '<button onclick="this.closest(\'div\').parentNode.remove()" style="width:100%;padding:12px;background:#F4F3EF;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Закрыть</button>' +
+  '</div>';
+  document.body.appendChild(overlay);
 }
 
 function applyAndChat(jobId) {
