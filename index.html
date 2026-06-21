@@ -948,7 +948,7 @@ function renderJobs() {
           </div>
           <div style="display:flex;gap:8px">
             <button class="m-fav-btn" onclick="event.stopPropagation();toggleFav(${j.id},this)" id="fav-${j.id}">
-              <i class="ph-bold ${isFav ? 'ph-heart-fill' : 'ph-heart'}" style="color:${isFav ? '#E8510A' : '#C0BFB9'}"></i>
+              <i class="ph-bold ${isFav ? 'ph-heart-fill' : 'ph-heart'}" style="color:${isFav ? '#E8124A' : '#C0BFB9'}"></i>
             </button>
             <button class="m-apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
           </div>
@@ -987,7 +987,7 @@ function renderJobs() {
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="fav-btn" id="fav-${j.id}" onclick="event.stopPropagation();toggleFav(${j.id},this)" title="Сохранить">
-              <i class="ph-bold ${Shabashka.isFavJob(j.id) ? 'ph-heart-fill' : 'ph-heart'}" style="color:${Shabashka.isFavJob(j.id) ? '#E8510A' : '#9A9A96'}"></i>
+              <i class="ph-bold ${Shabashka.isFavJob(j.id) ? 'ph-heart-fill' : 'ph-heart'}" style="color:${Shabashka.Shabashka.isFavJob(j.id) ? '#E8124A' : '#9A9A96'}"></i>
             </button>
             <button class="apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
           </div>
@@ -1467,10 +1467,17 @@ function toggleFav(jobId, btn) {
   const i = btn.querySelector('i');
   if (added) {
     i.className = 'ph-bold ph-heart-fill';
-    i.style.color = '#E8510A';
+    i.style.color = '#E8124A';
+    // Анимация пульса
+    i.style.transform = 'scale(1.4)';
+    i.style.transition = 'transform 0.15s ease';
+    setTimeout(function(){ i.style.transform = 'scale(1)'; }, 150);
   } else {
     i.className = 'ph-bold ph-heart';
-    i.style.color = '#9A9A96';
+    i.style.color = '#C0BFB9';
+    i.style.transform = 'scale(0.85)';
+    i.style.transition = 'transform 0.1s ease';
+    setTimeout(function(){ i.style.transform = 'scale(1)'; }, 100);
   }
 }
 
