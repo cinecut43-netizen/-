@@ -5,10 +5,17 @@
 /* ===== БАЗОВЫЕ ИСПРАВЛЕНИЯ ===== */
 @media (max-width: 600px) {
 
-  /* Переключатель роли — скрываем на мобильном, роль меняется через меню */
+  /* Переключатель роли и ссылки — скрываем на мобильном */
   .sb-role-toggle { display: none !important; }
   .sb-links { display: none !important; }
   .sb-burger { display: none !important; }
+
+  /* Футер скрываем на мобильном — занимает место и некрасиво */
+  .site-footer { display: none !important; }
+  footer.site-footer { display: none !important; }
+
+  /* Кнопка Назад — скрываем, навигация через нижнюю панель */
+  .back-btn { display: none !important; }
 
   /* Предотвращаем zoom при фокусе на input в iOS */
   input, textarea, select {
@@ -286,5 +293,39 @@
 
   .chat-layout {
     height: calc(100dvh - 48px) !important;
+  }
+}
+
+/* ===== ГЛОБАЛЬНЫЕ ИСПРАВЛЕНИЯ ДЛЯ ВСЕХ СТРАНИЦ ===== */
+@media (max-width: 600px) {
+
+  /* Скрываем переключатель роли в шапке — он везде лишний на мобильном */
+  .sb-role-toggle { display: none !important; }
+
+  /* Скрываем футер на мобильном — он не нужен при наличии нижней навигации */
+  .site-footer { display: none !important; }
+
+  /* Убираем лишний padding снизу который оставлял место под футер */
+  body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important; }
+
+  /* Карта — убираем кнопки переключения вид/список */
+  .view-toggle { display: none !important; }
+
+  /* Профиль — компактный рейтинг */
+  .big-num { font-size: 36px !important; }
+  .bars { width: 100% !important; }
+  .bar-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .bar-track { flex: 1 !important; }
+
+  /* Исполнители — убираем лишний отступ */
+  .workers-page { padding: 12px !important; }
+
+  /* Избранное — убираем лишний отступ */
+  .page-wrap, .fav-wrap { padding: 12px !important; }
+
+  /* Шапка nav.js — только логотип и аватар */
+  .sb-bar {
+    height: 48px !important;
+    padding: 0 14px !important;
   }
 }
