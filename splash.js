@@ -4,7 +4,7 @@
   splash.innerHTML =
     '<div class="shb-inner">' +
       '<div class="shb-logo">' +
-        '<img class="shb-icon" src="/logo-icon.png" alt="Шабашка"/>' +
+        '<img class="shb-icon" src="/logo-v2.png" alt="Шабашка"/>' +
         '<div class="shb-name">\u0428\u0430\u0431\u0430<span>\u0448\u043a\u0430</span></div>' +
         '<div class="shb-tag">\u0440\u0430\u0431\u043e\u0442\u0430 \u0435\u0441\u0442\u044c \u0432\u0441\u0435\u0433\u0434\u0430</div>' +
       '</div>' +
