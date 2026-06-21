@@ -987,7 +987,7 @@ function renderJobs() {
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="fav-btn" id="fav-${j.id}" onclick="event.stopPropagation();toggleFav(${j.id},this)" title="Сохранить">
-              <i class="ph-bold ${Shabashka.isFavJob(j.id) ? 'ph-heart-fill' : 'ph-heart'}" style="color:${Shabashka.Shabashka.isFavJob(j.id) ? '#E8124A' : '#9A9A96'}"></i>
+              <i class="ph-bold ${Shabashka.isFavJob(j.id) ? 'ph-heart-fill' : 'ph-heart'}" style="color:${Shabashka.isFavJob(j.id) ? '#E8124A' : '#9A9A96'}"></i>
             </button>
             <button class="apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
           </div>
@@ -1554,6 +1554,20 @@ function markOnTheWay(jobId) {
   show();
   window.addEventListener('resize', show);
 })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1) twemoji.parse(node, { folder: 'svg', ext: '.svg' });
+      });
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+});
 </script>
 </body>
 </html>
