@@ -169,13 +169,14 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 /* МОБИЛЬНАЯ ВЕРСИЯ */
 @media (max-width: 600px) {
   body { padding-bottom: 70px; }
+  #shabashka-nav .sb-role-toggle { display: none !important; }
   nav { padding: 0 12px; height: 50px; }
   #map { height: calc(100dvh - 50px - 60px); top: 50px; }
   .map-detail { width: calc(100vw - 24px); left: 12px; right: 12px; border-radius: 16px; }
+  .mode-toggle { display: none !important; }
 }
-.mobile-bottom-nav { position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #E5E4E0;display:none;align-items:center;justify-content:space-around;z-index:200; }
-.mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 12px;color:#6B6B67;font-family:inherit; }
-.mobile-nav-btn.active { color:#E8510A; }
+
+@media (max-width: 600px) { .site-footer { display: none !important; } .sb-role-toggle { display: none !important; } .sb-links { display: none !important; } .sb-burger { display: none !important; } .back-btn { display: none !important; } }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
@@ -193,6 +194,8 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .site-footer .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.18); }
 @media (max-width: 600px) { .site-footer .footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; } }
 </style>
+<meta name="color-scheme" content="light only">
+<style>:root { color-scheme: light only; }</style>
 </head>
 <body>
 

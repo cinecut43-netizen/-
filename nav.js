@@ -133,8 +133,9 @@
         }
         .sb-links { display: none; }
         .sb-burger { display: none; }
+        .sb-role-toggle { display: none; }
         .sb-right { gap: 6px; }
-        .sb-login-btn { font-size: 12px; padding: 6px 12px; }
+        .sb-login-btn { font-size: 11px; padding: 5px 10px; white-space: nowrap; }
         .sb-avatar { width: 28px; height: 28px; font-size: 11px; }
         .sb-logo { font-size: 17px; }
         .sb-mobile-panel { display: none !important; }
