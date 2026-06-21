@@ -128,34 +128,65 @@
   }
 
   function showJobNotification(job) {
+    var title = job.urgent ? '🔥 Срочный заказ рядом!' : '💼 Новый заказ — Шабашка';
+    var body = job.title + '\n' + job.pay.toLocaleString('ru') + ' ₽ · ' + job.location;
+    var opts = {
+      body: body,
+      icon: '/logo-v2.png',
+      badge: '/logo-v2.png',
+      tag: 'new-job-' + job.id,
+      renotify: true,
+      vibrate: [200, 100, 200],
+      data: { url: '/?job=' + job.id },
+      actions: [
+        { action: 'open', title: '👀 Смотреть заказ' },
+        { action: 'close', title: 'Закрыть' },
+      ],
+    };
+
     if (!('serviceWorker' in navigator)) {
       if (Notification.permission === 'granted') {
-        new Notification('🔥 Новый срочный заказ — Шабашка', {
-          body: job.title + ' · ' + job.pay.toLocaleString('ru') + ' ₽ · ' + job.location,
-          icon: '/favicon.svg',
-        });
+        var n = new Notification(title, { body: body, icon: '/logo-v2.png' });
+        n.onclick = function() { window.focus(); window.location.href = '/'; };
       }
       return;
     }
     navigator.serviceWorker.ready.then(function(sw) {
-      sw.showNotification('🔥 Срочный заказ — Шабашка', {
-        body: job.title + '\n' + job.pay.toLocaleString('ru') + ' ₽ · ' + job.location,
-        icon: '/favicon.svg',
-        badge: '/favicon.svg',
-        tag: 'new-job-' + job.id,
-        renotify: true,
-        data: { url: '/' },
-        actions: [
-          { action: 'open', title: 'Смотреть' },
-          { action: 'close', title: 'Закрыть' },
-        ],
-      });
+      sw.showNotification(title, opts);
+    });
+  }
+
+  function showResponseNotification(jobTitle, workerName) {
+    var title = '🎉 Новый отклик на ваш заказ';
+    var body = workerName + ' откликнулся на «' + jobTitle + '»';
+    var opts = {
+      body: body,
+      icon: '/logo-v2.png',
+      badge: '/logo-v2.png',
+      tag: 'response-' + Date.now(),
+      vibrate: [100, 50, 100],
+      data: { url: '/employer' },
+      actions: [
+        { action: 'open', title: '👤 Посмотреть' },
+        { action: 'close', title: 'Закрыть' },
+      ],
+    };
+    if (!('serviceWorker' in navigator)) {
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body: body, icon: '/logo-v2.png' });
+      }
+      return;
+    }
+    navigator.serviceWorker.ready.then(function(sw) {
+      sw.showNotification(title, opts);
     });
   }
 
   window.ShabashkaNotify = {
     startPolling: startJobPolling,
     checkNow: checkNewJobs,
+    showJob: showJobNotification,
+    showResponse: showResponseNotification,
   };
 
   // ===== КНОПКА "УСТАНОВИТЬ ПРИЛОЖЕНИЕ" =====

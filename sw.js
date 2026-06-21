@@ -11,7 +11,7 @@ const PRECACHE = [
   '/data.js',
   '/nav.js',
   '/icons.js',
-  '/favicon.svg',
+  '/logo-v2.png',
   'https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css',
 ];
 
@@ -99,8 +99,8 @@ self.addEventListener('push', function (e) {
   var title = data.title || 'Шабашка';
   var options = {
     body: data.body || 'У вас новое уведомление',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: '/logo-v2.png',
+    badge: '/logo-v2.png',
     tag: data.tag || 'shabashka-notification',
     data: { url: data.url || '/' },
     actions: data.actions || [
