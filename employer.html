@@ -10,8 +10,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Шабашка">
-<link rel="apple-touch-icon" href="/favicon.svg">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Кабинет работодателя — Шабашка</title>
 <meta name="description" content="Управляй заказами, откликами и платежами в личном кабинете работодателя.">
 <meta name="robots" content="index, follow">
@@ -285,8 +283,12 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
+<link rel="icon" type="image/png" href="/logo-v2.png">
+<link rel="apple-touch-icon" href="/logo-v2.png">
+<link rel="shortcut icon" href="/logo-v2.png">
 </head>
 <body>
+<script src="/splash.js"></script>
 
 <div id="shabashka-nav"></div>
 <nav>
@@ -912,16 +914,20 @@ function submitTopUp() {
 
 function orderRow(o) {
   const s = STATUS_MAP[o.status];
-  return `<div class="order-row" onclick="openDetail(${o.id})">
-    <div class="order-icon">${o.icon}</div>
-    <div class="order-info">
-      <div class="order-title">${o.title}</div>
-      <div class="order-meta">👥 ${o.people} чел · 📍 ${o.addr} · ${o.responses} откликов</div>
-    </div>
-    <div class="order-date">${o.date}</div>
-    <div class="order-pay">${(o.pay * o.people).toLocaleString('ru')} ₽</div>
-    <span class="status-pill ${s.cls}">${s.label}</span>
-  </div>`;
+  const repeatBtn = (o.status === 'done' || o.status === 'cancelled')
+    ? '<button class="btn-sm btn-sm-green" style="font-size:11px;padding:5px 10px" onclick="event.stopPropagation();repeatOrder(' + o.id + ')">🔄 Повторить</button>'
+    : '';
+  return '<div class="order-row" onclick="openDetail(' + o.id + ')">' +
+    '<div class="order-icon">' + o.icon + '</div>' +
+    '<div class="order-info">' +
+      '<div class="order-title">' + o.title + '</div>' +
+      '<div class="order-meta">👥 ' + o.people + ' чел · 📍 ' + o.addr + ' · ' + o.responses + ' откликов</div>' +
+    '</div>' +
+    '<div class="order-date">' + o.date + '</div>' +
+    '<div class="order-pay">' + (o.pay * o.people).toLocaleString('ru') + ' ₽</div>' +
+    '<span class="status-pill ' + s.cls + '">' + s.label + '</span>' +
+    repeatBtn +
+  '</div>';
 }
 
 function respItem(r) {
@@ -940,6 +946,38 @@ function respItem(r) {
       <button class="btn-sm btn-sm-gray" onclick="event.stopPropagation();declineResp(${r.id})">Отклонить</button>
     </div>
   </div>`;
+}
+
+function repeatOrder(id) {
+  var o = ORDERS.find(function(x){ return x.id === id; });
+  if (!o) return;
+
+  // Создаём новый заказ с теми же параметрами
+  var result = Shabashka.addJob({
+    cat:        o.cat || 'other',
+    emoji:      o.icon || '📦',
+    title:      o.title,
+    company:    Shabashka.getUser().company,
+    pay:        o.pay,
+    people:     o.people,
+    payLabel:   'за день',
+    date:       'Сегодня',
+    urgent:     false,
+    allowBargain: false,
+    location:   o.addr || 'Адрес не указан',
+    desc:       o.desc || '',
+    requirements: o.requirements || '—',
+  });
+
+  ORDERS = loadOrders();
+  renderPage();
+
+  // Toast
+  var t = document.createElement('div');
+  t.textContent = '✅ Заказ «' + o.title + '» создан заново!';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A7A4A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
 }
 
 function acceptResp(responseId) {

@@ -602,6 +602,14 @@
 </head>
 <body>
 <script src="/splash.js"></script>
+<script>
+// Редирект на онбординг при первом визите
+(function(){
+  if (!localStorage.getItem('shabashka_onboarding_done') && !localStorage.getItem('shabashka_user')) {
+    window.location.replace('/onboarding');
+  }
+})();
+</script>
 
 <!-- НАТИВНАЯ МОБИЛЬНАЯ ШАПКА (только на телефоне) -->
 <div id="mobileAppHeader" style="display:none">

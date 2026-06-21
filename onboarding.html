@@ -2,368 +2,125 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Шабашка — Добро пожаловать</title>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="color-scheme" content="light only">
+<style>:root{color-scheme:light only}</style>
+<link rel="icon" type="image/png" href="/logo-v2.png">
+<link rel="apple-touch-icon" href="/logo-v2.png">
+<title>Добро пожаловать — Шабашка</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
-  --dark: #14151A; --gray: #6B6B67; --border: #E5E4E0; --white: #fff;
-}
-html, body { height: 100%; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--dark);
-  color: var(--white);
-  overflow: hidden;
-  height: 100vh;
-}
-
-/* КОНТЕЙНЕР СЛАЙДОВ */
-.slides-wrap {
-  position: relative;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.slide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 28px 100px;
-  text-align: center;
-  opacity: 0;
-  transform: translateX(60px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-  pointer-events: none;
-}
-.slide.active {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: auto;
-}
-.slide.prev {
-  opacity: 0;
-  transform: translateX(-60px);
-}
-
-/* ИЛЛЮСТРАЦИЯ */
-.slide-icon {
-  font-size: 80px;
-  margin-bottom: 28px;
-  line-height: 1;
-  filter: drop-shadow(0 8px 24px rgba(232,81,10,0.3));
-}
-
-.slide-tag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--orange);
-  margin-bottom: 12px;
-  opacity: 0.9;
-}
-
-.slide-title {
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1.25;
-  letter-spacing: -0.5px;
-  margin-bottom: 16px;
-  max-width: 320px;
-}
-
-.slide-desc {
-  font-size: 15px;
-  line-height: 1.6;
-  color: rgba(255,255,255,0.65);
-  max-width: 300px;
-}
-
-/* ВЫДЕЛЕНИЕ КЛЮЧЕВЫХ СЛОВ */
-.slide-desc strong { color: var(--white); font-weight: 600; }
-
-/* ПРИМЕРЫ — маленькие карточки с демо-данными */
-.slide-example {
-  margin-top: 24px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px;
-  padding: 14px 18px;
-  font-size: 13px;
-  color: rgba(255,255,255,0.8);
-  max-width: 300px;
-  width: 100%;
-  line-height: 1.5;
-}
-.slide-example-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-}
-.slide-example-label { color: rgba(255,255,255,0.5); }
-.slide-example-value { font-weight: 600; color: var(--white); }
-.slide-example-value.orange { color: #FF8552; }
-.slide-example-value.green { color: #4ACA7A; }
-
-/* НИЖНЯЯ ПАНЕЛЬ */
-.bottom-bar {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  padding: 20px 24px 32px;
-  background: linear-gradient(to top, var(--dark) 60%, transparent);
-}
-
-.dots {
-  display: flex;
-  justify-content: center;
-  gap: 7px;
-  margin-bottom: 18px;
-}
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.25);
-  transition: all 0.3s;
-}
-.dot.active {
-  background: var(--orange);
-  width: 22px;
-  border-radius: 4px;
-}
-
-.btn-next {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  display: block;
-  padding: 16px;
-  background: var(--orange);
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, transform 0.1s;
-  letter-spacing: -0.2px;
-}
-.btn-next:active { transform: scale(0.98); background: var(--orange-dark); }
-
-.btn-skip {
-  display: block;
-  text-align: center;
-  margin-top: 12px;
-  font-size: 13px;
-  color: rgba(255,255,255,0.4);
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-family: inherit;
-  width: 100%;
-}
-.btn-skip:hover { color: rgba(255,255,255,0.7); }
-
-/* ПРОГРЕСС БАРА */
-.progress-bar {
-  position: fixed;
-  top: 0; left: 0;
-  height: 3px;
-  background: var(--orange);
-  transition: width 0.35s ease;
-}
-
-@media (max-width: 400px) {
-  .slide-title { font-size: 24px; }
-  .slide-icon { font-size: 64px; }
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#14151A;height:100vh;overflow:hidden;color:#fff}
+.slides{display:flex;width:300%;height:100vh;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.slide{width:33.333%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:60px 32px 48px}
+.slide-art{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
+.art-circle{width:220px;height:220px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:90px;position:relative}
+.art-1{background:rgba(232,81,10,.15)}
+.art-2{background:rgba(26,122,74,.15)}
+.art-3{background:rgba(24,95,165,.15)}
+.float-card{position:absolute;background:rgba(255,255,255,.1);border-radius:12px;padding:7px 12px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid rgba(255,255,255,.12)}
+.fc-1{top:10px;right:-30px;animation:fl 3s ease-in-out infinite}
+.fc-2{bottom:20px;left:-40px;animation:fl 3s .5s ease-in-out infinite}
+.fc-3{top:50px;left:-20px;animation:fl 3s 1s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.slide-text{text-align:center;margin-bottom:28px}
+.slide-title{font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:10px;line-height:1.25}
+.slide-sub{font-size:15px;color:rgba(255,255,255,.5);line-height:1.6}
+.accent{color:#E8510A}
+.dots{display:flex;gap:8px;margin-bottom:24px;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .3s}
+.dot.active{width:24px;border-radius:4px;background:#E8510A}
+.btn-next{width:100%;padding:16px;background:#E8510A;color:#fff;border:none;border-radius:16px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-next:active{transform:scale(.98)}
+.btn-skip{margin-top:12px;background:none;border:none;color:rgba(255,255,255,.3);font-size:14px;cursor:pointer;font-family:inherit;padding:8px;display:block;width:100%;text-align:center}
 </style>
-<link rel="stylesheet" href="/mobile.css">
 </head>
 <body>
-<div class="progress-bar" id="progressBar" style="width:25%"></div>
 
-<div class="slides-wrap" id="slidesWrap">
+<div class="slides" id="slides">
 
-  <!-- СЛАЙД 1 -->
-  <div class="slide active" data-slide="0">
-    <div class="slide-icon">🗺️</div>
-    <div class="slide-tag">Шаг 1 из 4</div>
-    <div class="slide-title">Находи заказы рядом с тобой</div>
-    <div class="slide-desc">
-      Сотни <strong>срочных заказов</strong> каждый день — грузчики, уборка, стройка, ивенты.
-      Фильтруй по категории, городу или смотри на <strong>карте</strong>.
+  <div class="slide">
+    <div class="slide-art">
+      <div class="art-circle art-1">
+        🔍
+        <div class="float-card fc-1">🔥 Срочный · 3 500 ₽</div>
+        <div class="float-card fc-2">📍 500 м от вас</div>
+        <div class="float-card fc-3">11 заказов рядом</div>
+      </div>
     </div>
-    <div class="slide-example">
-      <div class="slide-example-row">
-        <span class="slide-example-label">📦 Грузчики на переезд</span>
-        <span class="slide-example-value orange">3 500 ₽</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">🧹 Уборка офиса</span>
-        <span class="slide-example-value orange">2 800 ₽</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">🔥 Срочно · сегодня</span>
-        <span class="slide-example-value green">+5 заказов</span>
-      </div>
+    <div class="slide-text">
+      <div class="slide-title">Находи заказы<br><span class="accent">рядом с тобой</span></div>
+      <div class="slide-sub">Грузчик, промоутер, разнорабочий — выбирай подходящий заказ на карте или в ленте</div>
+    </div>
+    <div style="width:100%">
+      <div class="dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+      <button class="btn-next" onclick="goTo(1)">Далее</button>
+      <button class="btn-skip" onclick="finish()">Пропустить</button>
     </div>
   </div>
 
-  <!-- СЛАЙД 2 -->
-  <div class="slide" data-slide="1">
-    <div class="slide-icon">💬</div>
-    <div class="slide-tag">Шаг 2 из 4</div>
-    <div class="slide-title">Откликайся и торгуйся по цене</div>
-    <div class="slide-desc">
-      Нажми «Откликнуться» — и если работодатель разрешил торг,
-      можешь предложить <strong>свою цену</strong>.
-      Работодатель выберет лучший отклик.
+  <div class="slide">
+    <div class="slide-art">
+      <div class="art-circle art-2">
+        💬
+        <div class="float-card fc-1">✅ Вас выбрали!</div>
+        <div class="float-card fc-2">⭐ Рейтинг 4.9</div>
+        <div class="float-card fc-3">47 заказов</div>
+      </div>
     </div>
-    <div class="slide-example">
-      <div class="slide-example-row">
-        <span class="slide-example-label">Цена заказа</span>
-        <span class="slide-example-value" style="text-decoration:line-through;color:rgba(255,255,255,0.4)">5 000 ₽</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">Твоё предложение</span>
-        <span class="slide-example-value orange">4 200 ₽</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">Статус</span>
-        <span class="slide-example-value green">✓ Принят</span>
-      </div>
+    <div class="slide-text">
+      <div class="slide-title">Откликайся<br><span class="accent">за 1 клик</span></div>
+      <div class="slide-sub">Отправь отклик, предложи свою цену и сразу получи ответ в чате</div>
+    </div>
+    <div style="width:100%">
+      <div class="dots"><div class="dot"></div><div class="dot active"></div><div class="dot"></div></div>
+      <button class="btn-next" onclick="goTo(2)">Далее</button>
+      <button class="btn-skip" onclick="finish()">Пропустить</button>
     </div>
   </div>
 
-  <!-- СЛАЙД 3 -->
-  <div class="slide" data-slide="2">
-    <div class="slide-icon">⭐</div>
-    <div class="slide-tag">Шаг 3 из 4</div>
-    <div class="slide-title">Работай, получай оценки и расти</div>
-    <div class="slide-desc">
-      После каждого заказа работодатель оставляет <strong>отзыв с фото</strong>.
-      Чем выше рейтинг — тем выше ты в поиске
-      и тем больше работодателей выбирают именно тебя.
-    </div>
-    <div class="slide-example">
-      <div class="slide-example-row">
-        <span class="slide-example-label">Дмитрий К.</span>
-        <span class="slide-example-value">⭐ 4.9</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">Заказов выполнено</span>
-        <span class="slide-example-value green">47</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">Бейдж</span>
-        <span class="slide-example-value" style="color:#4ACA7A">✓ Проверен</span>
+  <div class="slide">
+    <div class="slide-art">
+      <div class="art-circle art-3">
+        💰
+        <div class="float-card fc-1">💳 Выплата сегодня</div>
+        <div class="float-card fc-2">🔒 Безопасно</div>
+        <div class="float-card fc-3">68 400 ₽ заработано</div>
       </div>
     </div>
-  </div>
-
-  <!-- СЛАЙД 4 -->
-  <div class="slide" data-slide="3">
-    <div class="slide-icon">🔒</div>
-    <div class="slide-tag">Шаг 4 из 4</div>
-    <div class="slide-title">Деньги под защитой платформы</div>
-    <div class="slide-desc">
-      Оплата резервируется на платформе до завершения заказа.
-      Если что-то пошло не так — <strong>откроешь спор</strong>,
-      и администрация рассмотрит ситуацию в течение 24 часов.
+    <div class="slide-text">
+      <div class="slide-title">Получай оплату<br><span class="accent">безопасно</span></div>
+      <div class="slide-sub">Деньги хранятся в эскроу до завершения заказа. Вы защищены от мошенников</div>
     </div>
-    <div class="slide-example">
-      <div class="slide-example-row">
-        <span class="slide-example-label">Комиссия платформы</span>
-        <span class="slide-example-value">10%</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">Защита от обмана</span>
-        <span class="slide-example-value green">✓ Эскроу</span>
-      </div>
-      <div class="slide-example-row">
-        <span class="slide-example-label">Разрешение споров</span>
-        <span class="slide-example-value green">✓ До 24 часов</span>
-      </div>
+    <div style="width:100%">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot active"></div></div>
+      <button class="btn-next" onclick="finish()">Начать работу 🚀</button>
+      <div style="height:44px"></div>
     </div>
   </div>
 
 </div>
 
-<div class="bottom-bar">
-  <div class="dots" id="dots">
-    <div class="dot active"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-  </div>
-  <button class="btn-next" id="btnNext" onclick="nextSlide()">Далее →</button>
-  <button class="btn-skip" onclick="finish()">Пропустить</button>
-</div>
-
-<script src="/data.js"></script>
 <script>
-// Если онбординг уже был показан — сразу на главную
-if (localStorage.getItem('shabashka_onboarding_seen')) {
-  window.location.replace('/');
-}
+var cur = 0;
 
-let current = 0;
-const total = 4;
-const slides = document.querySelectorAll('.slide');
-const dots = document.querySelectorAll('.dot');
-const btnNext = document.getElementById('btnNext');
-const progressBar = document.getElementById('progressBar');
-
-function goToSlide(idx) {
-  slides[current].classList.remove('active');
-  slides[current].classList.add('prev');
-  setTimeout(function () { slides[current].classList.remove('prev'); }, 400);
-
-  current = idx;
-  slides[current].classList.add('active');
-
-  dots.forEach(function (d, i) { d.classList.toggle('active', i === current); });
-  progressBar.style.width = ((current + 1) / total * 100) + '%';
-
-  if (current === total - 1) {
-    btnNext.textContent = '🚀 Начать работать';
-  } else {
-    btnNext.textContent = 'Далее →';
-  }
-}
-
-function nextSlide() {
-  if (current < total - 1) {
-    goToSlide(current + 1);
-  } else {
-    finish();
-  }
+function goTo(n) {
+  cur = n;
+  document.getElementById('slides').style.transform = 'translateX(-' + (n * 33.333) + '%)';
 }
 
 function finish() {
-  localStorage.setItem('shabashka_onboarding_seen', '1');
-  window.location.href = '/';
+  localStorage.setItem('shabashka_onboarding_done', '1');
+  window.location.href = '/register';
 }
 
-// Свайп на мобильных
-var touchStartX = 0;
-document.addEventListener('touchstart', function (e) { touchStartX = e.touches[0].clientX; });
-document.addEventListener('touchend', function (e) {
-  var diff = touchStartX - e.changedTouches[0].clientX;
-  if (Math.abs(diff) > 50) {
-    if (diff > 0 && current < total - 1) goToSlide(current + 1);
-    if (diff < 0 && current > 0) goToSlide(current - 1);
-  }
+// Свайп
+var sx = 0;
+document.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; });
+document.addEventListener('touchend', function(e){
+  var dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && cur < 2) goTo(cur + 1);
+  if (dx > 50 && cur > 0) goTo(cur - 1);
 });
 </script>
 </body>
