@@ -46,6 +46,14 @@
   ],
   "routes": [
     {
+      "src": "/admin-feedback",
+      "dest": "/admin-feedback.html"
+    },
+    {
+      "src": "/feedback.js",
+      "dest": "/feedback.js"
+    },
+    {
       "src": "/coming-soon",
       "dest": "/coming-soon.html"
     },

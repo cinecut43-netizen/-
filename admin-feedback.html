@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<title>Отзывы пользователей — Админка</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F3EF;color:#14151A;padding:24px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+h1{font-size:24px;font-weight:800}
+.back{padding:8px 16px;background:#fff;border:1px solid #E2E1DB;border-radius:10px;text-decoration:none;font-size:14px;color:#14151A;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:#fff;border-radius:14px;padding:16px;text-align:center}
+.stat-num{font-size:28px;font-weight:800;color:#E8510A}
+.stat-label{font-size:12px;color:#9A9A96;margin-top:4px}
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:7px 14px;border:1.5px solid #E2E1DB;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;background:#fff;color:#6B6B67}
+.filter-btn.active{border-color:#E8510A;color:#E8510A;background:#FFF0E8}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:10px;border-left:4px solid #E2E1DB}
+.card.idea{border-left-color:#185FA5}
+.card.bug{border-left-color:#B91C1C}
+.card.praise{border-left-color:#1A7A4A}
+.card.complaint{border-left-color:#B07800}
+.card-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.card-type{font-size:13px;font-weight:700}
+.card-date{font-size:12px;color:#9A9A96;margin-left:auto}
+.card-text{font-size:14px;color:#14151A;line-height:1.6;margin-bottom:8px}
+.card-meta{font-size:12px;color:#9A9A96}
+.stars{color:#E8510A;font-size:14px}
+.empty{text-align:center;padding:60px 20px;color:#9A9A96}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.clear-btn{padding:8px 16px;background:#FFF0F0;border:1px solid #FCA5A5;border-radius:10px;color:#B91C1C;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+<script src="/data.js"></script>
+<script src="/admin-nav.js"></script>
+
+<div class="header">
+  <div>
+    <h1>💬 Отзывы пользователей</h1>
+    <div style="font-size:13px;color:#9A9A96;margin-top:4px">Обратная связь от пользователей сайта</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="clear-btn" onclick="clearAll()">🗑 Очистить всё</button>
+    <a href="/admin" class="back">← Админка</a>
+  </div>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filterType('all',this)">Все</button>
+  <button class="filter-btn" onclick="filterType('💡 Идея',this)">💡 Идеи</button>
+  <button class="filter-btn" onclick="filterType('🐛 Ошибка',this)">🐛 Ошибки</button>
+  <button class="filter-btn" onclick="filterType('😍 Похвала',this)">😍 Похвала</button>
+  <button class="filter-btn" onclick="filterType('😞 Жалоба',this)">😞 Жалобы</button>
+</div>
+
+<div id="list"></div>
+
+<script>
+var all = JSON.parse(localStorage.getItem('shabashka_feedbacks') || '[]');
+var current = 'all';
+
+function renderStats() {
+  var total = all.length;
+  var ideas = all.filter(function(f){ return f.type.includes('Идея'); }).length;
+  var bugs = all.filter(function(f){ return f.type.includes('Ошибка'); }).length;
+  var avgRating = all.filter(function(f){ return f.rating > 0; });
+  var avg = avgRating.length ? (avgRating.reduce(function(s,f){ return s+f.rating; },0)/avgRating.length).toFixed(1) : '—';
+
+  document.getElementById('stats').innerHTML =
+    '<div class="stat"><div class="stat-num">'+total+'</div><div class="stat-label">Всего отзывов</div></div>' +
+    '<div class="stat"><div class="stat-num">'+ideas+'</div><div class="stat-label">Идей</div></div>' +
+    '<div class="stat"><div class="stat-num">'+bugs+'</div><div class="stat-label">Ошибок</div></div>' +
+    '<div class="stat"><div class="stat-num">'+avg+'</div><div class="stat-label">Средняя оценка</div></div>';
+}
+
+function getBorderClass(type) {
+  if (type.includes('Идея')) return 'idea';
+  if (type.includes('Ошибка')) return 'bug';
+  if (type.includes('Похвала')) return 'praise';
+  if (type.includes('Жалоба')) return 'complaint';
+  return '';
+}
+
+function renderList() {
+  var filtered = current === 'all' ? all : all.filter(function(f){ return f.type === current; });
+  if (!filtered.length) {
+    document.getElementById('list').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div>Отзывов пока нет</div></div>';
+    return;
+  }
+  document.getElementById('list').innerHTML = filtered.map(function(f) {
+    var stars = f.rating > 0 ? '<span class="stars">' + '⭐'.repeat(f.rating) + '</span> ' : '';
+    return '<div class="card ' + getBorderClass(f.type) + '">' +
+      '<div class="card-top">' +
+        '<span class="card-type">' + f.type + '</span>' +
+        stars +
+        '<span class="card-date">' + f.date + '</span>' +
+      '</div>' +
+      (f.text ? '<div class="card-text">' + f.text + '</div>' : '') +
+      '<div class="card-meta">👤 ' + (f.user||'Аноним') + (f.phone?' · 📞 '+f.phone:'') + ' · 📄 ' + f.page + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function filterType(type, btn) {
+  current = type;
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderList();
+}
+
+function clearAll() {
+  if (!confirm('Удалить все отзывы?')) return;
+  localStorage.removeItem('shabashka_feedbacks');
+  all = [];
+  renderStats();
+  renderList();
+}
+
+renderStats();
+renderList();
+</script>
+</body>
+</html>
