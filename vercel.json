@@ -63,6 +63,10 @@
   ],
   "routes": [
     {
+      "src": "/history",
+      "dest": "/history.html"
+    },
+    {
       "src": "/for-workers",
       "dest": "/for-workers.html"
     },

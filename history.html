@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<style>:root{color-scheme:light only}</style>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="/mobile.css">
+<title>История просмотров — Шабашка</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--orange:#E8510A;--dark:#14151A;--gray:#6B6B67;--light:#F4F3EF;--border:#E2E1DB;--white:#fff}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--light);color:var(--dark);padding-bottom:80px}
+.page-header{background:#fff;border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:12px}
+.page-title{font-size:18px;font-weight:800}
+.back-btn{width:36px;height:36px;border-radius:50%;background:var(--light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.clear-btn{margin-left:auto;padding:7px 14px;background:#FFF0F0;border:none;border-radius:20px;font-size:12px;font-weight:600;color:#B91C1C;cursor:pointer;font-family:inherit}
+.list{padding:12px}
+.h-card{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;display:flex;gap:12px;cursor:pointer;align-items:flex-start;border:1px solid var(--border)}
+.h-card:active{transform:scale(.99)}
+.h-emoji{width:46px;height:46px;border-radius:13px;background:#FFF0E8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.h-info{flex:1;min-width:0}
+.h-title{font-size:15px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-company{font-size:12px;color:var(--gray);margin-bottom:6px}
+.h-meta{display:flex;align-items:center;gap:8px}
+.h-pay{font-size:14px;font-weight:700;color:var(--dark)}
+.h-date{font-size:11px;color:var(--gray)}
+.h-time{font-size:11px;color:#9A9A96;white-space:nowrap;flex-shrink:0}
+.fav-btn{width:34px;height:34px;border-radius:50%;background:var(--light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.empty{padding:60px 20px;text-align:center}
+.empty-icon{font-size:48px;margin-bottom:14px}
+.empty-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.empty-sub{font-size:14px;color:var(--gray);margin-bottom:20px}
+.empty-btn{padding:12px 24px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
+.section-label{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;padding:12px 4px 6px}
+</style>
+</head>
+<body>
+<script src="/data.js"></script>
+<script src="/nav.js"></script>
+<script src="/feedback.js"></script>
+<script src="/ai-agent.js"></script>
+
+<div class="page-header">
+  <button class="back-btn" onclick="history.back()">
+    <i class="ph-bold ph-arrow-left" style="font-size:16px"></i>
+  </button>
+  <div class="page-title">История просмотров</div>
+  <button class="clear-btn" onclick="clearHistory()">Очистить</button>
+</div>
+
+<div id="shabashka-nav" style="display:none"></div>
+<div class="list" id="list"></div>
+
+<script>
+Shabashka.renderNav('history');
+
+var JOBS = Shabashka.getAllJobs ? Shabashka.getAllJobs() : Shabashka.getOpenJobs();
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('shabashka_view_history') || '[]'); }
+  catch(e) { return []; }
+}
+
+function isFav(id) { return Shabashka.isFavJob(id); }
+
+function toggleFavItem(id, btn) {
+  var added = Shabashka.toggleFavJob(id);
+  var i = btn.querySelector('i');
+  i.className = 'ph-bold ' + (added ? 'ph-heart-fill' : 'ph-heart');
+  i.style.color = added ? '#E8124A' : '#9A9A96';
+  i.style.transform = 'scale(1.3)';
+  setTimeout(function(){ i.style.transform = 'scale(1)'; }, 150);
+}
+
+function groupByDate(items) {
+  var groups = {};
+  var today = new Date().toDateString();
+  var yesterday = new Date(Date.now() - 86400000).toDateString();
+
+  items.forEach(function(item) {
+    var d = new Date(item.viewedAt);
+    var key = d.toDateString();
+    var label = key === today ? 'Сегодня' : key === yesterday ? 'Вчера' : d.toLocaleDateString('ru', {day:'numeric',month:'long'});
+    if (!groups[label]) groups[label] = [];
+    groups[label].push(item);
+  });
+  return groups;
+}
+
+function render() {
+  var hist = getHistory();
+  var list = document.getElementById('list');
+
+  if (!hist.length) {
+    list.innerHTML =
+      '<div class="empty">' +
+        '<div class="empty-icon">👀</div>' +
+        '<div class="empty-title">История пуста</div>' +
+        '<div class="empty-sub">Здесь появятся заказы которые ты открывал</div>' +
+        '<a href="/" class="empty-btn">Смотреть заказы</a>' +
+      '</div>';
+    return;
+  }
+
+  var groups = groupByDate(hist);
+  var html = '';
+
+  Object.keys(groups).forEach(function(label) {
+    html += '<div class="section-label">' + label + '</div>';
+    groups[label].forEach(function(item) {
+      var fav = isFav(item.id);
+      var time = item.viewedAt.split(',')[1] || '';
+      html +=
+        '<div class="h-card" onclick="goToJob(' + item.id + ')">' +
+          '<div class="h-emoji">' + item.emoji + '</div>' +
+          '<div class="h-info">' +
+            '<div class="h-title">' + item.title + '</div>' +
+            '<div class="h-company">' + item.company + '</div>' +
+            '<div class="h-meta">' +
+              '<div class="h-pay">' + item.pay.toLocaleString('ru') + ' ₽</div>' +
+              '<div class="h-date">· ' + item.payLabel + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
+            '<div class="h-time">' + time.trim() + '</div>' +
+            '<button class="fav-btn" onclick="event.stopPropagation();toggleFavItem(' + item.id + ',this)">' +
+              '<i class="ph-bold ' + (fav ? 'ph-heart-fill' : 'ph-heart') + '" style="font-size:16px;color:' + (fav ? '#E8124A' : '#9A9A96') + '"></i>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+    });
+  });
+
+  list.innerHTML = html;
+}
+
+function goToJob(id) {
+  window.location.href = '/?job=' + id;
+}
+
+function clearHistory() {
+  if (!confirm('Очистить историю просмотров?')) return;
+  localStorage.removeItem('shabashka_view_history');
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>

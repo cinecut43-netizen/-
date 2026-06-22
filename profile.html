@@ -201,11 +201,18 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
 <style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
-<link rel="icon" type="image/png" href="/logo-v2.png">
-<link rel="apple-touch-icon" href="/logo-v2.png">
-<link rel="shortcut icon" href="/logo-v2.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/favicon-192.png">
+<link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
+<script>
+if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashka_user')) {
+  window.location.replace('/coming-soon');
+}
+</script>
 <script src="/splash.js"></script>
 
 <!-- НАТИВНАЯ МОБИЛЬНАЯ ШАПКА ПРОФИЛЯ -->
@@ -345,6 +352,20 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
       <div>
         <div style="font-size:15px;font-weight:700">Мои заказы</div>
         <div style="font-size:12.5px;color:#6B6B67;margin-top:1px">Отклики, активные и завершённые</div>
+      </div>
+    </div>
+    <i class="ph-bold ph-caret-right" style="font-size:18px;color:#9A9A96"></i>
+  </a>
+
+  <!-- История просмотров -->
+  <a href="/history" style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #E2E1DB;border-radius:14px;padding:16px;margin-bottom:10px;text-decoration:none;color:#1A1A18">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:42px;height:42px;border-radius:12px;background:#F4F3EF;display:flex;align-items:center;justify-content:center">
+        <i class="ph-bold ph-clock-counter-clockwise" style="font-size:20px;color:#6B6B67"></i>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:700">История просмотров</div>
+        <div style="font-size:12.5px;color:#6B6B67;margin-top:1px">Заказы которые вы смотрели</div>
       </div>
     </div>
     <i class="ph-bold ph-caret-right" style="font-size:18px;color:#9A9A96"></i>
@@ -874,5 +895,8 @@ renderHero(); renderVerification(); renderBars(); renderActiveOrders(); renderHi
     <div class="footer-copy">© 2025 Шабашка · 18+</div>
   </div>
 </footer>
+
+<script src="/feedback.js"></script>
+<script src="/ai-agent.js"></script>
 </body>
 </html>

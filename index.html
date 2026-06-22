@@ -1017,6 +1017,16 @@ function renderJobs() {
 
 function openDetail(id) {
   const j = JOBS.find(x => x.id === id);
+
+  // Сохраняем в историю просмотров
+  try {
+    var hist = JSON.parse(localStorage.getItem('shabashka_view_history') || '[]');
+    hist = hist.filter(function(h){ return h.id !== id; }); // убираем дубли
+    hist.unshift({ id: id, title: j.title, emoji: j.emoji, pay: j.pay, payLabel: j.payLabel, company: j.company, date: j.date, viewedAt: new Date().toLocaleString('ru') });
+    if (hist.length > 20) hist = hist.slice(0, 20); // максимум 20
+    localStorage.setItem('shabashka_view_history', JSON.stringify(hist));
+  } catch(e) {}
+
   const commission = Math.round(j.pay * 0.1);
   const alreadyApplied = Shabashka.getResponsesForJob(j.id).some(r => r.workerName === Shabashka.getUser().name);
   const companyRating = Shabashka.getCompanyRating(j.company);
