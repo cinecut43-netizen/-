@@ -936,7 +936,8 @@ function renderJobs() {
       const ratingHtml = rating
         ? `<span style="color:#E8510A;font-size:11px;font-weight:600">⭐ ${rating.rating}</span>`
         : '';
-      return `<div class="m-job-card" onclick="openDetail(${j.id})">
+      const isJobClosed = j.status === 'selected' || j.status === 'on_the_way' || j.status === 'in_progress';
+      return `<div class="m-job-card" onclick="openDetail(${j.id})" style="${isJobClosed ? 'opacity:0.7' : ''}">
         <div class="m-job-header">
           <div class="m-job-emoji">${j.emoji}</div>
           <div class="m-job-info">
@@ -949,8 +950,9 @@ function renderJobs() {
           </div>
         </div>
         <div class="m-job-tags">
-          ${j.urgent ? '<span class="m-tag m-tag-hot">🔥 Срочно</span>' : ''}
-          ${j.allowBargain ? '<span class="m-tag m-tag-blue">💬 Торг</span>' : ''}
+          ${isJobClosed ? '<span class="m-tag" style="background:#F4F3EF;color:#9A9A96">🔒 Закрыт</span>' : ''}
+          ${!isJobClosed && j.urgent ? '<span class="m-tag m-tag-hot">🔥 Срочно</span>' : ''}
+          ${!isJobClosed && j.allowBargain ? '<span class="m-tag m-tag-blue">💬 Торг</span>' : ''}
           <span class="m-tag m-tag-gray"><i class="ph-bold ph-calendar" style="font-size:11px;vertical-align:-1px"></i> ${j.date}</span>
           <span class="m-tag m-tag-gray"><i class="ph-bold ph-map-pin" style="font-size:11px;vertical-align:-1px"></i> ${j.location}</span>
         </div>
@@ -963,7 +965,10 @@ function renderJobs() {
             <button class="m-fav-btn" onclick="event.stopPropagation();toggleFav(${j.id},this)" id="fav-${j.id}">
               <i class="ph-bold ${isFav ? 'ph-heart-fill' : 'ph-heart'}" style="color:${isFav ? '#E8124A' : '#C0BFB9'}"></i>
             </button>
-            <button class="m-apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>
+            ${isJobClosed
+              ? '<button class="m-apply-btn" style="background:#9A9A96;cursor:default" onclick="event.stopPropagation()">Закрыт</button>'
+              : `<button class="m-apply-btn" onclick="event.stopPropagation();openDetail(${j.id})">Откликнуться</button>`
+            }
           </div>
         </div>
       </div>`;
@@ -1019,6 +1024,9 @@ function openDetail(id) {
   const isDone = j.status === 'done';
   const isSelected = j.status === 'selected';
   const isOnTheWay = j.status === 'on_the_way';
+  const isInProgress = j.status === 'in_progress';
+  const isClosed = (isSelected || isOnTheWay || isInProgress) && !alreadyApplied;
+  const isCancelled = j.status === 'cancelled';
 
   const companyRatingHtml = companyRating
     ? `<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray);margin-top:2px">
@@ -1056,6 +1064,23 @@ function openDetail(id) {
         ? '<div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:12px;font-size:13px;margin-top:16px">✅ Вы уже оценили работодателя</div>'
         : '<button onclick="openEmployerReviewModal(' + j.id + ')" style="width:100%;margin-top:16px;padding:11px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">⭐ Оценить работодателя</button>'
       }
+    ` : isCancelled ? `
+    <div style="background:#F4F3EF;border-radius:12px;padding:16px;margin-top:16px;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">❌</div>
+      <div style="font-size:15px;font-weight:700;color:#14151A;margin-bottom:4px">Заказ отменён</div>
+      <div style="font-size:13px;color:#9A9A96">Работодатель отменил этот заказ</div>
+    </div>
+    ` : isClosed ? `
+    <div style="background:#FFF8E6;border-radius:12px;padding:16px;margin-top:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="font-size:28px">🔒</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#14151A">Исполнитель уже выбран</div>
+          <div style="font-size:13px;color:#9A9A96;margin-top:2px">Откликнуться на этот заказ больше нельзя</div>
+        </div>
+      </div>
+      <a href="/" onclick="closeModal('detailModal')" style="display:block;text-align:center;padding:11px;background:#E8510A;color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none">Найти другой заказ</a>
+    </div>
     ` : isOnTheWay ? `
     <div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:14px;font-size:13px;margin-top:16px;display:flex;align-items:center;gap:8px">
       <span style="font-size:20px">🚶</span>
@@ -1570,5 +1595,6 @@ function markOnTheWay(jobId) {
 </script>
 
 <script src="/feedback.js"></script>
+<script src="/ai-agent.js"></script>
 </body>
 </html>
