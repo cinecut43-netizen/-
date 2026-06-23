@@ -63,6 +63,10 @@
   ],
   "routes": [
     {
+      "src": "/admin-auth.js",
+      "dest": "/admin-auth.js"
+    },
+    {
       "src": "/api/telegram-notify",
       "dest": "/api/telegram-notify.js"
     },
