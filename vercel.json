@@ -63,6 +63,18 @@
   ],
   "routes": [
     {
+      "src": "/api/telegram-notify",
+      "dest": "/api/telegram-notify.js"
+    },
+    {
+      "src": "/api/telegram-webhook",
+      "dest": "/api/telegram-webhook.js"
+    },
+    {
+      "src": "/admin-stats",
+      "dest": "/admin-stats.html"
+    },
+    {
       "src": "/history",
       "dest": "/history.html"
     },
