@@ -35,6 +35,7 @@ h1{font-size:24px;font-weight:800}
 </style>
 </head>
 <body>
+<script src="/admin-auth.js"></script>
 <script src="/data.js"></script>
 <script src="/admin-nav.js"></script>
 
@@ -53,6 +54,7 @@ h1{font-size:24px;font-weight:800}
 
 <div class="filters">
   <button class="filter-btn active" onclick="filterType('all',this)">Все</button>
+  <button class="filter-btn" onclick="filterType('questions',this)">❓ Вопросы</button>
   <button class="filter-btn" onclick="filterType('💡 Идея',this)">💡 Идеи</button>
   <button class="filter-btn" onclick="filterType('🐛 Ошибка',this)">🐛 Ошибки</button>
   <button class="filter-btn" onclick="filterType('😍 Похвала',this)">😍 Похвала</button>
@@ -69,32 +71,44 @@ function renderStats() {
   var total = all.length;
   var ideas = all.filter(function(f){ return f.type.includes('Идея'); }).length;
   var bugs = all.filter(function(f){ return f.type.includes('Ошибка'); }).length;
-  var avgRating = all.filter(function(f){ return f.rating > 0; });
-  var avg = avgRating.length ? (avgRating.reduce(function(s,f){ return s+f.rating; },0)/avgRating.length).toFixed(1) : '—';
+  var questions = all.filter(function(f){ return f.type.includes('Вопрос'); }).length;
+  var unanswered = all.filter(function(f){ return f.type.includes('Вопрос') && !f.answer; }).length;
 
   document.getElementById('stats').innerHTML =
-    '<div class="stat"><div class="stat-num">'+total+'</div><div class="stat-label">Всего отзывов</div></div>' +
-    '<div class="stat"><div class="stat-num">'+ideas+'</div><div class="stat-label">Идей</div></div>' +
-    '<div class="stat"><div class="stat-num">'+bugs+'</div><div class="stat-label">Ошибок</div></div>' +
-    '<div class="stat"><div class="stat-num">'+avg+'</div><div class="stat-label">Средняя оценка</div></div>';
-}
-
-function getBorderClass(type) {
-  if (type.includes('Идея')) return 'idea';
-  if (type.includes('Ошибка')) return 'bug';
-  if (type.includes('Похвала')) return 'praise';
-  if (type.includes('Жалоба')) return 'complaint';
-  return '';
+    '<div class="stat"><div class="stat-num">'+total+'</div><div class="stat-label">Всего</div></div>' +
+    '<div class="stat"><div class="stat-num" style="color:#185FA5">'+questions+'</div><div class="stat-label">Вопросов</div></div>' +
+    '<div class="stat"><div class="stat-num" style="color:#B91C1C">'+unanswered+'</div><div class="stat-label">Без ответа</div></div>' +
+    '<div class="stat"><div class="stat-num">'+bugs+'</div><div class="stat-label">Ошибок</div></div>';
 }
 
 function renderList() {
-  var filtered = current === 'all' ? all : all.filter(function(f){ return f.type === current; });
+  var filtered = current === 'all' ? all :
+    current === 'questions' ? all.filter(function(f){ return f.type.includes('Вопрос'); }) :
+    all.filter(function(f){ return f.type === current; });
+
   if (!filtered.length) {
-    document.getElementById('list').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div>Отзывов пока нет</div></div>';
+    document.getElementById('list').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div>Пусто</div></div>';
     return;
   }
-  document.getElementById('list').innerHTML = filtered.map(function(f) {
+
+  document.getElementById('list').innerHTML = filtered.map(function(f, idx) {
+    var realIdx = all.indexOf(f);
     var stars = f.rating > 0 ? '<span class="stars">' + '⭐'.repeat(f.rating) + '</span> ' : '';
+    var answerBlock = f.type.includes('Вопрос')
+      ? (f.answer
+          ? '<div style="background:#E8F5EE;border-radius:10px;padding:12px;margin-top:10px;font-size:13px">' +
+              '<div style="font-size:11px;color:#1A7A4A;font-weight:700;margin-bottom:4px">✅ ВАШ ОТВЕТ:</div>' +
+              '<div style="color:#14151A">' + f.answer + '</div>' +
+              '<button onclick="deleteAnswer(' + realIdx + ')" style="margin-top:6px;background:none;border:none;color:#B91C1C;font-size:12px;cursor:pointer">Удалить ответ</button>' +
+            '</div>'
+          : '<div style="margin-top:10px;display:flex;gap:8px">' +
+              '<input id="ans_'+realIdx+'" type="text" placeholder="Написать ответ..." ' +
+                'style="flex:1;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:13px;font-family:inherit;outline:none">' +
+              '<button onclick="sendAnswer('+realIdx+')" ' +
+                'style="padding:9px 16px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Ответить</button>' +
+            '</div>')
+      : '';
+
     return '<div class="card ' + getBorderClass(f.type) + '">' +
       '<div class="card-top">' +
         '<span class="card-type">' + f.type + '</span>' +
@@ -103,8 +117,27 @@ function renderList() {
       '</div>' +
       (f.text ? '<div class="card-text">' + f.text + '</div>' : '') +
       '<div class="card-meta">👤 ' + (f.user||'Аноним') + (f.phone?' · 📞 '+f.phone:'') + ' · 📄 ' + f.page + '</div>' +
+      answerBlock +
     '</div>';
   }).join('');
+}
+
+function sendAnswer(idx) {
+  var input = document.getElementById('ans_' + idx);
+  var answer = input ? input.value.trim() : '';
+  if (!answer) return;
+  all[idx].answer = answer;
+  all[idx].answeredAt = new Date().toLocaleString('ru');
+  localStorage.setItem('shabashka_feedbacks', JSON.stringify(all));
+  renderStats();
+  renderList();
+}
+
+function deleteAnswer(idx) {
+  delete all[idx].answer;
+  delete all[idx].answeredAt;
+  localStorage.setItem('shabashka_feedbacks', JSON.stringify(all));
+  renderList();
 }
 
 function filterType(type, btn) {
@@ -112,6 +145,15 @@ function filterType(type, btn) {
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   renderList();
+}
+
+function getBorderClass(type) {
+  if (type.includes('Идея')) return 'idea';
+  if (type.includes('Ошибка')) return 'bug';
+  if (type.includes('Похвала')) return 'praise';
+  if (type.includes('Жалоба')) return 'complaint';
+  if (type.includes('Вопрос')) return '';
+  return '';
 }
 
 function clearAll() {
