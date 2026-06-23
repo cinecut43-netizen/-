@@ -38,17 +38,11 @@ module.exports = async function handler(req, res) {
         [{ text: '🔧 Админка', url: 'https://shabashka-jade.vercel.app/admin' }],
       ]
     );
-  } else if (text === '/stats') {
+  } else if (text === '/stats' || callbackData === 'stats') {
     await sendMessage(chatId,
       '📊 <b>Статистика Шабашки</b>\n\n' +
-      '👉 Подробная статистика: /admin-stats\n\n' +
-      '<i>Данные доступны в админке сайта</i>'
-    );
-  } else if (callbackData === 'stats') {
-    await sendMessage(chatId,
-      '📊 <b>Быстрая статистика</b>\n\n' +
       '🔗 <a href="https://shabashka-jade.vercel.app/admin-stats">Открыть статистику</a>\n\n' +
-      'Здесь будет реальная статистика после подключения базы данных.'
+      '📋 <a href="https://shabashka-jade.vercel.app/admin">Главная админки</a>'
     );
   } else if (callbackData === 'jobs') {
     await sendMessage(chatId,
