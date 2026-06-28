@@ -2,11 +2,9 @@ meta:
   environment: node
   toolchain:
     name: npm
-    version: 18
-
+    version: "18"
 build:
-  skip: no
-
+  skip: false
 run:
   scriptName: server.js
-  containerPort: 80
+  containerPort: 3000
