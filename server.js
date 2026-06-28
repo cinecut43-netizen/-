@@ -69,9 +69,13 @@ try { app.post('/api/ai-chat',       require(path.join(ROOT, 'api/ai-chat'))); }
 // Статика
 app.use(express.static(ROOT));
 
+// coming-soon страница
+app.get('/coming-soon', function(req, res) {
+  res.sendFile(path.join(ROOT, 'coming-soon.html'));
+});
+
 // Страницы
 const pages = {
-  '/': 'index.html', '/landing': 'landing.html', '/register': 'register.html',
   '/profile': 'profile.html', '/chat': 'chat.html', '/map': 'map.html',
   '/wallet': 'wallet.html', '/employer': 'employer.html', '/workers': 'workers.html',
   '/favorites': 'favorites.html', '/pro': 'pro.html', '/privacy': 'privacy.html',
