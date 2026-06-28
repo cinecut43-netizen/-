@@ -85,7 +85,13 @@ const pages = {
   '/admin-workers': 'admin-workers.html', '/admin-reviews': 'admin-reviews.html',
   '/admin-complaints': 'admin-complaints.html', '/admin-finance': 'admin-finance.html',
   '/admin-settings': 'admin-settings.html', '/admin-content': 'admin-content.html',
-  '/admin-security': 'admin-security.html',
+  '/admin-security': 'admin-security.html', '/admin-stats': 'admin-stats.html',
+  '/admin-feedback': 'admin-feedback.html', '/my-orders': 'my-orders.html',
+  '/history': 'history.html', '/for-workers': 'for-workers.html',
+  '/coming-soon': 'coming-soon.html', '/referral': 'referral.html',
+  '/employer-rules': 'employer-rules.html', '/landing': 'landing.html',
+  '/register': 'register.html', '/profile': 'profile.html',
+  '/chat': 'chat.html', '/map': 'map.html', '/404': '404.html',
 };
 
 Object.entries(pages).forEach(function([route, file]) {
