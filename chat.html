@@ -712,7 +712,7 @@ renderSidebar();
 
 renderQuickReplies();
 </script>
-<script>(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
+<script>(function(){ var n=document.getElementById('mobileNav'); if(n){ function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); } })();</script>
 <script src="/pwa.js"></script>
 <footer class="site-footer">
   <div class="footer-inner">
