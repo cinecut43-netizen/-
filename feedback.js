@@ -108,6 +108,23 @@
     });
     localStorage.setItem('shabashka_feedbacks', JSON.stringify(feedbacks));
 
+    // Отправляем в Telegram
+    fetch('/api/telegram-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'new_feedback',
+        data: {
+          type: selectedType || '💬 Отзыв',
+          rating: selectedRating,
+          text: text,
+          page: window.location.pathname,
+          user: (window.Shabashka && Shabashka.getUser) ? Shabashka.getUser().name : 'Аноним',
+          phone: (window.Shabashka && Shabashka.getUser) ? Shabashka.getUser().phone : '',
+        }
+      })
+    }).catch(function(){});
+
     // Закрываем и показываем спасибо
     document.getElementById('shb-feedback-overlay').remove();
     var toast = document.createElement('div');
