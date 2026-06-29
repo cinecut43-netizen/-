@@ -188,22 +188,22 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
-<script>
-if (!localStorage.getItem('shabashka_access')) {
-  window.location.replace('/coming-soon');
-}
-</script>
+
 <script src="/splash.js"></script>
 
 <!-- МОБИЛЬНАЯ ШАПКА ЧАТА -->
 <div id="mobileChatHeader" style="display:none;background:#fff;border-bottom:1px solid #F0EFE9;position:sticky;top:0;z-index:100">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px">
     <div style="font-size:17px;font-weight:800;color:#14151A">Сообщения</div>
     <div id="mobileChatStatus" style="font-size:12px;color:#6B6B67;display:flex;align-items:center;gap:4px">
       <div style="width:7px;height:7px;border-radius:50%;background:#1A7A4A"></div>
       онлайн
     </div>
   </div>
+  <div style="padding:0 16px 10px;display:flex;align-items:center;gap:8px;background:#F4F3EF;margin:0 16px 10px;border-radius:12px">
+    <i class="ph-bold ph-magnifying-glass" style="font-size:14px;color:#9A9A96;flex-shrink:0;padding-left:4px"></i>
+    <input type="text" placeholder="Поиск по чатам..." oninput="searchChats(this.value)"
+      style="border:none;background:none;font-size:14px;outline:none;width:100%;color:#14151A;font-family:inherit;padding:8px 0">
   <!-- Горизонтальный список чатов -->
   <div id="mobileChatList" style="display:none;gap:12px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none"></div>
 </div>
@@ -220,7 +220,14 @@ if (!localStorage.getItem('shabashka_access')) {
 
 <div class="layout">
   <div class="sidebar">
-    <div class="sidebar-header"><div class="sidebar-title">Сообщения</div></div>
+    <div class="sidebar-header">
+      <div class="sidebar-title">Сообщения</div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px;background:#F4F3EF;border-radius:10px;padding:8px 12px">
+        <i class="ph-bold ph-magnifying-glass" style="font-size:14px;color:#9A9A96;flex-shrink:0"></i>
+        <input type="text" id="chatSearch" placeholder="Поиск по чатам..." oninput="searchChats(this.value)"
+          style="border:none;background:none;font-size:14px;outline:none;width:100%;color:#14151A;font-family:inherit">
+      </div>
+    </div>
     <div class="convo-list" id="convoList"></div>
   </div>
 
@@ -345,6 +352,48 @@ Object.keys(MESSAGES_DB).forEach(function(convoId) {
 let currentConvo = 1;
 let typingTimeout = null;
 
+function searchChats(query) {
+  var q = query.toLowerCase().trim();
+  var filtered = q
+    ? CONVOS.filter(function(c) {
+        return c.name.toLowerCase().includes(q) ||
+               c.preview.toLowerCase().includes(q) ||
+               (c.jobTitle && c.jobTitle.toLowerCase().includes(q));
+      })
+    : CONVOS;
+
+  var list = document.getElementById('convoList');
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:#9A9A96;font-size:13px">Ничего не найдено</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(c) {
+    var isActive = c.id === currentConvo;
+    return '<div class="convo-item' + (isActive ? ' active' : '') + '" onclick="selectConvo(' + c.id + ')">' +
+      '<div class="convo-avatar" style="background:' + c.color + '">' + c.name[0] + '</div>' +
+      '<div class="convo-info">' +
+        '<div class="convo-name">' + highlightMatch(c.name, q) + '</div>' +
+        '<div class="convo-preview">' + highlightMatch(c.preview, q) + '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
+        '<span class="convo-time">' + c.time + '</span>' +
+        (c.unread > 0 ? '<span class="convo-badge">' + c.unread + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function highlightMatch(text, query) {
+  if (!query) return text;
+  var idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0, idx) +
+    '<mark style="background:#FFF0E8;color:#E8510A;border-radius:2px">' +
+    text.slice(idx, idx + query.length) +
+    '</mark>' +
+    text.slice(idx + query.length);
+}
+
 function renderSidebar() {
   document.getElementById('convoList').innerHTML = CONVOS.map(c => `
     <div class="convo-item ${c.id === currentConvo ? 'active' : ''}" onclick="switchConvo(${c.id})">
@@ -445,6 +494,21 @@ function sendMsg() {
   renderMessages();
   renderSidebar();
   renderQuickReplies();
+
+  // Сохраняем в базу данных
+  var user = window.Shabashka ? Shabashka.getUser() : null;
+  if (user && user.id) {
+    fetch('/api/db-messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job_id: currentConvo,
+        sender_id: user.id,
+        receiver_id: null,
+        text: text,
+      })
+    }).catch(function(){});
+  }
 
   // Прогрессия статуса: отправлено → доставлено → прочитано
   var msgs = MESSAGES_DB[currentConvo];
@@ -663,5 +727,7 @@ renderQuickReplies();
   </div>
 </footer>
 
+<script src="/feedback.js"></script>
+<script src="/ai-agent.js"></script>
 </body>
 </html>
