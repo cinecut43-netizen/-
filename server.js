@@ -65,7 +65,24 @@ try { app.get('/api/check-new-jobs', require(path.join(ROOT, 'api/check-new-jobs
 try { app.post('/api/admin-login',   require(path.join(ROOT, 'api/admin-login'))); } catch(e) {}
 try { app.post('/api/admin-verify',  require(path.join(ROOT, 'api/admin-verify'))); } catch(e) {}
 try { app.post('/api/ai-chat',       require(path.join(ROOT, 'api/ai-chat'))); } catch(e) {}
+try { app.post('/api/telegram-notify', require(path.join(ROOT, 'api/telegram-notify'))); } catch(e) {}
+try { app.post('/api/telegram-webhook', require(path.join(ROOT, 'api/telegram-webhook'))); } catch(e) {}
 
+// База данных API
+try {
+  const db = require(path.join(ROOT, 'db'));
+  db.testConnection().then(function(ok) {
+    if (ok) {
+      db.initSchema();
+      console.log('✅ PostgreSQL подключён');
+    }
+  });
+  app.all('/api/db-jobs',  require(path.join(ROOT, 'api/db-jobs')));
+  app.all('/api/db-users', require(path.join(ROOT, 'api/db-users')));
+  console.log('✅ DB API роуты подключены');
+} catch(e) {
+  console.log('БД не подключена:', e.message);
+}
 // Статика
 app.use(express.static(ROOT));
 
