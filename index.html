@@ -1579,7 +1579,6 @@ function toggleFav(jobId, btn) {
   if (added) {
     i.className = 'ph-bold ph-heart-fill';
     i.style.color = '#E8124A';
-    // Анимация пульса
     i.style.transform = 'scale(1.4)';
     i.style.transition = 'transform 0.15s ease';
     setTimeout(function(){ i.style.transform = 'scale(1)'; }, 150);
@@ -1589,6 +1588,16 @@ function toggleFav(jobId, btn) {
     i.style.transform = 'scale(0.85)';
     i.style.transition = 'transform 0.1s ease';
     setTimeout(function(){ i.style.transform = 'scale(1)'; }, 100);
+  }
+
+  // Сохраняем в БД
+  const user = Shabashka.getUser();
+  if (user && user.id) {
+    fetch('/api/db-favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: user.id, job_id: jobId })
+    }).catch(function(){});
   }
 }
 
