@@ -876,6 +876,45 @@ Shabashka.renderNav('index');
 
 let JOBS = Shabashka.JOBS;
 
+// Загружаем заказы из базы данных
+(function loadJobsFromDB() {
+  fetch('/api/db-jobs')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.ok && data.jobs && data.jobs.length > 0) {
+        // Конвертируем формат БД в формат сайта
+        var dbJobs = data.jobs.map(function(j) {
+          return {
+            id: j.id,
+            title: j.title,
+            company: j.employer_name || j.company || 'Работодатель',
+            emoji: j.emoji || '📦',
+            pay: parseInt(j.pay),
+            payLabel: j.pay_label || 'за день',
+            location: j.location || 'Москва',
+            date: j.date || 'Сегодня',
+            urgent: j.urgent || false,
+            allowBargain: j.allow_bargain || false,
+            cat: j.category || 'other',
+            desc: j.description || '',
+            status: j.status || 'new',
+            responses: parseInt(j.responses_count) || 0,
+            colors: ['#E8510A','#185FA5','#1A7A4A'],
+            requirements: '—',
+          };
+        });
+        // Добавляем заказы из БД к локальным
+        JOBS = dbJobs.concat(Shabashka.JOBS.filter(function(lj) {
+          return !dbJobs.find(function(dj){ return dj.id === lj.id; });
+        }));
+        filtered = JOBS;
+        renderJobs();
+        console.log('✅ Загружено заказов из БД:', dbJobs.length);
+      }
+    })
+    .catch(function(e){ console.log('БД недоступна, используем локальные данные'); });
+})();
+
 // Скелетон на мобильном пока грузятся данные
 (function() {
   if (window.innerWidth > 600) return;

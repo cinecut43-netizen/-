@@ -467,27 +467,60 @@ function attachHandlers() {
       state.name = nameInput.value.trim();
       if (companyInput) state.company = companyInput.value.trim();
 
-      // Сохраняем данные пользователя
-      if (window.Shabashka && Shabashka.completeRegistration) {
-        const notifyConsent = document.getElementById('consentNotify');
-        Shabashka.completeRegistration({
-          role: state.role,
+      // Показываем индикатор загрузки
+      const btn = document.getElementById('finishBtn');
+      btn.textContent = 'Сохраняем...';
+      btn.disabled = true;
+
+      // Сохраняем в базу данных
+      fetch('/api/db-users?action=register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: state.phone,
           name: state.name,
-          company: state.company,
-          notifyConsent: notifyConsent ? notifyConsent.checked : false,
-        });
-      }
+          role: state.role,
+          company: state.company || null,
+        })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.user) {
+          // Сохраняем в localStorage для работы сайта
+          var userObj = {
+            id: data.user.id,
+            phone: state.phone,
+            name: state.name,
+            role: state.role,
+            company: state.company,
+            rating: data.user.rating || 5.0,
+            verified: data.user.verified || false,
+          };
+          localStorage.setItem('shabashka_user', JSON.stringify(userObj));
+        }
+      })
+      .catch(function(e){ console.log('DB save error:', e); })
+      .finally(function() {
+        // Сохраняем локально в любом случае
+        if (window.Shabashka && Shabashka.completeRegistration) {
+          const notifyConsent = document.getElementById('consentNotify');
+          Shabashka.completeRegistration({
+            role: state.role,
+            name: state.name,
+            company: state.company,
+            notifyConsent: notifyConsent ? notifyConsent.checked : false,
+          });
+        }
 
-      // Сохраняем доступ чтобы coming-soon не мешал
-      localStorage.setItem('shabashka_access', '1');
-      localStorage.setItem('shabashka_onboarding_done', '1');
+        localStorage.setItem('shabashka_access', '1');
+        localStorage.setItem('shabashka_onboarding_done', '1');
 
-      // Сразу переходим без лишнего шага
-      if (state.role === 'employer') {
-        window.location.href = '/employer';
-      } else {
-        window.location.href = '/';
-      }
+        if (state.role === 'employer') {
+          window.location.href = '/employer';
+        } else {
+          window.location.href = '/';
+        }
+      });
     });
   }
 
