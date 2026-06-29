@@ -38,12 +38,11 @@
   --radius: 10px; --blue: #185FA5; --blue-bg: #E6F1FB;
 }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-.layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+#shabashka-nav { flex-shrink: 0; }
+.site-footer { display: none; }
 
 /* NAV */
 nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; gap: 12px; height: 52px; flex-shrink: 0; }
-#shabashka-nav { flex-shrink: 0; }
-.site-footer { flex-shrink: 0; }
 .back-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray); padding: 4px; }
 .nav-title { font-size: 15px; font-weight: 600; }
 .nav-sub { font-size: 12px; color: var(--gray); }
@@ -51,7 +50,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 
 /* LAYOUT */
-.layout { display: flex; flex: 1; overflow: hidden; }
+.layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
 /* SIDEBAR */
 .sidebar { width: 260px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
