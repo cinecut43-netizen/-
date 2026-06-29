@@ -217,20 +217,19 @@
 
       // Навигация исполнителя
       var workerNav = [
-        { href: '/',           icon: 'home',     label: 'Главная',   page: 'index' },
-        { href: '/map',        icon: 'location', label: 'Карта',     page: 'map' },
-        { href: '/chat',       icon: 'chat',     label: 'Чат',       page: 'chat', badge: true },
-        { href: '/favorites',  icon: 'orders',   label: 'Избранное', page: 'favorites' },
-        { href: '/profile',    icon: 'profile',  label: 'Профиль',   page: 'profile' },
+        { href: '/',           icon: 'ph-house',            label: 'Главная',   page: 'index' },
+        { href: '/map',        icon: 'ph-map-pin',          label: 'Карта',     page: 'map' },
+        { href: '/chat',       icon: 'ph-chat-circle-dots', label: 'Чат',       page: 'chat', badge: true },
+        { href: '/favorites',  icon: 'ph-heart',            label: 'Избранное', page: 'favorites' },
+        { href: '/profile',    icon: 'ph-user-circle',      label: 'Профиль',   page: 'profile' },
       ];
 
-      // Навигация работодателя
       var employerNav = [
-        { href: '/employer',   icon: 'home',     label: 'Главная',   page: 'employer' },
-        { href: '/workers',    icon: 'workers',  label: 'Исполн.',   page: 'workers' },
-        { href: '/chat',       icon: 'chat',     label: 'Чат',       page: 'chat', badge: true },
-        { href: '/map',        icon: 'location', label: 'Карта',     page: 'map' },
-        { href: '/profile',    icon: 'profile',  label: 'Профиль',   page: 'profile' },
+        { href: '/employer',   icon: 'ph-chart-bar',        label: 'Главная',   page: 'employer' },
+        { href: '/workers',    icon: 'ph-users',            label: 'Исполн.',   page: 'workers' },
+        { href: '/chat',       icon: 'ph-chat-circle-dots', label: 'Чат',       page: 'chat', badge: true },
+        { href: '/map',        icon: 'ph-map-pin',          label: 'Карта',     page: 'map' },
+        { href: '/profile',    icon: 'ph-user-circle',      label: 'Профиль',   page: 'profile' },
       ];
 
       var navItems = user.role === 'employer' ? employerNav : workerNav;
@@ -244,9 +243,7 @@
         }
         return '<a href="' + item.href + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:' + color + ';flex:1;padding:8px 4px;min-height:52px;justify-content:center">' +
           '<span style="position:relative;display:inline-flex">' +
-          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="color:' + color + '">' +
-          '<use href="/icons/sprite.svg#icon-' + item.icon + '" stroke="' + color + '"/>' +
-          '</svg>' +
+          '<i class="ph-bold ' + item.icon + '" style="font-size:24px"></i>' +
           badgeHtml +
           '</span>' +
           '<span style="font-size:9.5px;font-weight:' + (isActive?'700':'500') + '">' + item.label + '</span>' +
