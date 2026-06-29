@@ -94,7 +94,22 @@
       return;
     }
 
-    // Сохраняем в localStorage (для админки)
+    // Сохраняем в базу данных и отправляем в Telegram
+    var user = (window.Shabashka && Shabashka.getUser) ? Shabashka.getUser() : {};
+    fetch('/api/db-feedbacks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: selectedType || '💬 Отзыв',
+        rating: selectedRating,
+        text: text,
+        page: window.location.pathname,
+        user_name: user.name || 'Аноним',
+        phone: user.phone || '',
+      })
+    }).catch(function(){});
+
+    // Также сохраняем локально
     var feedbacks = JSON.parse(localStorage.getItem('shabashka_feedbacks') || '[]');
     feedbacks.unshift({
       id: Date.now(),
@@ -103,27 +118,10 @@
       text: text,
       page: window.location.pathname,
       date: new Date().toLocaleString('ru'),
-      user: (window.Shabashka && Shabashka.getUser) ? Shabashka.getUser().name : 'Аноним',
-      phone: (window.Shabashka && Shabashka.getUser) ? Shabashka.getUser().phone : '',
+      user: user.name || 'Аноним',
+      phone: user.phone || '',
     });
     localStorage.setItem('shabashka_feedbacks', JSON.stringify(feedbacks));
-
-    // Отправляем в Telegram
-    fetch('/api/telegram-notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'new_feedback',
-        data: {
-          type: selectedType || '💬 Отзыв',
-          rating: selectedRating,
-          text: text,
-          page: window.location.pathname,
-          user: (window.Shabashka && Shabashka.getUser) ? Shabashka.getUser().name : 'Аноним',
-          phone: (window.Shabashka && Shabashka.getUser) ? Shabashka.getUser().phone : '',
-        }
-      })
-    }).catch(function(){});
 
     // Закрываем и показываем спасибо
     document.getElementById('shb-feedback-overlay').remove();

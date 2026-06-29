@@ -83,6 +83,7 @@ try {
   app.all('/api/db-messages',   require(path.join(ROOT, 'api/db-messages')));
   app.all('/api/db-reviews',    require(path.join(ROOT, 'api/db-reviews')));
   app.all('/api/db-favorites',  require(path.join(ROOT, 'api/db-favorites')));
+  app.all('/api/db-feedbacks',  require(path.join(ROOT, 'api/db-feedbacks')));
   console.log('✅ DB API роуты подключены');
 } catch(e) {
   console.log('БД не подключена:', e.message);

@@ -67,6 +67,32 @@ h1{font-size:24px;font-weight:800}
 var all = JSON.parse(localStorage.getItem('shabashka_feedbacks') || '[]');
 var current = 'all';
 
+// Загружаем из базы данных
+fetch('/api/db-feedbacks')
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.ok && data.feedbacks) {
+      var dbItems = data.feedbacks.map(function(f) {
+        return {
+          id: f.id,
+          type: f.type,
+          rating: f.rating,
+          text: f.text,
+          page: f.page,
+          date: new Date(f.created_at).toLocaleString('ru'),
+          user: 'Пользователь',
+          answer: f.answer,
+          answeredAt: f.answered_at,
+        };
+      });
+      // Объединяем с локальными
+      all = dbItems.concat(all);
+      renderStats();
+      renderList();
+    }
+  })
+  .catch(function(){});
+
 function renderStats() {
   var total = all.length;
   var ideas = all.filter(function(f){ return f.type.includes('Идея'); }).length;
@@ -129,6 +155,16 @@ function sendAnswer(idx) {
   all[idx].answer = answer;
   all[idx].answeredAt = new Date().toLocaleString('ru');
   localStorage.setItem('shabashka_feedbacks', JSON.stringify(all));
+
+  // Сохраняем в БД
+  if (all[idx].id) {
+    fetch('/api/db-feedbacks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: all[idx].id, answer: answer })
+    }).catch(function(){});
+  }
+
   renderStats();
   renderList();
 }
