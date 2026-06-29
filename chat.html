@@ -426,18 +426,26 @@ function renderSidebar() {
 function switchConvo(id) {
   currentConvo = id;
   const c = CONVOS.find(x => x.id === id);
-  document.getElementById('navName').textContent = c.name;
-  document.getElementById('navJob').textContent = c.job;
-  document.getElementById('bannerIcon').textContent = c.icon;
-  document.getElementById('bannerTitle').textContent = c.job;
-  document.getElementById('bannerDetail').textContent = '📅 ' + c.date;
-  document.getElementById('bannerPay').textContent = c.pay;
+  if (!c) return;
+  var navName = document.getElementById('navName');
+  var navJob = document.getElementById('navJob');
+  var bannerIcon = document.getElementById('bannerIcon');
+  var bannerTitle = document.getElementById('bannerTitle');
+  var bannerDetail = document.getElementById('bannerDetail');
+  var bannerPay = document.getElementById('bannerPay');
+  var confirmPanel = document.getElementById('confirmPanel');
+  if (navName) navName.textContent = c.name;
+  if (navJob) navJob.textContent = c.job;
+  if (bannerIcon) bannerIcon.textContent = c.icon;
+  if (bannerTitle) bannerTitle.textContent = c.job;
+  if (bannerDetail) bannerDetail.textContent = '📅 ' + c.date;
+  if (bannerPay) bannerPay.textContent = c.pay;
   c.unread = 0;
   syncUnreadCount();
   renderSidebar();
   renderMessages();
   renderQuickReplies();
-  document.getElementById('confirmPanel').style.display = 'none';
+  if (confirmPanel) confirmPanel.style.display = 'none';
 }
 
 function renderMessages() {
