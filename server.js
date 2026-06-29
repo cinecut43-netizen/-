@@ -77,8 +77,9 @@ try {
       console.log('✅ PostgreSQL подключён');
     }
   });
-  app.all('/api/db-jobs',  require(path.join(ROOT, 'api/db-jobs')));
-  app.all('/api/db-users', require(path.join(ROOT, 'api/db-users')));
+  app.all('/api/db-jobs',       require(path.join(ROOT, 'api/db-jobs')));
+  app.all('/api/db-users',      require(path.join(ROOT, 'api/db-users')));
+  app.all('/api/db-responses',  require(path.join(ROOT, 'api/db-responses')));
   console.log('✅ DB API роуты подключены');
 } catch(e) {
   console.log('БД не подключена:', e.message);

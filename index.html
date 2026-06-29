@@ -1229,10 +1229,38 @@ function applyAndChat(jobId) {
   document.body.appendChild(t);
   setTimeout(function(){ t.remove(); }, 3000);
 
-  // Push уведомление для работодателя (если разрешены)
+  // Сохраняем отклик в базу данных
+  const user = Shabashka.getUser();
+  fetch('/api/db-responses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      job_id: jobId,
+      worker_id: user.id || null,
+      worker_name: user.name,
+      proposed_pay: proposedPay,
+      message: '',
+    })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ if(d.ok) console.log('✅ Отклик сохранён в БД'); })
+    .catch(function(){ console.log('БД недоступна, отклик сохранён локально'); });
+
+  // Уведомление в Telegram
   const job = Shabashka.getJob(jobId);
+  if (job) {
+    fetch('/api/telegram-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'new_response',
+        data: { jobTitle: job.title, workerName: user.name, message: '' }
+      })
+    }).catch(function(){});
+  }
+
+  // Push уведомление
   if (job && window.ShabashkaNotify && Notification.permission === 'granted') {
-    ShabashkaNotify.showResponse(job.title, Shabashka.getUser().name || 'Исполнитель');
+    ShabashkaNotify.showResponse(job.title, user.name || 'Исполнитель');
   }
 
   goToChat(jobId);
