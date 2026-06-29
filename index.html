@@ -1575,19 +1575,19 @@ function syncMobileCat(btn) {
 
 function toggleFav(jobId, btn) {
   const added = Shabashka.toggleFavJob(jobId);
-  const i = btn.querySelector('i');
+
+  // Phosphor Icons заменяет <i> на <svg>, ищем и то и другое
+  const i = btn.querySelector('i') || btn.querySelector('svg');
+
   if (added) {
-    i.className = 'ph-bold ph-heart-fill';
-    i.style.color = '#E8124A';
-    i.style.transform = 'scale(1.4)';
-    i.style.transition = 'transform 0.15s ease';
-    setTimeout(function(){ i.style.transform = 'scale(1)'; }, 150);
+    // Меняем весь innerHTML кнопки
+    btn.innerHTML = '<i class="ph-bold ph-heart-fill" style="color:#E8124A;font-size:20px"></i>';
+    btn.style.transform = 'scale(1.3)';
+    setTimeout(function(){ btn.style.transform = 'scale(1)'; }, 150);
   } else {
-    i.className = 'ph-bold ph-heart';
-    i.style.color = '#C0BFB9';
-    i.style.transform = 'scale(0.85)';
-    i.style.transition = 'transform 0.1s ease';
-    setTimeout(function(){ i.style.transform = 'scale(1)'; }, 100);
+    btn.innerHTML = '<i class="ph-bold ph-heart" style="color:#C0BFB9;font-size:20px"></i>';
+    btn.style.transform = 'scale(0.85)';
+    setTimeout(function(){ btn.style.transform = 'scale(1)'; }, 100);
   }
 
   // Сохраняем в БД
