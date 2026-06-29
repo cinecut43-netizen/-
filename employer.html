@@ -290,11 +290,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 <link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
-<script>
-if (!localStorage.getItem('shabashka_access')) {
-  window.location.replace('/coming-soon');
-}
-</script>
+
 <script src="/splash.js"></script>
 
 <div id="shabashka-nav"></div>
@@ -1286,6 +1282,7 @@ async function submitOrder() {
     }
   }
 
+  // Сначала сохраняем локально
   Shabashka.addJob({
     cat: catInfo.cat,
     emoji: catInfo.emoji,
@@ -1303,6 +1300,46 @@ async function submitOrder() {
     desc: document.getElementById('newDesc').value,
     requirements: '—',
   });
+
+  // Сохраняем в базу данных
+  try {
+    await fetch('/api/db-jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        employer_id: user.id || 1,
+        title: title,
+        description: document.getElementById('newDesc').value,
+        category: catInfo.cat,
+        emoji: catInfo.emoji,
+        pay: parseInt(pay),
+        pay_label: 'за день',
+        people: parseInt(document.getElementById('newCount').value) || 1,
+        location: addr || 'Адрес не указан',
+        address: addr,
+        lat: lat,
+        lng: lng,
+        date: 'Сегодня',
+        urgent: document.getElementById('newUrgent').checked,
+        allow_bargain: document.getElementById('newAllowBargain').checked,
+      })
+    });
+    console.log('✅ Заказ сохранён в БД');
+  } catch(e) {
+    console.log('БД недоступна, заказ сохранён локально');
+  }
+
+  // Уведомление в Telegram
+  try {
+    fetch('/api/telegram-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'new_job',
+        data: { title: title, pay: parseInt(pay), location: addr, company: user.company }
+      })
+    });
+  } catch(e) {}
 
   ORDERS = loadOrders();
   closeModal('postModal');
@@ -1464,5 +1501,7 @@ function syncEmployerNav(page) {
   </div>
 </footer>
 
+<script src="/feedback.js"></script>
+<script src="/ai-agent.js"></script>
 </body>
 </html>
