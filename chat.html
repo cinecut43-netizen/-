@@ -190,6 +190,19 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <body>
 
 <script src="/splash.js"></script>
+<script>
+// Принудительно сбрасываем кэш Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r){ r.update(); });
+  });
+  caches.keys().then(function(keys) {
+    keys.forEach(function(key) {
+      if (key !== 'shabashka-v10') caches.delete(key);
+    });
+  });
+}
+</script>
 
 <!-- МОБИЛЬНАЯ ШАПКА ЧАТА -->
 <div id="mobileChatHeader" style="display:none;background:#fff;border-bottom:1px solid #F0EFE9;position:sticky;top:0;z-index:100">
