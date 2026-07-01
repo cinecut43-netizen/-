@@ -34,30 +34,30 @@ module.exports = async function handler(req, res) {
       [
         [{ text: '📊 Статистика', callback_data: 'stats' }, { text: '📋 Заказы', callback_data: 'jobs' }],
         [{ text: '👥 Пользователи', callback_data: 'users' }, { text: '💬 Отзывы', callback_data: 'feedbacks' }],
-        [{ text: '🌐 Открыть сайт', url: 'https://shabashka-jade.vercel.app' }],
-        [{ text: '🔧 Админка', url: 'https://shabashka-jade.vercel.app/admin' }],
+        [{ text: '🌐 Открыть сайт', url: 'https://shabashka-lllll16.amvera.io' }],
+        [{ text: '🔧 Админка', url: 'https://shabashka-lllll16.amvera.io/admin' }],
       ]
     );
   } else if (text === '/stats' || callbackData === 'stats') {
     await sendMessage(chatId,
       '📊 <b>Статистика Шабашки</b>\n\n' +
-      '🔗 <a href="https://shabashka-jade.vercel.app/admin-stats">Открыть статистику</a>\n\n' +
-      '📋 <a href="https://shabashka-jade.vercel.app/admin">Главная админки</a>'
+      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-stats">Открыть статистику</a>\n\n' +
+      '📋 <a href="https://shabashka-lllll16.amvera.io/admin">Главная админки</a>'
     );
   } else if (callbackData === 'jobs') {
     await sendMessage(chatId,
       '📋 <b>Управление заказами</b>\n\n' +
-      '🔗 <a href="https://shabashka-jade.vercel.app/admin-orders">Открыть заказы</a>'
+      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-orders">Открыть заказы</a>'
     );
   } else if (callbackData === 'users') {
     await sendMessage(chatId,
       '👥 <b>Пользователи</b>\n\n' +
-      '🔗 <a href="https://shabashka-jade.vercel.app/admin-users">Открыть пользователей</a>'
+      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-users">Открыть пользователей</a>'
     );
   } else if (callbackData === 'feedbacks') {
     await sendMessage(chatId,
       '💬 <b>Отзывы пользователей</b>\n\n' +
-      '🔗 <a href="https://shabashka-jade.vercel.app/admin-feedback">Открыть отзывы</a>'
+      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-feedback">Открыть отзывы</a>'
     );
   } else {
     await sendMessage(chatId, '❓ Неизвестная команда. Напиши /menu');
