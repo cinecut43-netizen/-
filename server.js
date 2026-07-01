@@ -88,6 +88,36 @@ try {
 } catch(e) {
   console.log('БД не подключена:', e.message);
 }
+// Страницы — до статики!
+const pages = {
+  '/profile': 'profile.html', '/chat': 'chat.html', '/map': 'map.html',
+  '/wallet': 'wallet.html', '/employer': 'employer.html', '/workers': 'workers.html',
+  '/favorites': 'favorites.html', '/pro': 'pro.html', '/privacy': 'privacy.html',
+  '/terms': 'terms.html', '/offer': 'offer.html', '/contacts': 'contacts.html',
+  '/onboarding': 'onboarding.html', '/admin': 'admin.html',
+  '/admin-users': 'admin-users.html', '/admin-orders': 'admin-orders.html',
+  '/admin-workers': 'admin-workers.html', '/admin-reviews': 'admin-reviews.html',
+  '/admin-complaints': 'admin-complaints.html', '/admin-finance': 'admin-finance.html',
+  '/admin-settings': 'admin-settings.html', '/admin-content': 'admin-content.html',
+  '/admin-security': 'admin-security.html', '/admin-stats': 'admin-stats.html',
+  '/admin-feedback': 'admin-feedback.html', '/my-orders': 'my-orders.html',
+  '/history': 'history.html', '/for-workers': 'for-workers.html',
+  '/coming-soon': 'coming-soon.html', '/referral': 'referral.html',
+  '/employer-rules': 'employer-rules.html', '/landing': 'landing.html',
+  '/register': 'register.html', '/404': '404.html',
+};
+
+Object.entries(pages).forEach(function([route, file]) {
+  app.get(route, function(req, res) {
+    const filePath = path.join(ROOT, file);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).send('Файл не найден: ' + filePath);
+    }
+  });
+});
+
 // Явные роуты для HTML страниц (до статики)
 app.get('/', function(req, res) { res.sendFile(path.join(ROOT, 'index.html')); });
 
@@ -107,37 +137,6 @@ app.use(express.static(ROOT));
 // coming-soon страница
 app.get('/coming-soon', function(req, res) {
   res.sendFile(path.join(ROOT, 'coming-soon.html'));
-});
-
-// Страницы
-const pages = {
-  '/profile': 'profile.html', '/chat': 'chat.html', '/map': 'map.html',
-  '/wallet': 'wallet.html', '/employer': 'employer.html', '/workers': 'workers.html',
-  '/favorites': 'favorites.html', '/pro': 'pro.html', '/privacy': 'privacy.html',
-  '/terms': 'terms.html', '/offer': 'offer.html', '/contacts': 'contacts.html',
-  '/onboarding': 'onboarding.html', '/admin': 'admin.html',
-  '/admin-users': 'admin-users.html', '/admin-orders': 'admin-orders.html',
-  '/admin-workers': 'admin-workers.html', '/admin-reviews': 'admin-reviews.html',
-  '/admin-complaints': 'admin-complaints.html', '/admin-finance': 'admin-finance.html',
-  '/admin-settings': 'admin-settings.html', '/admin-content': 'admin-content.html',
-  '/admin-security': 'admin-security.html', '/admin-stats': 'admin-stats.html',
-  '/admin-feedback': 'admin-feedback.html', '/my-orders': 'my-orders.html',
-  '/history': 'history.html', '/for-workers': 'for-workers.html',
-  '/coming-soon': 'coming-soon.html', '/referral': 'referral.html',
-  '/employer-rules': 'employer-rules.html', '/landing': 'landing.html',
-  '/register': 'register.html', '/profile': 'profile.html',
-  '/chat': 'chat.html', '/map': 'map.html', '/404': '404.html',
-};
-
-Object.entries(pages).forEach(function([route, file]) {
-  app.get(route, function(req, res) {
-    const filePath = path.join(ROOT, file);
-    if (fs.existsSync(filePath)) {
-      res.sendFile(filePath);
-    } else {
-      res.status(404).send('Файл не найден: ' + filePath);
-    }
-  });
 });
 
 app.use(function(req, res) {
