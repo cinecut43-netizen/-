@@ -265,7 +265,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 .employer-nav-icon { font-size: 20px; }
 </style>
 <script src="/data.js"></script>
-<script src="/nav.js"></script>
+<script src="/nav2.js"></script>
 <script src="/icons.js"></script>
 <link rel="stylesheet" href="/mobile.css">
 
@@ -375,7 +375,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
       </label>
     </div>
     <div class="commission-hint">
-      💡 Комиссия платформы — 10% от суммы заказа. Спишется только при подтверждении исполнителя.
+      🎉 Платформа сейчас полностью бесплатна — комиссия не взимается!
     </div>
     <button class="modal-submit" onclick="submitOrder()">Разместить заказ</button>
   </div>
@@ -640,7 +640,7 @@ function getAnalyticsPage() {
     <div class="stat-card">
       <div class="stat-card-label">Всего потрачено</div>
       <div class="stat-card-num" style="color:var(--orange)">${Math.round(totalSpent * 1.1).toLocaleString('ru')} ₽</div>
-      <div class="stat-card-sub" style="color:var(--gray)">Включая 10% сервис</div>
+      <div class="stat-card-sub" style="color:var(--gray)">Без комиссии</div>
     </div>
     <div class="stat-card">
       <div class="stat-card-label">Средний чек заказа</div>
@@ -780,9 +780,9 @@ function getDashboard() {
       <div class="stat-card-sub" style="color:var(--gray)">Всего за месяц</div>
     </div>
     <div class="stat-card">
-      <div class="stat-card-label">Потрачено (с комиссией)</div>
+      <div class="stat-card-label">Потрачено</div>
       <div class="stat-card-num">${Math.round(totalSpent * 1.1).toLocaleString('ru')} ₽</div>
-      <div class="stat-card-sub" style="color:var(--gray)">Включая 10% сервис</div>
+      <div class="stat-card-sub" style="color:var(--gray)">Без комиссии</div>
     </div>
   </div>
 
@@ -1068,7 +1068,7 @@ function declineResp(responseId) {
 function openDetail(id) {
   const o = ORDERS.find(x => x.id === id);
   const s = STATUS_MAP[o.status];
-  const commission = Math.round(o.pay * o.people * 0.1);
+  const commission = 0;
   document.getElementById('detailTitle').textContent = o.title;
   document.getElementById('detailBody').innerHTML = `
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">

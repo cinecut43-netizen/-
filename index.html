@@ -864,7 +864,7 @@ if ('serviceWorker' in navigator) {
     </div>
 
     <div class="commission-note">
-      💡 Сервисный сбор — 10% при успешном завершении заказа. Оплачивается после того, как исполнитель подтверждён.
+      🎉 Сейчас платформа полностью бесплатна для всех участников!
     </div>
 
     <button class="apply-btn" style="width:100%;padding:12px;font-size:15px;border-radius:10px;margin-top:16px" onclick="submitPost()">Разместить заказ</button>
@@ -1099,11 +1099,11 @@ function openDetail(id) {
     </div>
     <div style="background:var(--gray-light);border-radius:10px;padding:16px;display:flex;justify-content:space-between;margin-bottom:20px">
       <div><div style="font-size:22px;font-weight:700">${j.pay.toLocaleString('ru')} ₽</div><div style="font-size:12px;color:#6B6B67">${j.payLabel}</div></div>
-      <div style="text-align:right"><div style="font-size:22px;font-weight:700;color:#1A7A4A">${(j.pay - commission).toLocaleString('ru')} ₽</div><div style="font-size:12px;color:#6B6B67">вы получите на руки</div></div>
+      <div style="text-align:right"><div style="font-size:22px;font-weight:700;color:#1A7A4A">${j.pay.toLocaleString('ru')} ₽</div><div style="font-size:12px;color:#1A7A4A">вы получите полностью</div></div>
     </div>
     <div class="modal-section"><h3>Задача</h3><p>${j.desc}</p></div>
     <div class="modal-section"><h3>Требования</h3><p>${j.requirements}</p></div>
-    <div class="commission-note">Сервисный сбор платформы — 10% (${commission.toLocaleString('ru')} ₽). Удерживается при подтверждении заказа.</div>
+    <div class="commission-note">✅ Бесплатно — комиссия не взимается на период запуска.</div>
     ${isDone ? `
       ${alreadyRatedEmployer
         ? '<div style="background:#E8F5EE;color:#1A7A4A;border-radius:10px;padding:12px;font-size:13px;margin-top:16px">✅ Вы уже оценили работодателя</div>'
