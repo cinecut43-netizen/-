@@ -130,7 +130,12 @@ app.get('/debug', function(req, res) {
     files: fs.readdirSync(ROOT).slice(0, 20),
   });
 });
-
+app.get('/admin', function(req, res) { res.sendFile('/app/admin.html'); });
+app.get('/admin-feedback', function(req, res) { res.sendFile('/app/admin-feedback.html'); });
+app.get('/admin-stats', function(req, res) { res.sendFile('/app/admin-stats.html'); });
+app.get('/admin-users', function(req, res) { res.sendFile('/app/admin-users.html'); });
+app.get('/admin-orders', function(req, res) { res.sendFile('/app/admin-orders.html'); });
+app.get('/debug', function(req, res) { res.send('OK ROOT=/app'); });
 // Статика
 app.use(express.static(ROOT));
 
