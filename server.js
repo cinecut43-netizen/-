@@ -88,6 +88,19 @@ try {
 } catch(e) {
   console.log('БД не подключена:', e.message);
 }
+// Явные роуты для HTML страниц (до статики)
+app.get('/', function(req, res) { res.sendFile(path.join(ROOT, 'index.html')); });
+
+// Диагностика
+app.get('/debug', function(req, res) {
+  res.json({
+    ROOT: ROOT,
+    exists: fs.existsSync(ROOT),
+    adminExists: fs.existsSync(path.join(ROOT, 'admin.html')),
+    files: fs.readdirSync(ROOT).slice(0, 20),
+  });
+});
+
 // Статика
 app.use(express.static(ROOT));
 
