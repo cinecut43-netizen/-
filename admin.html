@@ -3,172 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Шабашка — Admin Dashboard</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Админка — Шабашка</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
-  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
-  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE;
-  --blue: #185FA5; --blue-bg: #E6F1FB; --amber: #854F0B; --amber-bg: #FAEEDA;
-  --red: #B91C1C; --red-bg: #FEE2E2; --purple: #9B59B6;
-}
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
-
-.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
-.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
-.stat-card-label { font-size: 12.5px; color: var(--gray); margin-bottom: 8px; font-weight: 500; }
-.stat-card-num { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
-.stat-card-sub { font-size: 11.5px; margin-top: 4px; color: var(--gray); }
-.stat-card-sub.up { color: var(--green); }
-
-.charts-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 24px; }
-.panel { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.panel-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
-
-.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 160px; }
-.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
-.bar-rect { width: 100%; max-width: 28px; background: var(--orange); border-radius: 5px 5px 0 0; min-height: 3px; transition: height 0.4s ease; }
-.bar-lbl { font-size: 10.5px; color: var(--gray); }
-
-.donut-wrap { display: flex; align-items: center; justify-content: center; gap: 20px; }
-.donut-legend { display: flex; flex-direction: column; gap: 8px; }
-.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
-.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-
-.section-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
-.activity-list { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.activity-row { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 13px; }
-.activity-row:last-child { border-bottom: none; }
-.activity-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-.activity-text { flex: 1; }
-.activity-time { color: var(--gray); font-size: 11.5px; flex-shrink: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#14151A;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.box{background:#1E1E1C;border-radius:20px;padding:36px 32px;width:340px;text-align:center}
+.logo{font-size:24px;font-weight:800;margin-bottom:4px}
+.logo span{color:#E8510A}
+.sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:24px}
+input{width:100%;padding:13px 16px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:16px;font-family:inherit;outline:none;text-align:center;margin-bottom:12px}
+button{width:100%;padding:14px;background:#E8510A;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.err{color:#FF6B6B;font-size:13px;margin-bottom:12px;display:none}
+.links{margin-top:20px;display:flex;flex-direction:column;gap:8px}
+.links a{display:block;padding:12px;background:rgba(255,255,255,.05);border-radius:10px;color:rgba(255,255,255,.7);text-decoration:none;font-size:13px}
+.links a:hover{background:rgba(255,255,255,.1)}
 </style>
-<script src="/data.js"></script>
-<script src="/admin-data.js"></script>
-<script src="/admin-nav.js"></script>
 </head>
 <body>
+<div class="box">
+  <div class="logo">Шаба<span>шка</span></div>
+  <div class="sub">Панель администратора</div>
+  <input type="password" id="pass" placeholder="Пароль" onkeydown="if(event.key==='Enter')check()">
+  <div class="err" id="err">Неверный пароль</div>
+  <button onclick="check()">Войти</button>
+  <div class="links" id="menu" style="display:none">
+    <a href="/admin-stats">📊 Статистика</a>
+    <a href="/admin-feedback">💬 Отзывы и вопросы</a>
+    <a href="/admin-users">👥 Пользователи</a>
+    <a href="/admin-orders">📋 Заказы</a>
+    <a href="/admin-workers">⭐ Исполнители</a>
+    <a href="/admin-reviews">🏆 Отзывы</a>
+    <a href="/admin-complaints">⚠️ Жалобы</a>
+    <a href="/admin-finance">💰 Финансы</a>
+    <a href="/admin-settings">⚙️ Настройки</a>
+  </div>
+</div>
 <script>
-ShabashkaAdminNav.renderAdminShell('dashboard', 'Dashboard').then(function (rendered) {
-if (rendered) {
-  const A = ShabashkaAdmin;
-  const stats = A.getDashboardStats();
-
-  document.getElementById('admContentRoot').innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-card-label">Всего пользователей</div>
-        <div class="stat-card-num">${stats.totalUsers}</div>
-        <div class="stat-card-sub up">+${stats.newToday} сегодня</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Работодатели</div>
-        <div class="stat-card-num" style="color:var(--blue)">${stats.employersCount}</div>
-        <div class="stat-card-sub">Активных аккаунтов</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Исполнители</div>
-        <div class="stat-card-num" style="color:var(--green)">${stats.workersCount}</div>
-        <div class="stat-card-sub">Активных аккаунтов</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Выручка платформы</div>
-        <div class="stat-card-num" style="color:var(--orange)">${stats.revenue.toLocaleString('ru')} ₽</div>
-        <div class="stat-card-sub">Комиссия с завершённых заказов</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Активные заказы</div>
-        <div class="stat-card-num" style="color:var(--amber)">${stats.activeOrders}</div>
-        <div class="stat-card-sub">На всех этапах кроме завершённых</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Завершённые заказы</div>
-        <div class="stat-card-num" style="color:var(--green)">${stats.doneOrders}</div>
-        <div class="stat-card-sub">За всё время</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Откликов всего</div>
-        <div class="stat-card-num">${stats.totalResponses}</div>
-        <div class="stat-card-sub">По всем заказам</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Новых регистраций</div>
-        <div class="stat-card-num">${stats.newToday}</div>
-        <div class="stat-card-sub">За сегодня</div>
-      </div>
-    </div>
-
-    <div class="charts-row">
-      <div class="panel">
-        <div class="panel-title">Активность за неделю</div>
-        <div class="bar-chart" id="weekChart"></div>
-      </div>
-      <div class="panel">
-        <div class="panel-title">Заказы по категориям</div>
-        <div class="donut-wrap" id="categoryDonut"></div>
-      </div>
-    </div>
-
-    <div class="section-title">Последняя активность</div>
-    <div class="activity-list" id="activityList"></div>
-  `;
-
-  const weekData = [
-    { l: 'Пн', v: 8 }, { l: 'Вт', v: 12 }, { l: 'Ср', v: 7 }, { l: 'Чт', v: 15 },
-    { l: 'Пт', v: 19 }, { l: 'Сб', v: 11 }, { l: 'Вс', v: 6 },
-  ];
-  const maxV = Math.max(...weekData.map(d => d.v));
-  document.getElementById('weekChart').innerHTML = weekData.map(d => `
-    <div class="bar-col">
-      <div class="bar-rect" style="height:${Math.round(d.v / maxV * 100)}%"></div>
-      <div class="bar-lbl">${d.l}</div>
-    </div>`).join('');
-
-  const jobs = Shabashka.getAllJobs();
-  const catCounts = {};
-  jobs.forEach(j => { catCounts[j.cat] = (catCounts[j.cat] || 0) + 1; });
-  const catColors = { move: '#E8510A', build: '#185FA5', clean: '#1A7A4A', event: '#9B59B6', other: '#854F0B' };
-  const catLabels = { move: 'Переезд', build: 'Стройка', clean: 'Уборка', event: 'Ивент', other: 'Прочее' };
-  const total = Object.values(catCounts).reduce((s, n) => s + n, 0);
-
-  let gradParts = [];
-  let acc = 0;
-  Object.keys(catCounts).forEach(cat => {
-    const pct = catCounts[cat] / total * 100;
-    gradParts.push(`${catColors[cat]} ${acc}% ${acc + pct}%`);
-    acc += pct;
-  });
-
-  document.getElementById('categoryDonut').innerHTML = `
-    <div style="width:120px;height:120px;border-radius:50%;background:conic-gradient(${gradParts.join(',')});flex-shrink:0"></div>
-    <div class="donut-legend">
-      ${Object.keys(catCounts).map(cat => `
-        <div class="legend-item">
-          <span class="legend-dot" style="background:${catColors[cat]}"></span>
-          ${catLabels[cat]} — ${catCounts[cat]}
-        </div>`).join('')}
-    </div>`;
-
-  const log = A.getActionLog().slice(0, 5);
-  const recentJobs = jobs.slice(0, 3);
-
-  const activityItems = [
-    ...log.map(l => ({ icon: '⚙', bg: 'var(--blue-bg)', color: 'var(--blue)', text: l.role + ': ' + l.description, time: new Date(l.timestamp).toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'}) })),
-    ...recentJobs.map(j => ({ icon: j.emoji, bg: 'var(--orange-light)', color: 'var(--orange-dark)', text: 'Заказ «' + j.title + '» — ' + (Shabashka.STATUS_MAP[j.status] ? Shabashka.STATUS_MAP[j.status].label : j.status), time: j.date })),
-  ];
-
-  document.getElementById('activityList').innerHTML = activityItems.length
-    ? activityItems.map(a => `
-      <div class="activity-row">
-        <div class="activity-icon" style="background:${a.bg};color:${a.color}">${a.icon}</div>
-        <div class="activity-text">${a.text}</div>
-        <div class="activity-time">${a.time}</div>
-      </div>`).join('')
-    : '<div class="activity-row"><div class="activity-text" style="color:var(--gray)">Активности пока нет</div></div>';
+var PASS = 'shabashka_admin_2025';
+function check() {
+  var val = document.getElementById('pass').value;
+  if (val === PASS) {
+    sessionStorage.setItem('shabashka_admin_auth', '1');
+    document.getElementById('pass').style.display = 'none';
+    document.getElementById('err').style.display = 'none';
+    document.querySelector('button').style.display = 'none';
+    document.querySelector('.sub').textContent = 'Добро пожаловать!';
+    document.getElementById('menu').style.display = 'flex';
+  } else {
+    document.getElementById('err').style.display = 'block';
+    document.getElementById('pass').value = '';
+  }
 }
-});
+// Если уже авторизован
+if (sessionStorage.getItem('shabashka_admin_auth') === '1') {
+  document.querySelector('.sub').textContent = 'Добро пожаловать!';
+  document.getElementById('pass').style.display = 'none';
+  document.querySelector('button').style.display = 'none';
+  document.getElementById('menu').style.display = 'flex';
+}
 </script>
 </body>
 </html>
