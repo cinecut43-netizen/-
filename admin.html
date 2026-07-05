@@ -7,59 +7,101 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#14151A;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
-.box{background:#1E1E1C;border-radius:20px;padding:36px 32px;width:340px;text-align:center}
+.box{background:#1E1E1C;border-radius:20px;padding:36px 32px;width:360px;text-align:center}
 .logo{font-size:24px;font-weight:800;margin-bottom:4px}
 .logo span{color:#E8510A}
 .sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:24px}
 input{width:100%;padding:13px 16px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:16px;font-family:inherit;outline:none;text-align:center;margin-bottom:12px}
-button{width:100%;padding:14px;background:#E8510A;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+button{width:100%;padding:14px;background:#E8510A;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px}
 .err{color:#FF6B6B;font-size:13px;margin-bottom:12px;display:none}
-.links{margin-top:20px;display:flex;flex-direction:column;gap:8px}
+.links{margin-top:8px;display:flex;flex-direction:column;gap:8px}
 .links a{display:block;padding:12px;background:rgba(255,255,255,.05);border-radius:10px;color:rgba(255,255,255,.7);text-decoration:none;font-size:13px}
 .links a:hover{background:rgba(255,255,255,.1)}
+.role-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:16px}
+.logout{margin-top:12px;padding:10px;background:rgba(255,255,255,.05);border:none;border-radius:10px;color:rgba(255,255,255,.5);font-size:12px;cursor:pointer;width:100%;font-family:inherit}
 </style>
 </head>
 <body>
 <div class="box">
   <div class="logo">Шаба<span>шка</span></div>
-  <div class="sub">Панель администратора</div>
-  <input type="password" id="pass" placeholder="Пароль" onkeydown="if(event.key==='Enter')check()">
+  <div class="sub" id="sub">Панель администратора</div>
+  <input type="password" id="pass" placeholder="Введите пароль" onkeydown="if(event.key==='Enter')check()">
   <div class="err" id="err">Неверный пароль</div>
   <button onclick="check()">Войти</button>
-  <div class="links" id="menu" style="display:none">
-    <a href="/admin-stats">📊 Статистика</a>
-    <a href="/admin-feedback">💬 Отзывы и вопросы</a>
-    <a href="/admin-users">👥 Пользователи</a>
-    <a href="/admin-orders">📋 Заказы</a>
-    <a href="/admin-workers">⭐ Исполнители</a>
-    <a href="/admin-reviews">🏆 Отзывы</a>
-    <a href="/admin-complaints">⚠️ Жалобы</a>
-    <a href="/admin-finance">💰 Финансы</a>
-    <a href="/admin-settings">⚙️ Настройки</a>
+  <div id="menu" style="display:none">
+    <div class="role-badge" id="roleBadge"></div>
+    <div class="links" id="links"></div>
+    <button class="logout" onclick="logout()">Выйти</button>
   </div>
 </div>
 <script>
-var PASS = 'shabashka_admin_2025';
+var ROLES = {
+  'MzqJqHbxt7dVVcgr6Q8N': { name: 'Super Admin', color: '#E8510A', links: [
+    ['📊 Статистика', '/admin-stats'],
+    ['💬 Отзывы и вопросы', '/admin-feedback'],
+    ['👥 Пользователи', '/admin-users'],
+    ['📋 Заказы', '/admin-orders'],
+    ['⭐ Исполнители', '/admin-workers'],
+    ['🏆 Отзывы', '/admin-reviews'],
+    ['⚠️ Жалобы', '/admin-complaints'],
+    ['💰 Финансы', '/admin-finance'],
+    ['⚙️ Настройки', '/admin-settings'],
+    ['🔒 Безопасность', '/admin-security'],
+    ['📝 Контент', '/admin-content'],
+  ]},
+  'sKKnigc9BHgLc2GH': { name: 'Moderator', color: '#185FA5', links: [
+    ['💬 Отзывы и вопросы', '/admin-feedback'],
+    ['👥 Пользователи', '/admin-users'],
+    ['📋 Заказы', '/admin-orders'],
+    ['⭐ Исполнители', '/admin-workers'],
+    ['🏆 Отзывы', '/admin-reviews'],
+    ['⚠️ Жалобы', '/admin-complaints'],
+  ]},
+  'XuBz75Pb7eEznNVG': { name: 'Support', color: '#1A7A4A', links: [
+    ['💬 Отзывы и вопросы', '/admin-feedback'],
+    ['📋 Заказы', '/admin-orders'],
+    ['⚠️ Жалобы', '/admin-complaints'],
+  ]},
+};
+
 function check() {
   var val = document.getElementById('pass').value;
-  if (val === PASS) {
+  var role = ROLES[val];
+  if (role) {
     sessionStorage.setItem('shabashka_admin_auth', '1');
-    document.getElementById('pass').style.display = 'none';
-    document.getElementById('err').style.display = 'none';
-    document.querySelector('button').style.display = 'none';
-    document.querySelector('.sub').textContent = 'Добро пожаловать!';
-    document.getElementById('menu').style.display = 'flex';
+    sessionStorage.setItem('shabashka_admin_role', role.name);
+    showMenu(role);
   } else {
     document.getElementById('err').style.display = 'block';
     document.getElementById('pass').value = '';
+    setTimeout(function(){ document.getElementById('err').style.display = 'none'; }, 2000);
   }
 }
-// Если уже авторизован
-if (sessionStorage.getItem('shabashka_admin_auth') === '1') {
-  document.querySelector('.sub').textContent = 'Добро пожаловать!';
+
+function showMenu(role) {
   document.getElementById('pass').style.display = 'none';
+  document.getElementById('err').style.display = 'none';
   document.querySelector('button').style.display = 'none';
-  document.getElementById('menu').style.display = 'flex';
+  document.getElementById('sub').textContent = 'Добро пожаловать!';
+  document.getElementById('roleBadge').textContent = role.name;
+  document.getElementById('roleBadge').style.background = role.color;
+  document.getElementById('links').innerHTML = role.links.map(function(l){
+    return '<a href="' + l[1] + '">' + l[0] + '</a>';
+  }).join('');
+  document.getElementById('menu').style.display = 'block';
+}
+
+function logout() {
+  sessionStorage.removeItem('shabashka_admin_auth');
+  sessionStorage.removeItem('shabashka_admin_role');
+  location.reload();
+}
+
+// Проверяем сессию
+var savedRole = sessionStorage.getItem('shabashka_admin_role');
+if (sessionStorage.getItem('shabashka_admin_auth') === '1' && savedRole) {
+  var role = Object.values(ROLES).find(function(r){ return r.name === savedRole; });
+  if (role) showMenu(role);
 }
 </script>
 </body>
