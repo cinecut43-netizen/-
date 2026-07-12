@@ -12,7 +12,6 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Сервис верификации не настроен' });
   }
 
-  // Нормализуем телефон — только цифры
   const cleanPhone = phone.replace(/\D/g, '');
 
   try {
@@ -24,16 +23,14 @@ module.exports = async function handler(req, res) {
 
     console.log('Zvonok response:', JSON.stringify(data));
 
-    if (data.status === 'success' || data.call_id) {
-      // Сохраняем код в памяти (последние 4 цифры придут при звонке)
-      // Zvonok сам генерирует код — мы его не знаем заранее
-      // Проверка происходит через verify-code
+    if (data.status === 'ok' && data.data) {
+      // Сохраняем pincode который прислал Zvonok
       if (!global.zvonokCodes) global.zvonokCodes = {};
       global.zvonokCodes[cleanPhone] = {
-        callId: data.call_id || data.data?.call_id,
+        pincode: data.data.pincode,
+        callId: data.data.call_id,
         expires: Date.now() + 5 * 60 * 1000
       };
-
       return res.json({ ok: true, method: 'flashcall' });
     } else {
       console.error('Zvonok error:', data);
