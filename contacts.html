@@ -3,182 +3,101 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<style>:root{color-scheme:light only}</style>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="stylesheet" href="/mobile.css">
 <title>Контакты — Шабашка</title>
-<meta name="description" content="Контакты платформы Шабашка. Служба поддержки, юридические обращения.">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-:root { --orange: #E8510A; --dark: #1A1A18; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E2E1DB; --white: #fff; --green: #1A7A4A; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-light); color: var(--dark); padding-bottom: 40px; }
-nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; }
-.logo { font-size: 19px; font-weight: 800; color: var(--dark); text-decoration: none; }
-.logo span { color: var(--orange); }
-nav a.back { font-size: 13px; color: var(--gray); text-decoration: none; margin-left: auto; display: flex; align-items: center; gap: 4px; }
-.page { max-width: 720px; margin: 0 auto; padding: 40px 20px 60px; }
-.page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
-.page-sub { font-size: 15px; color: var(--gray); margin-bottom: 28px; }
-.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.contact-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
-.contact-icon { font-size: 24px; }
-.contact-title { font-size: 14px; font-weight: 700; }
-.contact-desc { font-size: 12.5px; color: var(--gray); line-height: 1.5; flex: 1; }
-.contact-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--orange); text-decoration: none; padding: 7px 11px; background: #FFF0E8; border-radius: 8px; width: fit-content; }
-.hours-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
-.hours-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-.hours-desc { font-size: 13px; color: var(--gray); }
-.requisites { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 16px; }
-.req-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
-.req-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--border); gap: 16px; }
-.req-row:last-child { border-bottom: none; }
-.req-label { font-size: 13px; color: var(--gray); flex-shrink: 0; width: 180px; }
-.req-value { font-size: 13px; font-weight: 500; text-align: right; }
-.feedback-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
-.feedback-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-.feedback-sub { font-size: 13px; color: var(--gray); margin-bottom: 16px; }
-.form-row { margin-bottom: 10px; }
-.form-label { font-size: 13px; font-weight: 500; margin-bottom: 4px; display: block; }
-.form-inp { width: 100%; padding: 9px 13px; border: 1px solid var(--border); border-radius: 9px; font-size: 14px; font-family: inherit; outline: none; }
-.form-inp:focus { border-color: var(--orange); }
-textarea.form-inp { resize: vertical; min-height: 90px; }
-.form-btn { padding: 11px 24px; background: var(--orange); color: #fff; border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
-.form-btn:hover { background: #B33D06; }
-.site-footer { background: var(--dark); padding: 28px 24px; }
-.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
-.footer-logo { font-size: 17px; font-weight: 800; color: #fff; text-decoration: none; }
-.footer-logo span { color: var(--orange); }
-.footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
-.footer-link { font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; }
-.footer-link:hover { color: rgba(255,255,255,0.75); }
-.footer-copy { font-size: 12px; color: rgba(255,255,255,0.2); }
-@media (max-width: 600px) {
-  .contact-grid { grid-template-columns: 1fr; }
-  .req-label { width: 130px; }
-  .footer-inner { flex-direction: column; align-items: flex-start; }
-}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--orange:#E8510A;--dark:#14151A;--gray:#6B6B67;--light:#F4F3EF;--border:#E2E1DB}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--light);color:var(--dark);padding-bottom:80px}
+.header{background:#fff;border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.back-btn{width:36px;height:36px;border-radius:50%;background:var(--light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.page-title{font-size:18px;font-weight:800}
+.content{padding:20px 16px;max-width:600px;margin:0 auto}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:12px;border:1px solid var(--border)}
+.card-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.contact-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.contact-item:last-child{border-bottom:none}
+.contact-icon{width:40px;height:40px;border-radius:12px;background:#FFF0E8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.contact-label{font-size:12px;color:var(--gray);margin-bottom:2px}
+.contact-value{font-size:15px;font-weight:600;color:var(--dark);text-decoration:none}
+.contact-value:hover{color:var(--orange)}
 </style>
-<meta name="color-scheme" content="light only">
-<style>:root { color-scheme: light only; }</style>
-<link rel="icon" type="image/png" href="/logo-v2.png">
-<link rel="apple-touch-icon" href="/logo-v2.png">
 </head>
 <body>
-<nav>
-  <a class="logo" href="/">Шаба<span>шка</span></a>
-  <a class="back" href="/"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i> На главную</a>
-</nav>
+<script src="/data.js"></script>
+<script src="/nav2.js"></script>
 
-<div class="page">
-  <h1 class="page-title">Контакты</h1>
-  <p class="page-sub">Ответим в течение 24 часов</p>
+<div class="header">
+  <button class="back-btn" onclick="history.back()">
+    <i class="ph-bold ph-arrow-left" style="font-size:16px"></i>
+  </button>
+  <div class="page-title">Контакты</div>
+</div>
 
-  <div class="contact-grid">
-    <div class="contact-card">
-      <div class="contact-icon"><i class="ph-bold ph-headset" style="color:#E8510A"></i></div>
-      <div class="contact-title">Служба поддержки</div>
-      <div class="contact-desc">Вопросы по заказам, откликам, спорам и работе платформы</div>
-      <a class="contact-link" href="mailto:shabashka.legal@yandex.ru"><i class="ph-bold ph-envelope" style="font-size:13px"></i> Написать</a>
+<div id="shabashka-nav"></div>
+
+<div class="content">
+  <div class="card">
+    <div class="card-title">📬 Связаться с нами</div>
+    <div class="contact-item">
+      <div class="contact-icon"><i class="ph-bold ph-envelope" style="font-size:20px;color:#E8510A"></i></div>
+      <div>
+        <div class="contact-label">Email поддержки</div>
+        <a href="mailto:shabashka.help@gmail.com" class="contact-value">shabashka.help@gmail.com</a>
+      </div>
     </div>
-    <div class="contact-card">
-      <div class="contact-icon"><i class="ph-bold ph-scales" style="color:#185FA5"></i></div>
-      <div class="contact-title">Юридические обращения</div>
-      <div class="contact-desc">Запросы по персональным данным, претензии, уведомления</div>
-      <a class="contact-link" href="mailto:shabashka.legal@yandex.ru"><i class="ph-bold ph-envelope" style="font-size:13px"></i> Написать</a>
-    </div>
-    <div class="contact-card">
-      <div class="contact-icon"><i class="ph-bold ph-handshake" style="color:#1A7A4A"></i></div>
-      <div class="contact-title">Сотрудничество</div>
-      <div class="contact-desc">Партнёрство, корпоративные клиенты, интеграции</div>
-      <a class="contact-link" href="mailto:shabashka.legal@yandex.ru"><i class="ph-bold ph-envelope" style="font-size:13px"></i> Написать</a>
-    </div>
-    <div class="contact-card">
-      <div class="contact-icon"><i class="ph-bold ph-warning-circle" style="color:#B07800"></i></div>
-      <div class="contact-title">Жалобы и нарушения</div>
-      <div class="contact-desc">Мошенничество, нарушения правил, незаконный контент</div>
-      <a class="contact-link" href="mailto:shabashka.legal@yandex.ru"><i class="ph-bold ph-envelope" style="font-size:13px"></i> Написать</a>
+    <div class="contact-item">
+      <div class="contact-icon"><i class="ph-bold ph-telegram-logo" style="font-size:20px;color:#E8510A"></i></div>
+      <div>
+        <div class="contact-label">Telegram поддержка</div>
+        <a href="https://t.me/shabashka_support_bot" class="contact-value">@shabashka_support_bot</a>
+      </div>
     </div>
   </div>
 
-  <div class="hours-card">
-    <div><i class="ph-bold ph-clock" style="font-size:26px;color:#E8510A"></i></div>
-    <div>
-      <div class="hours-title">Режим работы поддержки</div>
-      <div class="hours-desc">Ежедневно, 9:00–21:00 МСК. Ответ на обращения — до 24 часов. По срочным спорам — до 2 часов в рабочее время.</div>
+  <div class="card">
+    <div class="card-title">⏰ Время работы</div>
+    <div class="contact-item">
+      <div class="contact-icon"><i class="ph-bold ph-clock" style="font-size:20px;color:#E8510A"></i></div>
+      <div>
+        <div class="contact-label">Поддержка</div>
+        <div class="contact-value">Пн-Вс 9:00 - 21:00</div>
+      </div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-icon"><i class="ph-bold ph-chat-circle-dots" style="font-size:20px;color:#E8510A"></i></div>
+      <div>
+        <div class="contact-label">Время ответа</div>
+        <div class="contact-value">До 24 часов</div>
+      </div>
     </div>
   </div>
 
-  <div class="requisites">
-    <div class="req-title">Сведения об операторе</div>
-    <div class="req-row">
-      <span class="req-label">Сервис</span>
-      <span class="req-value">«Шабашка» — биржа разовых подработок</span>
+  <div class="card">
+    <div class="card-title">📋 Юридическая информация</div>
+    <div class="contact-item">
+      <div class="contact-icon"><i class="ph-bold ph-user" style="font-size:20px;color:#E8510A"></i></div>
+      <div>
+        <div class="contact-label">Оператор ПДн</div>
+        <div class="contact-value">Самозанятый</div>
+      </div>
     </div>
-    <div class="req-row">
-      <span class="req-label">Оператор ПДн</span>
-      <span class="req-value">Физическое лицо (ФЗ-152)</span>
+    <div class="contact-item">
+      <div class="contact-icon"><i class="ph-bold ph-envelope" style="font-size:20px;color:#E8510A"></i></div>
+      <div>
+        <div class="contact-label">Email для правовых вопросов</div>
+        <a href="mailto:shabashka.help@gmail.com" class="contact-value">shabashka.help@gmail.com</a>
+      </div>
     </div>
-    <div class="req-row">
-      <span class="req-label">Адрес сайта</span>
-      <span class="req-value"><a href="https://shabashka-jade.vercel.app" style="color:var(--orange)">shabashka-jade.vercel.app</a></span>
-    </div>
-    <div class="req-row">
-      <span class="req-label">Email</span>
-      <span class="req-value"><a href="mailto:shabashka.legal@yandex.ru" style="color:var(--orange)">shabashka.legal@yandex.ru</a></span>
-    </div>
-    <div class="req-row">
-      <span class="req-label">Применимое право</span>
-      <span class="req-value">Российская Федерация</span>
-    </div>
-    <div class="req-row">
-      <span class="req-label">Законодательство</span>
-      <span class="req-value">ФЗ-152 «О персональных данных», ФЗ-149 «Об информации»</span>
-    </div>
-  </div>
-
-  <div class="feedback-card">
-    <div class="feedback-title">Написать нам</div>
-    <div class="feedback-sub">Откроется почтовый клиент с заполненным адресом</div>
-    <div class="form-row">
-      <label class="form-label">Тема обращения</label>
-      <select class="form-inp" id="fbTopic">
-        <option>Вопрос по заказу</option>
-        <option>Проблема с аккаунтом</option>
-        <option>Спор / конфликт</option>
-        <option>Персональные данные</option>
-        <option>Сотрудничество</option>
-        <option>Другое</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Сообщение</label>
-      <textarea class="form-inp" id="fbText" placeholder="Опишите вашу ситуацию..."></textarea>
-    </div>
-    <button class="form-btn" onclick="sendFeedback()">Написать на email</button>
   </div>
 </div>
 
-<footer class="site-footer">
-  <div class="footer-inner">
-    <a class="footer-logo" href="/">Шаба<span>шка</span></a>
-    <div class="footer-links">
-      <a class="footer-link" href="/privacy">Конфиденциальность</a>
-      <a class="footer-link" href="/terms">Условия</a>
-      <a class="footer-link" href="/offer">Оферта</a>
-      <a class="footer-link" href="/contacts">Контакты</a>
-    </div>
-    <div class="footer-copy">© 2025 Шабашка · 18+</div>
-  </div>
-</footer>
-
 <script>
-function sendFeedback() {
-  var topic = document.getElementById('fbTopic').value;
-  var text = document.getElementById('fbText').value.trim();
-  var mailto = 'mailto:shabashka.legal@yandex.ru?subject=' +
-    encodeURIComponent('[Шабашка] ' + topic) +
-    (text ? '&body=' + encodeURIComponent(text) : '');
-  window.location.href = mailto;
-}
+Shabashka.renderNav('contacts');
 </script>
 </body>
 </html>
