@@ -289,12 +289,7 @@ if ('serviceWorker' in navigator) {
 <script>
 Shabashka.renderNav('chat');
 
-const CONVOS = [
-  { id:1, name:'Андрей К.', job:'Сборка мебели IKEA', icon:'🔨', pay:'2 000 ₽', date:'Завтра · м. Юго-Западная', color:'#185FA5', unread:0, time:'10:32', preview:'Хорошо, буду вовремя!', jobId:5 },
-  { id:2, name:'ООО ТрансЛогист', job:'Разгрузка фуры на складе', icon:'📦', pay:'3 200 ₽', date:'Завтра 6:00 · Солнцево', color:'#E8510A', unread:2, time:'09:15', preview:'Нужно ещё 2 человека...', jobId:9 },
-  { id:3, name:'Агентство «Праздник»', job:'Официант на свадьбу', icon:'🎉', pay:'4 500 ₽', date:'Пятница · Ресторан Панорама', color:'#9B59B6', unread:1, time:'Вчера', preview:'Форму привезут за час...', jobId:7 },
-  { id:4, name:'Семья Петровых', job:'Грузчики на переезд', icon:'📦', pay:'3 500 ₽', date:'Сегодня 9:00 · м. Щёлковская', color:'#1A7A4A', unread:0, time:'Вчера', preview:'Спасибо за работу! 👍', jobId:1 },
-];
+const CONVOS = [];
 
 const MESSAGES_DB = {
   1: [
