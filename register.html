@@ -231,7 +231,7 @@ function renderPhoneStep() {
   return `
     ${stepsHtml(1)}
     <div class="step-title">Вход и регистрация</div>
-    <div class="step-sub">Введите номер телефона — пришлём код подтверждения по SMS. Если аккаунта ещё нет, мы создадим его автоматически.</div>
+    <div class="step-sub">Введите номер телефона — вам поступит входящий звонок. Последние 4 цифры номера звонящего — это ваш код для входа. Отвечать на звонок не нужно.</div>
 
     <div class="form-group">
       <label class="form-label">Номер телефона</label>
@@ -264,7 +264,7 @@ function renderPhoneStep() {
       <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
         <input type="checkbox" id="consentNotify" style="width:18px;height:18px;margin-top:1px;accent-color:#E8510A;flex-shrink:0;cursor:pointer">
         <span style="font-size:13px;color:#6B6B67;line-height:1.4">
-          Согласен(-на) получать уведомления по SMS и Push <span style="color:#9A9A96">(необязательно)</span>
+          Согласен(-на) получать уведомления по звонку и Push <span style="color:#9A9A96">(необязательно)</span>
         </span>
       </label>
     </div>
@@ -279,7 +279,8 @@ function renderCodeStep() {
   return `
     ${stepsHtml(2)}
     <button class="btn-back" id="backBtn">← Изменить номер</button>
-    <div class="step-title">Введите код из SMS</div>
+    <div class="step-title">Введите последние 4 цифры номера</div>
+    <div class="step-sub" style="color:#6B6B67;font-size:14px;margin-top:4px">Вам поступит звонок с незнакомого номера — введите его последние 4 цифры. Отвечать не нужно.</div>
     <div class="step-sub">Отправили код на номер <strong>+7 ${formatPhoneDisplay(state.phone)}</strong></div>
 
     <div class="code-row">
