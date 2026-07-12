@@ -1,43 +1,40 @@
-// api/verify-code.js — проверка SMS кода
+// api/verify-code.js — проверка Flash Call кода через Zvonok
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { phone, code } = req.body || {};
   if (!phone || !code) return res.status(400).json({ error: 'Укажите телефон и код' });
 
+  const publicKey = process.env.ZVONOK_PUBLIC_KEY;
+  const campaignId = process.env.ZVONOK_CAMPAIGN_ID;
+  const cleanPhone = phone.replace(/\D/g, '');
+
   try {
-    // Проверяем в PostgreSQL
-    const { pool } = require('../db');
-    const result = await pool.query(
-      `SELECT * FROM sms_codes WHERE phone=$1 AND code=$2 AND expires_at > NOW() AND used=false
-       ORDER BY created_at DESC LIMIT 1`,
-      [phone, code]
-    );
+    // Проверяем код через Zvonok API
+    const url = `https://zvonok.com/manager/cabapi_external/api/v1/phones/flashcall/checkcode/` +
+      `?public_key=${publicKey}&campaign_id=${campaignId}&phone=${cleanPhone}&code=${code}`;
 
-    if (result.rows.length > 0) {
-      await pool.query('UPDATE sms_codes SET used=true WHERE id=$1', [result.rows[0].id]);
+    const response = await fetch(url);
+    const data = await response.json();
+
+    console.log('Zvonok verify response:', JSON.stringify(data));
+
+    if (data.status === 'success' || data.call_status === 'accepted') {
+      // Сохраняем в БД если доступна
+      try {
+        const { pool } = require('../db');
+        await pool.query(
+          `INSERT INTO users (phone) VALUES ($1) ON CONFLICT (phone) DO NOTHING`,
+          [phone]
+        );
+      } catch(e) {}
+
       return res.json({ ok: true });
+    } else {
+      return res.status(400).json({ error: 'Неверный код' });
     }
-
-    // Проверяем в памяти (если БД недоступна)
-    if (global.smsCodes && global.smsCodes[phone]) {
-      const entry = global.smsCodes[phone];
-      if (entry.code === code && entry.expires > Date.now()) {
-        delete global.smsCodes[phone];
-        return res.json({ ok: true });
-      }
-    }
-
-    return res.status(400).json({ error: 'Неверный или устаревший код' });
   } catch(e) {
-    // Если БД недоступна — проверяем в памяти
-    if (global.smsCodes && global.smsCodes[phone]) {
-      const entry = global.smsCodes[phone];
-      if (entry.code === code && entry.expires > Date.now()) {
-        delete global.smsCodes[phone];
-        return res.json({ ok: true });
-      }
-    }
-    return res.status(400).json({ error: 'Неверный код' });
+    console.error('verify-code error:', e);
+    return res.status(500).json({ error: 'Ошибка проверки кода' });
   }
 };
