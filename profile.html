@@ -288,7 +288,7 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
       <div class="hero-tags">
         
         
-        <span class="tag tag-gray">🧹 Уборка</span>
+        
       </div>
       <div class="hero-stats">
         <div class="stat"><div class="stat-num" id="statOrders">0</div><div class="stat-label">заказов</div></div>
@@ -335,7 +335,7 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
       <span class="skill-tag top">Переезды</span>
       <span class="skill-tag top">Сборка мебели</span>
       <span class="skill-tag top">Погрузка / разгрузка</span>
-      <span class="skill-tag">Уборка</span>
+      
       <span class="skill-tag">Подсобные работы</span>
       <span class="skill-tag">Демонтаж</span>
       <span class="skill-tag">Курьер</span>
@@ -439,12 +439,11 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
 <script>
 Shabashka.renderNav('profile');
 
-const BARS = [{stars:5,count:38},{stars:4,count:4},{stars:3,count:1},{stars:2,count:0},{stars:1,count:0}];
+const BARS = [{stars:5,count:0},{stars:4,count:0},{stars:3,count:0},{stars:2,count:0},{stars:1,count:0}];
 
 const HISTORY = [
   {icon:'📦',title:'Грузчики на переезд',company:'Семья Петровых',date:'12 июня 2026',pay:3500},
   {icon:'🔨',title:'Подсобный рабочий',company:'СК Горизонт',date:'8 июня 2026',pay:4000},
-  {icon:'🧹',title:'Уборка офиса',company:'ООО Техносфера',date:'3 июня 2026',pay:2500},
   {icon:'📦',title:'Разгрузка фуры',company:'ООО ТрансЛогист',date:'28 мая 2026',pay:3200},
   {icon:'📦',title:'Сборка мебели IKEA',company:'Андрей К.',date:'20 мая 2026',pay:2000},
 ];
@@ -452,7 +451,6 @@ const HISTORY = [
 const REVIEWS = [
   {name:'Семья Петровых',color:'#1A7A4A',job:'Грузчики на переезд',stars:5,date:'12 июня 2026',text:'Дмитрий — настоящий профессионал! Пришёл вовремя, работал быстро и аккуратно. Всё вынес без единой царапины. Обязательно позвоним ещё раз.'},
   {name:'СК Горизонт',color:'#185FA5',job:'Подсобный рабочий',stars:5,date:'8 июня 2026',text:'Отличный работник. Без лишних слов, всё делает как надо. Бригадир доволен — уже позвали на следующий объект.'},
-  {name:'ООО Техносфера',color:'#9B59B6',job:'Уборка офиса',stars:5,date:'3 июня 2026',text:'Качественная работа, офис сверкает. Справился быстрее срока. Рекомендуем.'},
   {name:'Андрей К.',color:'#E8510A',job:'Сборка мебели IKEA',stars:4,date:'20 мая 2026',text:'Хорошо собрал шкаф и кухню. Небольшая задержка в начале, но в итоге всё чётко. Спасибо!'},
 ];
 
@@ -602,8 +600,8 @@ function renderHero() {
   const registeredLabel = Shabashka.formatRegisteredDate(u.registeredAt);
   document.getElementById('profileMetaRow').innerHTML = `
     <span class="hero-meta-item">📍 ${u.city}</span>
-    <span class="hero-meta-item">🎂 ${u.age} лет</span>
-    <span class="hero-meta-item">⭐ ${u.rating} (${u.reviewsCount} отзывов)</span>
+    <span class="hero-meta-item">${u.age ? "🎂 " + u.age + " лет" : ""}</span>
+    <span class="hero-meta-item">${u.reviewsCount > 0 ? "⭐ " + u.rating + " (" + u.reviewsCount + " отзывов)" : ""}</span>
     <span class="hero-meta-item">📅 На платформе с ${registeredLabel}</span>
   `;
 
@@ -638,7 +636,7 @@ function renderHero() {
   if (mobileStatOrders) mobileStatOrders.textContent = u.completedOrders;
 
   const mobileMeta = document.getElementById('mobileProfileMeta');
-  if (mobileMeta) mobileMeta.textContent = `📍 ${u.city} · 🎂 ${u.age} лет`;
+  if (mobileMeta) mobileMeta.textContent = `📍 ${u.city} · ${u.age ? "🎂 " + u.age + " лет" : ""}`;
 
   const mobileProWrap = document.getElementById('mobileProBadgeWrap');
   if (mobileProWrap) {

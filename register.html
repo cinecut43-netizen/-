@@ -493,9 +493,15 @@ function attachHandlers() {
             phone: state.phone,
             name: state.name,
             role: state.role,
-            company: state.company,
-            rating: data.user.rating || 5.0,
-            verified: data.user.verified || false,
+            company: state.company || '',
+            rating: 0,
+            reviewsCount: 0,
+            jobsDone: 0,
+            age: null,
+            city: '',
+            verified: false,
+            passportVerified: false,
+            registeredAt: new Date().toISOString().slice(0,10),
           };
           localStorage.setItem('shabashka_user', JSON.stringify(userObj));
         }
