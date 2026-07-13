@@ -732,27 +732,27 @@ if ('serviceWorker' in navigator) {
       <div class="filter-label">Категория</div>
       <button class="category-btn active" onclick="filterCat('all', this)">
         <span class="cat-icon">🏠</span> Все категории
-        <span class="category-count" id="cnt-all">12</span>
+        <span class="category-count" id="cnt-all">0</span>
       </button>
       <button class="category-btn" onclick="filterCat('move', this)">
         <span class="cat-icon">📦</span> Переезд и грузчики
-        <span class="category-count">4</span>
+        <span class="category-count" id="cnt-move">0</span>
       </button>
       <button class="category-btn" onclick="filterCat('build', this)">
         <span class="cat-icon">🔨</span> Строительство
-        <span class="category-count">3</span>
+        <span class="category-count" id="cnt-build">0</span>
       </button>
       <button class="category-btn" onclick="filterCat('clean', this)">
         <span class="cat-icon">🧹</span> Уборка
-        <span class="category-count">2</span>
+        <span class="category-count" id="cnt-clean">0</span>
       </button>
       <button class="category-btn" onclick="filterCat('event', this)">
         <span class="cat-icon">🎉</span> Ивент и промо
-        <span class="category-count">2</span>
+        <span class="category-count" id="cnt-event">0</span>
       </button>
       <button class="category-btn" onclick="filterCat('other', this)">
         <span class="cat-icon">⚡</span> Прочее
-        <span class="category-count">1</span>
+        <span class="category-count" id="cnt-other">0</span>
       </button>
     </div>
 
@@ -946,7 +946,19 @@ let currentCat = 'all';
 let searchQuery = '';
 let payMin = 0, payMax = Infinity;
 
+function updateCategoryCounts() {
+  var cats = ['all', 'move', 'build', 'clean', 'event', 'other'];
+  cats.forEach(function(cat) {
+    var el = document.getElementById('cnt-' + cat);
+    if (!el) return;
+    var count = cat === 'all' ? JOBS.length : JOBS.filter(function(j){ return j.cat === cat; }).length;
+    el.textContent = count;
+    el.style.display = count > 0 ? 'inline-flex' : 'none';
+  });
+}
+
 function renderJobs() {
+  updateCategoryCounts();
   const list = document.getElementById('jobsList');
   const isMobile = window.innerWidth <= 600;
 
