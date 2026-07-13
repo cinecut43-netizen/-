@@ -7,17 +7,31 @@
 (function () {
   'use strict';
 
+  // Очищаем старые демо-данные если они есть
+  (function() {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('shabashka_user') || 'null'); } catch(e) {}
+    if (user && (user.name === 'Дмитрий Козлов' || user.name === 'Ратмир' && user.jobsDone > 0)) {
+      var phone = user.phone;
+      var role = user.role;
+      localStorage.clear();
+      if (phone) localStorage.setItem('shabashka_phone', phone);
+      if (role) localStorage.setItem('shabashka_role', role);
+    }
+  })();
+
+
   /* ---------- ТЕКУЩИЙ ПОЛЬЗОВАТЕЛЬ ---------- */
   // role: 'worker' (я ищу работу) | 'employer' (я ищу работников)
   const DEFAULT_USER = {
-    name: 'Дмитрий Козлов',
-    initials: 'ДК',
-    age: 32,
-    city: 'Москва',
+    name: '',
+    initials: '',
+    age: null,
+    city: '',
     photo: null, // base64 data-URL, если пользователь загрузил фото
-    registeredAt: '2024-03-01', // ISO-дата для расчёта «на платформе с...»
+    registeredAt: new Date().toISOString().slice(0,10), // ISO-дата для расчёта «на платформе с...»
     role: localStorage.getItem('shabashka_role') || 'worker',
-    company: 'ООО ТрансЛогист', // используется в режиме работодателя
+    company: '', // используется в режиме работодателя
     rating: 4.9,
     reviewsCount: 43,
     completedOrders: 47,
