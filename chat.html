@@ -248,7 +248,7 @@ if ('serviceWorker' in navigator) {
   </div>
 
   <div class="chat-area">
-    <div class="job-banner">
+    <div class="job-banner" id="jobBanner" style="display:none">
       <div class="job-banner-icon" id="bannerIcon">🔨</div>
       <div class="job-banner-info">
         <div class="job-banner-title" id="bannerTitle"></div>
@@ -260,7 +260,14 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
-    <div class="messages" id="messages"></div>
+    <div id="emptyChat" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9A9A96;text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:16px">💬</div>
+      <div style="font-size:17px;font-weight:700;color:#14151A;margin-bottom:8px">Пока нет сообщений</div>
+      <div style="font-size:14px;line-height:1.6">Откликнитесь на заказ чтобы<br>начать общение с работодателем</div>
+      <a href="/" style="margin-top:20px;padding:12px 24px;background:#E8510A;color:#fff;border-radius:12px;text-decoration:none;font-size:14px;font-weight:700">Найти заказ</a>
+    </div>
+
+    <div class="messages" id="messages" style="display:none"></div>
 
     <div class="confirm-panel" id="confirmPanel" style="display:none">
       <div class="confirm-text">
@@ -438,6 +445,12 @@ function switchConvo(id) {
   if (bannerTitle) bannerTitle.textContent = c.job;
   if (bannerDetail) bannerDetail.textContent = '📅 ' + c.date;
   if (bannerPay) bannerPay.textContent = c.pay;
+  var jobBanner = document.getElementById('jobBanner');
+  var emptyChat = document.getElementById('emptyChat');
+  var messagesEl = document.getElementById('messages');
+  if (jobBanner) jobBanner.style.display = 'flex';
+  if (emptyChat) emptyChat.style.display = 'none';
+  if (messagesEl) messagesEl.style.display = 'flex';
   c.unread = 0;
   syncUnreadCount();
   renderSidebar();
