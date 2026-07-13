@@ -332,14 +332,14 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
   <div class="card">
     <div class="section-title">Навыки</div>
     <div class="skills-grid">
-      <span class="skill-tag top">Переезды</span>
-      <span class="skill-tag top">Сборка мебели</span>
-      <span class="skill-tag top">Погрузка / разгрузка</span>
       
-      <span class="skill-tag">Подсобные работы</span>
-      <span class="skill-tag">Демонтаж</span>
-      <span class="skill-tag">Курьер</span>
-      <span class="skill-tag">Малярные работы</span>
+      
+      
+      
+      
+      
+      
+      
     </div>
   </div>
 
@@ -601,7 +601,7 @@ function renderHero() {
   document.getElementById('profileMetaRow').innerHTML = `
     <span class="hero-meta-item">📍 ${u.city}</span>
     <span class="hero-meta-item">${u.age ? "🎂 " + u.age + " лет" : ""}</span>
-    <span class="hero-meta-item">${u.reviewsCount > 0 ? "⭐ " + u.rating + " (" + u.reviewsCount + " отзывов)" : ""}</span>
+    <span class="hero-meta-item">${u.reviewsCount > 0 ? "⭐ " + (u.rating || 0).toFixed(1) + " (" + u.reviewsCount + " отзывов)" : ""}</span>
     <span class="hero-meta-item">📅 На платформе с ${registeredLabel}</span>
   `;
 
