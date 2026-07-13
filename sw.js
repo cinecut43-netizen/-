@@ -1,7 +1,7 @@
 /* sw.js — Service Worker Шабашки
    Версия кэша: при обновлении сайта меняй CACHE_VERSION,
    чтобы старый кэш сбросился автоматически. */
-const CACHE_VERSION = 'shabashka-v10';
+const CACHE_VERSION = 'shabashka-v11';
 const CACHE_STATIC = 'static-v1';
 
 // Файлы, которые кэшируются при первой установке
