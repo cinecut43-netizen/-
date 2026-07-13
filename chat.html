@@ -228,8 +228,8 @@ if ('serviceWorker' in navigator) {
 <nav>
   <button class="back-btn" onclick="history.back()">←</button>
   <div>
-    <a href="/profile" style="text-decoration:none;color:inherit" id="navName" class="nav-title">Андрей К.</a>
-    <div class="nav-sub" id="navJob">Сборка мебели IKEA</div>
+    <a href="/profile" style="text-decoration:none;color:inherit" id="navName" class="nav-title"></a>
+    <div class="nav-sub" id="navJob"></div>
   </div>
   <div class="nav-status"><div class="status-dot"></div> онлайн</div>
 </nav>
@@ -251,7 +251,7 @@ if ('serviceWorker' in navigator) {
     <div class="job-banner">
       <div class="job-banner-icon" id="bannerIcon">🔨</div>
       <div class="job-banner-info">
-        <div class="job-banner-title" id="bannerTitle">Сборка мебели IKEA</div>
+        <div class="job-banner-title" id="bannerTitle"></div>
         <div class="job-banner-detail" id="bannerDetail">📅 Завтра · 📍 м. Юго-Западная</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
@@ -293,7 +293,7 @@ const CONVOS = [];
 
 const MESSAGES_DB = {
   1: [
-    { type:'sys', text:'Вы откликнулись на заказ «Сборка мебели IKEA»' },
+    
     { type:'them', text:'Здравствуйте! Видел ваш отклик. Опыт сборки ИКЕА есть?', time:'10:05' },
     { type:'me', text:'Добрый день! Да, собирал неоднократно — кухни, шкафы, кровати. Дрель своя есть.', time:'10:08' },
     { type:'them', text:'Отлично. Шкаф-купе PAX и кухня METOD. Справитесь за день?', time:'10:12' },
