@@ -223,13 +223,13 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
   <div class="hero-top">
     <div class="hero-avatar">ДК<div class="hero-verified">✓</div></div>
     <div>
-      <div class="hero-name">Дмитрий Козлов</div>
+      <div class="hero-name" id="walletUserName"></div>
       <div class="hero-role">Исполнитель · Уровень «Профи» 🥈</div>
     </div>
   </div>
   <div class="balance-label">Доступно для вывода</div>
-  <div class="balance-amount" id="balanceAmount">12 350 ₽</div>
-  <div class="balance-sub">Обновлено только что · В резерве: 3 200 ₽</div>
+  <div class="balance-amount" id="balanceAmount">0 ₽</div>
+  <div class="balance-sub">Обновлено только что · В резерве: 0 ₽</div>
   <div class="hero-btns">
     <button class="hero-btn btn-withdraw" onclick="openWithdraw()">💳 Вывести деньги</button>
     <button class="hero-btn btn-topup" onclick="openTopUp()">➕ Пополнить</button>
@@ -241,7 +241,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <div class="stats-row">
   <div class="stat-card">
     <div class="stat-icon">💰</div>
-    <div class="stat-val" style="color:var(--green)">68 400 ₽</div>
+    <div class="stat-val" style="color:var(--green)">0 ₽</div>
     <div class="stat-lbl">Всего заработано</div>
   </div>
   <div class="stat-card">
@@ -269,7 +269,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
     </div>
     <div class="mini-chart" id="miniChart"></div>
     <div class="chart-total">
-      <div class="chart-total-item"><div class="chart-total-val" style="color:var(--green)" id="chartTotal">18 200 ₽</div><div class="chart-total-lbl">За период</div></div>
+      <div class="chart-total-item"><div class="chart-total-val" style="color:var(--green)" id="chartTotal">0 ₽</div><div class="chart-total-lbl">За период</div></div>
       <div class="chart-total-item"><div class="chart-total-val" id="chartAvg">2 600 ₽</div><div class="chart-total-lbl">В среднем</div></div>
       <div class="chart-total-item"><div class="chart-total-val" style="color:var(--orange)" id="chartBest">4 500 ₽</div><div class="chart-total-lbl">Лучший день</div></div>
     </div>
@@ -328,7 +328,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Вывод средств</div>
-    <div class="modal-sub">Доступно: <strong id="withdrawCurrentBalance">12 350 ₽</strong> · Минимум вывода: 500 ₽</div>
+    <div class="modal-sub">Доступно: <strong id="withdrawCurrentBalance">0 ₽</strong> · Минимум вывода: 500 ₽</div>
 
     <div class="form-group">
       <label class="form-label">Сумма вывода</label>
@@ -368,7 +368,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Пополнить баланс</div>
-    <div class="modal-sub">Текущий баланс: <strong id="topUpCurrentBalance">12 350 ₽</strong></div>
+    <div class="modal-sub">Текущий баланс: <strong id="topUpCurrentBalance">0 ₽</strong></div>
 
     <div class="form-group">
       <label class="form-label">Сумма пополнения</label>
@@ -400,19 +400,22 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 
 <script>
 Shabashka.renderNav('wallet');
+  var u = Shabashka.getUser();
+  var nameEl = document.getElementById('walletUserName');
+  if (nameEl && u.name) nameEl.textContent = u.name;
 
 const PERIODS = {
   week: {
-    bars: [{l:'Пн',v:0},{l:'Вт',v:2000},{l:'Ср',v:0},{l:'Чт',v:3500},{l:'Пт',v:0},{l:'Сб',v:4500},{l:'Вс',v:2200}],
-    total:'12 200 ₽', avg:'1 743 ₽', best:'4 500 ₽'
+    bars: [{l:'Пн',v:0},{l:'Вт',v:0},{l:'Ср',v:0},{l:'Чт',v:0},{l:'Пт',v:0},{l:'Сб',v:0},{l:'Вс',v:0}],
+    total:'0 ₽', avg:'0 ₽', best:'0 ₽'
   },
   month: {
     bars: [{l:'1н',v:4200},{l:'2н',v:6800},{l:'3н',v:3500},{l:'4н',v:3700}],
-    total:'18 200 ₽', avg:'2 600 ₽', best:'4 500 ₽'
+    total:'0 ₽', avg:'0 ₽', best:'0 ₽'
   },
   year: {
-    bars: [{l:'Янв',v:0},{l:'Фев',v:4000},{l:'Мар',v:8000},{l:'Апр',v:12000},{l:'Май',v:9500},{l:'Июн',v:18200},{l:'Июл',v:0},{l:'Авг',v:0},{l:'Сен',v:0},{l:'Окт',v:0},{l:'Ноя',v:0},{l:'Дек',v:0}],
-    total:'51 700 ₽', avg:'7 386 ₽', best:'18 200 ₽'
+    bars: [{l:'Янв',v:0},{l:'Фев',v:0},{l:'Мар',v:0},{l:'Апр',v:0},{l:'Май',v:0},{l:'Июн',v:0},{l:'Июл',v:0},{l:'Авг',v:0},{l:'Сен',v:0},{l:'Окт',v:0},{l:'Ноя',v:0},{l:'Дек',v:0}],
+    total:'0 ₽', avg:'0 ₽', best:'0 ₽'
   }
 };
 
