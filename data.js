@@ -32,8 +32,8 @@
     registeredAt: new Date().toISOString().slice(0,10), // ISO-дата для расчёта «на платформе с...»
     role: localStorage.getItem('shabashka_role') || 'worker',
     company: '', // используется в режиме работодателя
-    rating: 4.9,
-    reviewsCount: 43,
+    rating: 0,
+    reviewsCount: 0,
     completedOrders: 47,
     verified: {
       phone: true,
@@ -464,8 +464,8 @@
 
   // Демо-отзывы — несколько компаний уже имеют оценки
   const BASE_EMPLOYER_REVIEWS = [
-    { jobId: 16, companyName: 'ООО ТрансЛогист', rating: 5, text: 'Всё чётко: деньги вовремя, условия как договорились. Буду работать ещё.', date: '10 июн', reviewerName: 'Дмитрий К.' },
-    { jobId: 17, companyName: 'ООО ТрансЛогист', rating: 4, text: 'Нормально, но пришлось подождать 20 минут на месте. В целом рекомендую.', date: '14 июн', reviewerName: 'Сергей М.' },
+    { jobId: 16, companyName: 'ООО ТрансЛогист', rating: 0, text: 'Всё чётко: деньги вовремя, условия как договорились. Буду работать ещё.', date: '10 июн', reviewerName: 'Дмитрий К.' },
+    { jobId: 17, companyName: 'ООО ТрансЛогист', rating: 0, text: 'Нормально, но пришлось подождать 20 минут на месте. В целом рекомендую.', date: '14 июн', reviewerName: 'Сергей М.' },
   ];
 
   function getAllEmployerReviews() {
@@ -776,18 +776,18 @@
      В реальном продукте это был бы запрос к серверу, здесь —
      расширенные профили из тех же людей что фигурируют в откликах. */
   const BASE_WORKERS = [
-    { id: 1, name: 'Дмитрий К.', color: '#E8510A', cats: ['move'], rating: 4.9, orders: 47, location: 'Москва', price: 3500, verified: true, bio: 'Профессиональный грузчик, 3 года опыта. Есть свой инструмент, помогаю с разборкой мебели.', skills: ['Грузчик', 'Переезды', 'Разборка мебели'], responseTime: '~20 мин' },
-    { id: 2, name: 'Сергей М.', color: '#185FA5', cats: ['move', 'build'], rating: 4.7, orders: 31, location: 'Москва', price: 3000, verified: false, bio: 'Физически крепкий, обучаемый. Работал на стройке и переездах.', skills: ['Грузчик', 'Подсобник'], responseTime: '~35 мин' },
-    { id: 3, name: 'Алёна П.', color: '#1A7A4A', cats: ['event'], rating: 5.0, orders: 22, location: 'Москва', price: 2800, verified: true, bio: 'Промоутер, хостес. Коммуникабельная, презентабельный внешний вид.', skills: ['Промоутер', 'Хостес', 'Раздача листовок'], responseTime: '~15 мин' },
-    { id: 4, name: 'Марина С.', color: '#9B59B6', cats: ['event', 'clean'], rating: 4.8, orders: 19, location: 'Москва', price: 2500, verified: true, bio: 'Работала промоутером 2 года, также делаю уборку офисов.', skills: ['Промоутер', 'Уборка'], responseTime: '~40 мин' },
-    { id: 5, name: 'Иван Г.', color: '#B33D06', cats: ['build'], rating: 4.6, orders: 55, location: 'МО', price: 4500, verified: true, bio: 'Строитель с 7 годами опыта. Отделка, плитка, сантехника. Инструмент свой.', skills: ['Отделка', 'Плитка', 'Сантехника', 'Электрика'], responseTime: '~1 час' },
-    { id: 6, name: 'Олег Т.', color: '#185FA5', cats: ['build', 'move'], rating: 4.9, orders: 40, location: 'Москва', price: 3800, verified: true, bio: 'Подсобные работы, переезды. Быстро, аккуратно, без лишних разговоров.', skills: ['Подсобник', 'Грузчик'], responseTime: '~25 мин' },
-    { id: 7, name: 'Наталья В.', color: '#1A7A4A', cats: ['event'], rating: 5.0, orders: 28, location: 'Москва', price: 3000, verified: false, bio: 'Доброжелательная, энергичная. Опыт в промо и ивент-агентствах.', skills: ['Хостес', 'Промоутер'], responseTime: '~30 мин' },
-    { id: 8, name: 'Роман Д.', color: '#854F0B', cats: ['move'], rating: 4.5, orders: 15, location: 'МО', price: 2800, verified: false, bio: 'Молодой, сильный. Готов выйти срочно, даже сегодня вечером.', skills: ['Грузчик'], responseTime: '~10 мин' },
-    { id: 9, name: 'Елена К.', color: '#E8510A', cats: ['clean'], rating: 4.9, orders: 63, location: 'Москва', price: 2200, verified: true, bio: 'Профессиональная уборщица. Генеральная, после ремонта, офисы. Свой инвентарь.', skills: ['Уборка', 'После ремонта', 'Офисы'], responseTime: '~20 мин' },
-    { id: 10, name: 'Андрей Ф.', color: '#2C7BB6', cats: ['build'], rating: 4.8, orders: 34, location: 'Москва', price: 4000, verified: true, bio: 'Электрик, сантехник. Быстрая диагностика и ремонт. Выезжаю срочно.', skills: ['Электрик', 'Сантехник'], responseTime: '~45 мин' },
-    { id: 11, name: 'Ксения Л.', color: '#9B59B6', cats: ['clean', 'event'], rating: 4.7, orders: 21, location: 'Москва', price: 2000, verified: false, bio: 'Уборка и промо. Ответственная, не опаздываю.', skills: ['Уборка', 'Промоутер'], responseTime: '~1 час' },
-    { id: 12, name: 'Павел Н.', color: '#1A7A4A', cats: ['build', 'other'], rating: 4.6, orders: 38, location: 'МО', price: 3200, verified: true, bio: 'Разнорабочий. Что угодно — сделаю. Опыт в строительстве и ремонте.', skills: ['Разнорабочий', 'Стройка', 'Ремонт'], responseTime: '~50 мин' },
+    { id: 1, name: 'Дмитрий К.', color: '#E8510A', cats: ['move'], rating: 0, orders: 47, location: 'Москва', price: 3500, verified: true, bio: 'Профессиональный грузчик, 3 года опыта. Есть свой инструмент, помогаю с разборкой мебели.', skills: ['Грузчик', 'Переезды', 'Разборка мебели'], responseTime: '~20 мин' },
+    { id: 2, name: 'Сергей М.', color: '#185FA5', cats: ['move', 'build'], rating: 0, orders: 31, location: 'Москва', price: 3000, verified: false, bio: 'Физически крепкий, обучаемый. Работал на стройке и переездах.', skills: ['Грузчик', 'Подсобник'], responseTime: '~35 мин' },
+    { id: 3, name: 'Алёна П.', color: '#1A7A4A', cats: ['event'], rating: 0, orders: 22, location: 'Москва', price: 2800, verified: true, bio: 'Промоутер, хостес. Коммуникабельная, презентабельный внешний вид.', skills: ['Промоутер', 'Хостес', 'Раздача листовок'], responseTime: '~15 мин' },
+    { id: 4, name: 'Марина С.', color: '#9B59B6', cats: ['event', 'clean'], rating: 0, orders: 19, location: 'Москва', price: 2500, verified: true, bio: 'Работала промоутером 2 года, также делаю уборку офисов.', skills: ['Промоутер', 'Уборка'], responseTime: '~40 мин' },
+    { id: 5, name: 'Иван Г.', color: '#B33D06', cats: ['build'], rating: 0, orders: 55, location: 'МО', price: 4500, verified: true, bio: 'Строитель с 7 годами опыта. Отделка, плитка, сантехника. Инструмент свой.', skills: ['Отделка', 'Плитка', 'Сантехника', 'Электрика'], responseTime: '~1 час' },
+    { id: 6, name: 'Олег Т.', color: '#185FA5', cats: ['build', 'move'], rating: 0, orders: 40, location: 'Москва', price: 3800, verified: true, bio: 'Подсобные работы, переезды. Быстро, аккуратно, без лишних разговоров.', skills: ['Подсобник', 'Грузчик'], responseTime: '~25 мин' },
+    { id: 7, name: 'Наталья В.', color: '#1A7A4A', cats: ['event'], rating: 0, orders: 28, location: 'Москва', price: 3000, verified: false, bio: 'Доброжелательная, энергичная. Опыт в промо и ивент-агентствах.', skills: ['Хостес', 'Промоутер'], responseTime: '~30 мин' },
+    { id: 8, name: 'Роман Д.', color: '#854F0B', cats: ['move'], rating: 0, orders: 15, location: 'МО', price: 2800, verified: false, bio: 'Молодой, сильный. Готов выйти срочно, даже сегодня вечером.', skills: ['Грузчик'], responseTime: '~10 мин' },
+    { id: 9, name: 'Елена К.', color: '#E8510A', cats: ['clean'], rating: 0, orders: 63, location: 'Москва', price: 2200, verified: true, bio: 'Профессиональная уборщица. Генеральная, после ремонта, офисы. Свой инвентарь.', skills: ['Уборка', 'После ремонта', 'Офисы'], responseTime: '~20 мин' },
+    { id: 10, name: 'Андрей Ф.', color: '#2C7BB6', cats: ['build'], rating: 0, orders: 34, location: 'Москва', price: 4000, verified: true, bio: 'Электрик, сантехник. Быстрая диагностика и ремонт. Выезжаю срочно.', skills: ['Электрик', 'Сантехник'], responseTime: '~45 мин' },
+    { id: 11, name: 'Ксения Л.', color: '#9B59B6', cats: ['clean', 'event'], rating: 0, orders: 21, location: 'Москва', price: 2000, verified: false, bio: 'Уборка и промо. Ответственная, не опаздываю.', skills: ['Уборка', 'Промоутер'], responseTime: '~1 час' },
+    { id: 12, name: 'Павел Н.', color: '#1A7A4A', cats: ['build', 'other'], rating: 0, orders: 38, location: 'МО', price: 3200, verified: true, bio: 'Разнорабочий. Что угодно — сделаю. Опыт в строительстве и ремонте.', skills: ['Разнорабочий', 'Стройка', 'Ремонт'], responseTime: '~50 мин' },
   ];
 
   function getAllWorkers() {
