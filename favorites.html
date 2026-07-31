@@ -199,7 +199,7 @@ function unsaveWorker(id) {
   render();
 }
 
-(function(){ var n=document.getElementById('mobileNav'); function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();
+(function(){ var n=document.getElementById('mobileNav'); if(!n) return; function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();
 
 render();
 </script>
