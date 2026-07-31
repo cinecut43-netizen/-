@@ -1,8 +1,9 @@
 /* sw.js — Service Worker Шабашки
    Версия кэша: при обновлении сайта меняй CACHE_VERSION,
    чтобы старый кэш сбросился автоматически. */
-const CACHE_VERSION = 'shabashka-v12';
-const CACHE_STATIC = 'static-v1';
+const CACHE_VERSION = 'shabashka-v14';
+const CACHE_STATIC = CACHE_VERSION; // раньше было отдельной константой и никогда не менялось —
+// из-за этого старый кэш (в т.ч. data.js) не сбрасывался при обновлении сайта
 
 // Файлы, которые кэшируются при первой установке
 const PRECACHE = [
@@ -74,7 +75,29 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // Статика: Cache First → Network fallback
+  // JS/CSS — код меняется при каждом деплое, поэтому тоже Network First:
+  // сначала пробуем сеть (свежая версия), кэш — только как запасной
+  // вариант если сеть недоступна (офлайн). Раньше здесь был Cache First,
+  // из-за чего data.js мог годами не обновляться в браузере пользователя.
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(function (response) {
+          if (response && response.status === 200) {
+            var clone = response.clone();
+            caches.open(CACHE_STATIC).then(function (cache) { cache.put(e.request, clone); });
+          }
+          return response;
+        })
+        .catch(function () {
+          return caches.match(e.request);
+        })
+    );
+    return;
+  }
+
+  // Остальная статика (картинки, иконки, шрифты) — меняется редко,
+  // тут Cache First оправдан и не создаёт проблем со «старыми данными».
   e.respondWith(
     caches.match(e.request).then(function (cached) {
       if (cached) return cached;
