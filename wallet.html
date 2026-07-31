@@ -221,10 +221,10 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <!-- HERO -->
 <div class="hero">
   <div class="hero-top">
-    <div class="hero-avatar">ДК<div class="hero-verified">✓</div></div>
+    <div class="hero-avatar" id="walletUserAvatar"><div class="hero-verified" id="walletVerifiedBadge" style="display:none">✓</div></div>
     <div>
       <div class="hero-name" id="walletUserName"></div>
-      <div class="hero-role">Исполнитель · Уровень «Профи» 🥈</div>
+      <div class="hero-role" id="walletUserRole">Исполнитель</div>
     </div>
   </div>
   <div class="balance-label">Доступно для вывода</div>
@@ -280,17 +280,17 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 <div class="section">
   <div class="level-card">
     <div class="level-row">
-      <div class="level-badge" style="background:var(--gray-light)">🥈</div>
+      <div class="level-badge" style="background:var(--gray-light)" id="levelBadge">🌱</div>
       <div>
-        <div class="level-name">Уровень «Профи»</div>
+        <div class="level-name" id="levelName">Уровень «Новичок»</div>
         <div class="level-sub" id="levelSub">0 заказов</div>
       </div>
     </div>
     <div class="progress-wrap">
       <div class="progress-track"><div class="progress-fill" id="levelProgress" style="width:0%"></div></div>
-      <div class="progress-labels"><span id="progressCurrent">0 заказов</span><span>75 заказов</span></div>
+      <div class="progress-labels"><span id="progressCurrent">0 заказов</span><span id="progressTarget">10 заказов</span></div>
     </div>
-    <div class="next-level">🥇 До уровня «Эксперт» осталось <strong>28 заказов</strong>. Эксперты получают приоритетный показ в ленте и +5% к видимости.</div>
+    <div class="next-level" id="nextLevelNote">🥈 До уровня «Профи» осталось <strong id="nextLevelCount">10 заказов</strong>. Профи получают приоритетный показ в ленте и +5% к видимости.</div>
   </div>
 </div>
 
@@ -424,12 +424,55 @@ function renderBalance() {
   document.getElementById('balanceAmount').textContent = balance.toLocaleString('ru') + ' ₽';
   // Обновляем данные из профиля
   var u = Shabashka.getUser();
-  var jobsDone = u.jobsDone || 0;
+  var jobsDone = u.completedOrders || 0;
   var rating = u.rating || 0;
+
+  // Аватар и имя в шапке
+  var avatarEl = document.getElementById('walletUserAvatar');
+  if (avatarEl) avatarEl.insertAdjacentText('afterbegin', u.initials || '');
+  var verifiedBadge = document.getElementById('walletVerifiedBadge');
+  if (verifiedBadge && u.verified && u.verified.passport) verifiedBadge.style.display = '';
+  var roleEl = document.getElementById('walletUserRole');
+  if (roleEl) roleEl.textContent = u.role === 'employer' ? 'Работодатель' : 'Исполнитель';
+
+  // Уровни: Новичок (0-9) → Профи (10-49) → Эксперт (50+)
+  var LEVELS = [
+    { name: 'Новичок', badge: '🌱', min: 0 },
+    { name: 'Профи', badge: '🥈', min: 10 },
+    { name: 'Эксперт', badge: '🥇', min: 50 },
+  ];
+  var levelIdx = 0;
+  for (var li = 0; li < LEVELS.length; li++) { if (jobsDone >= LEVELS[li].min) levelIdx = li; }
+  var curLevel = LEVELS[levelIdx];
+  var nextLevel = LEVELS[levelIdx + 1];
+
+  var levelBadge = document.getElementById('levelBadge');
+  var levelName = document.getElementById('levelName');
+  if (levelBadge) levelBadge.textContent = curLevel.badge;
+  if (levelName) levelName.textContent = 'Уровень «' + curLevel.name + '»';
+
   var levelSub = document.getElementById('levelSub');
   var progressCurrent = document.getElementById('progressCurrent');
-  if (levelSub) levelSub.textContent = jobsDone + ' заказов · Следующий: «Эксперт» 🥇';
+  var progressTarget = document.getElementById('progressTarget');
+  var levelProgress = document.getElementById('levelProgress');
+  var nextLevelNote = document.getElementById('nextLevelNote');
+  var nextLevelCount = document.getElementById('nextLevelCount');
+
+  if (levelSub) levelSub.textContent = jobsDone + ' заказов';
   if (progressCurrent) progressCurrent.textContent = jobsDone + ' заказов';
+
+  if (nextLevel) {
+    var remaining = nextLevel.min - jobsDone;
+    var pct = Math.min(100, Math.round((jobsDone - curLevel.min) / (nextLevel.min - curLevel.min) * 100));
+    if (progressTarget) progressTarget.textContent = nextLevel.min + ' заказов';
+    if (levelProgress) levelProgress.style.width = pct + '%';
+    if (nextLevelCount) nextLevelCount.textContent = remaining + ' заказов';
+    if (nextLevelNote) nextLevelNote.innerHTML = nextLevel.badge + ' До уровня «' + nextLevel.name + '» осталось <strong id="nextLevelCount">' + remaining + ' заказов</strong>. ' + nextLevel.name + ' получают приоритетный показ в ленте и +5% к видимости.';
+  } else {
+    if (progressTarget) progressTarget.textContent = jobsDone + ' заказов';
+    if (levelProgress) levelProgress.style.width = '100%';
+    if (nextLevelNote) nextLevelNote.textContent = '🏆 Вы достигли максимального уровня «Эксперт». Спасибо, что вы с нами!';
+  }
   // Обновляем статистику
   var statVals = document.querySelectorAll('.stat-val');
   if (statVals[1]) statVals[1].textContent = jobsDone;

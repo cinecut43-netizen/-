@@ -34,10 +34,10 @@
     company: '', // используется в режиме работодателя
     rating: 0,
     reviewsCount: 0,
-    completedOrders: 47,
+    completedOrders: 0,
     verified: {
-      phone: true,
-      passport: true,
+      phone: false,
+      passport: false,
     },
   };
 
@@ -298,16 +298,7 @@
 
   // Демо-отклики на старые заказы, чтобы интерфейс работодателя не был
   // пустым при первом входе — та же роль, что у BASE_JOBS для заказов.
-  const BASE_RESPONSES = [
-    { id: 1, jobId: 9, workerName: 'Дмитрий К.', workerColor: '#E8510A', workerRating: '4.9 ⭐ (47 заказов)', proposedPay: null, message: 'Готов выйти завтра, опыт 3 года.', status: 'pending', date: '17 июн' },
-    { id: 2, jobId: 9, workerName: 'Сергей М.', workerColor: '#185FA5', workerRating: '4.7 ⭐ (31 заказ)', proposedPay: null, message: 'Физически крепкий, инструмент свой.', status: 'pending', date: '17 июн' },
-    { id: 3, jobId: 13, workerName: 'Алёна П.', workerColor: '#1A7A4A', workerRating: '5.0 ⭐ (22 заказа)', proposedPay: null, message: 'Коммуникабельная, презентабельный вид.', status: 'pending', date: '16 июн' },
-    { id: 4, jobId: 13, workerName: 'Марина С.', workerColor: '#9B59B6', workerRating: '4.8 ⭐ (19 заказов)', proposedPay: null, message: 'Работала промоутером 2 года.', status: 'pending', date: '16 июн' },
-    { id: 5, jobId: 14, workerName: 'Иван Г.', workerColor: '#B33D06', workerRating: '4.6 ⭐ (55 заказов)', proposedPay: 4500, message: 'Готов за 4500, есть свой инструмент и опыт именно с такими объектами.', status: 'pending', date: '15 июн' },
-    { id: 6, jobId: 14, workerName: 'Олег Т.', workerColor: '#185FA5', workerRating: '4.9 ⭐ (40 заказов)', proposedPay: null, message: 'Подсобные работы — моё.', status: 'pending', date: '15 июн' },
-    { id: 7, jobId: 13, workerName: 'Наталья В.', workerColor: '#1A7A4A', workerRating: '5.0 ⭐ (28 заказов)', proposedPay: null, message: 'Доброжелательная, энергичная.', status: 'pending', date: '14 июн' },
-    { id: 8, jobId: 9, workerName: 'Роман Д.', workerColor: '#854F0B', workerRating: '4.5 ⭐ (15 заказов)', proposedPay: 3000, message: 'Могу за 3000, если нужно — выйду уже сегодня вечером.', status: 'pending', date: '17 июн' },
-  ];
+  const BASE_RESPONSES = [];
 
   function readResponses() {
     try {
@@ -463,10 +454,7 @@
   const EMPLOYER_REVIEWS_KEY = 'shabashka_employer_reviews';
 
   // Демо-отзывы — несколько компаний уже имеют оценки
-  const BASE_EMPLOYER_REVIEWS = [
-    { jobId: 16, companyName: 'ООО ТрансЛогист', rating: 0, text: 'Всё чётко: деньги вовремя, условия как договорились. Буду работать ещё.', date: '10 июн', reviewerName: 'Дмитрий К.' },
-    { jobId: 17, companyName: 'ООО ТрансЛогист', rating: 0, text: 'Нормально, но пришлось подождать 20 минут на месте. В целом рекомендую.', date: '14 июн', reviewerName: 'Сергей М.' },
-  ];
+  const BASE_EMPLOYER_REVIEWS = [];
 
   function getAllEmployerReviews() {
     try {
@@ -654,18 +642,11 @@
   const WORKER_BALANCE_KEY = 'shabashka_worker_balance';
   const WORKER_TX_KEY = 'shabashka_worker_tx';
 
-  const DEFAULT_EMPLOYER_BALANCE = 12300;
-  const DEFAULT_EMPLOYER_TX = [
-    { date: '12 июн', title: 'Официанты на корпоратив', amount: 19800, type: 'debit', status: 'Выполнен' },
-    { date: '10 июн', title: 'Грузчики на склад', amount: 9900, type: 'debit', status: 'Выполнен' },
-    { date: '8 июн', title: 'Пополнение баланса', amount: 30000, type: 'credit', status: 'Выполнен' },
-  ];
+  const DEFAULT_EMPLOYER_BALANCE = 0;
+  const DEFAULT_EMPLOYER_TX = [];
 
   const DEFAULT_WORKER_BALANCE = 0;
-  const DEFAULT_WORKER_TX = [
-    { date: '17 июн', title: 'Вывод на Сбербанк', amount: 5000, type: 'debit', status: 'Выполнен' },
-    { date: '12 июн', title: 'Грузчики на переезд', amount: 3150, type: 'credit', status: 'Зачислено' },
-  ];
+  const DEFAULT_WORKER_TX = [];
 
   function readNumber(key, fallback) {
     const raw = localStorage.getItem(key);
@@ -775,20 +756,7 @@
      Демо-база профессионалов для страницы поиска работодателя.
      В реальном продукте это был бы запрос к серверу, здесь —
      расширенные профили из тех же людей что фигурируют в откликах. */
-  const BASE_WORKERS = [
-    { id: 1, name: 'Дмитрий К.', color: '#E8510A', cats: ['move'], rating: 0, orders: 47, location: 'Москва', price: 3500, verified: true, bio: 'Профессиональный грузчик, 3 года опыта. Есть свой инструмент, помогаю с разборкой мебели.', skills: ['Грузчик', 'Переезды', 'Разборка мебели'], responseTime: '~20 мин' },
-    { id: 2, name: 'Сергей М.', color: '#185FA5', cats: ['move', 'build'], rating: 0, orders: 31, location: 'Москва', price: 3000, verified: false, bio: 'Физически крепкий, обучаемый. Работал на стройке и переездах.', skills: ['Грузчик', 'Подсобник'], responseTime: '~35 мин' },
-    { id: 3, name: 'Алёна П.', color: '#1A7A4A', cats: ['event'], rating: 0, orders: 22, location: 'Москва', price: 2800, verified: true, bio: 'Промоутер, хостес. Коммуникабельная, презентабельный внешний вид.', skills: ['Промоутер', 'Хостес', 'Раздача листовок'], responseTime: '~15 мин' },
-    { id: 4, name: 'Марина С.', color: '#9B59B6', cats: ['event', 'clean'], rating: 0, orders: 19, location: 'Москва', price: 2500, verified: true, bio: 'Работала промоутером 2 года, также делаю уборку офисов.', skills: ['Промоутер', 'Уборка'], responseTime: '~40 мин' },
-    { id: 5, name: 'Иван Г.', color: '#B33D06', cats: ['build'], rating: 0, orders: 55, location: 'МО', price: 4500, verified: true, bio: 'Строитель с 7 годами опыта. Отделка, плитка, сантехника. Инструмент свой.', skills: ['Отделка', 'Плитка', 'Сантехника', 'Электрика'], responseTime: '~1 час' },
-    { id: 6, name: 'Олег Т.', color: '#185FA5', cats: ['build', 'move'], rating: 0, orders: 40, location: 'Москва', price: 3800, verified: true, bio: 'Подсобные работы, переезды. Быстро, аккуратно, без лишних разговоров.', skills: ['Подсобник', 'Грузчик'], responseTime: '~25 мин' },
-    { id: 7, name: 'Наталья В.', color: '#1A7A4A', cats: ['event'], rating: 0, orders: 28, location: 'Москва', price: 3000, verified: false, bio: 'Доброжелательная, энергичная. Опыт в промо и ивент-агентствах.', skills: ['Хостес', 'Промоутер'], responseTime: '~30 мин' },
-    { id: 8, name: 'Роман Д.', color: '#854F0B', cats: ['move'], rating: 0, orders: 15, location: 'МО', price: 2800, verified: false, bio: 'Молодой, сильный. Готов выйти срочно, даже сегодня вечером.', skills: ['Грузчик'], responseTime: '~10 мин' },
-    { id: 9, name: 'Елена К.', color: '#E8510A', cats: ['clean'], rating: 0, orders: 63, location: 'Москва', price: 2200, verified: true, bio: 'Профессиональная уборщица. Генеральная, после ремонта, офисы. Свой инвентарь.', skills: ['Уборка', 'После ремонта', 'Офисы'], responseTime: '~20 мин' },
-    { id: 10, name: 'Андрей Ф.', color: '#2C7BB6', cats: ['build'], rating: 0, orders: 34, location: 'Москва', price: 4000, verified: true, bio: 'Электрик, сантехник. Быстрая диагностика и ремонт. Выезжаю срочно.', skills: ['Электрик', 'Сантехник'], responseTime: '~45 мин' },
-    { id: 11, name: 'Ксения Л.', color: '#9B59B6', cats: ['clean', 'event'], rating: 0, orders: 21, location: 'Москва', price: 2000, verified: false, bio: 'Уборка и промо. Ответственная, не опаздываю.', skills: ['Уборка', 'Промоутер'], responseTime: '~1 час' },
-    { id: 12, name: 'Павел Н.', color: '#1A7A4A', cats: ['build', 'other'], rating: 0, orders: 38, location: 'МО', price: 3200, verified: true, bio: 'Разнорабочий. Что угодно — сделаю. Опыт в строительстве и ремонте.', skills: ['Разнорабочий', 'Стройка', 'Ремонт'], responseTime: '~50 мин' },
-  ];
+  const BASE_WORKERS = [];
 
   function getAllWorkers() {
     return BASE_WORKERS;

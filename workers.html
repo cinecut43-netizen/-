@@ -279,7 +279,12 @@ function applyFilters() {
 function render(workers) {
   document.getElementById('resultsCount').textContent = workers.length + ' ' + plural(workers.length, 'исполнитель', 'исполнителя', 'исполнителей');
   if (!workers.length) {
-    document.getElementById('workersList').innerHTML = '<div class="empty-state-v2"><div class="es-icon es-gray">🔍</div><div class="es-title">Никого не найдено</div><div class="es-sub">Попробуйте изменить фильтры или сбросить поиск</div><button class="es-btn" onclick="document.getElementById(\'searchInput\').value=\'\';renderWorkers()">Сбросить фильтры</button></div>';
+    var filtersActive = currentCat !== 'all' || verifiedOnly || !!document.getElementById('searchInp').value.trim();
+    if (filtersActive) {
+      document.getElementById('workersList').innerHTML = '<div class="empty-state-v2"><div class="es-icon es-gray">🔍</div><div class="es-title">Никого не найдено</div><div class="es-sub">Попробуйте изменить фильтры или сбросить поиск</div><button class="es-btn" onclick="document.getElementById(\'searchInp\').value=\'\';currentCat=\'all\';verifiedOnly=false;applyFilters()">Сбросить фильтры</button></div>';
+    } else {
+      document.getElementById('workersList').innerHTML = '<div class="empty-state-v2"><div class="es-icon es-gray">👷</div><div class="es-title">Пока нет исполнителей</div><div class="es-sub">Как только кто-то зарегистрируется, вы увидите его здесь</div></div>';
+    }
     return;
   }
   document.getElementById('workersList').innerHTML = workers.map(workerCard).join('');

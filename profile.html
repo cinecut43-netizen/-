@@ -441,18 +441,9 @@ Shabashka.renderNav('profile');
 
 const BARS = [{stars:5,count:0},{stars:4,count:0},{stars:3,count:0},{stars:2,count:0},{stars:1,count:0}];
 
-const HISTORY = [
-  {icon:'📦',title:'Грузчики на переезд',company:'Семья Петровых',date:'12 июня 2026',pay:3500},
-  {icon:'🔨',title:'Подсобный рабочий',company:'СК Горизонт',date:'8 июня 2026',pay:4000},
-  {icon:'📦',title:'Разгрузка фуры',company:'ООО ТрансЛогист',date:'28 мая 2026',pay:3200},
-  {icon:'📦',title:'Сборка мебели IKEA',company:'Андрей К.',date:'20 мая 2026',pay:2000},
-];
+const HISTORY = [];
 
-const REVIEWS = [
-  {name:'Семья Петровых',color:'#1A7A4A',job:'Грузчики на переезд',stars:5,date:'12 июня 2026',text:'Дмитрий — настоящий профессионал! Пришёл вовремя, работал быстро и аккуратно. Всё вынес без единой царапины. Обязательно позвоним ещё раз.'},
-  {name:'СК Горизонт',color:'#185FA5',job:'Подсобный рабочий',stars:5,date:'8 июня 2026',text:'Отличный работник. Без лишних слов, всё делает как надо. Бригадир доволен — уже позвали на следующий объект.'},
-  {name:'Андрей К.',color:'#E8510A',job:'Сборка мебели IKEA',stars:4,date:'20 мая 2026',text:'Хорошо собрал шкаф и кухню. Небольшая задержка в начале, но в итоге всё чётко. Спасибо!'},
-];
+const REVIEWS = [];
 
 function renderBars() {
   const total = BARS.reduce((s,b) => s+b.count, 0);
@@ -539,6 +530,10 @@ function showProfileToast(msg) {
 }
 
 function renderHistory() {
+  if (!HISTORY.length) {
+    document.getElementById('historyList').innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--gray);font-size:13px">Пока нет выполненных заказов</div>';
+    return;
+  }
   document.getElementById('historyList').innerHTML = HISTORY.map(h => `
     <div class="history-item">
       <div class="history-icon">${h.icon}</div>
