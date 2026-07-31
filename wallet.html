@@ -246,12 +246,12 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
   </div>
   <div class="stat-card">
     <div class="stat-icon">📋</div>
-    <div class="stat-val" style="color:var(--blue)">47</div>
+    <div class="stat-val" style="color:var(--blue)">0</div>
     <div class="stat-lbl">Заказов выполнено</div>
   </div>
   <div class="stat-card">
     <div class="stat-icon">⭐</div>
-    <div class="stat-val" style="color:var(--orange)">4.9</div>
+    <div class="stat-val" style="color:var(--orange)">0</div>
     <div class="stat-lbl">Средний рейтинг</div>
   </div>
 </div>
@@ -283,12 +283,12 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
       <div class="level-badge" style="background:var(--gray-light)">🥈</div>
       <div>
         <div class="level-name">Уровень «Профи»</div>
-        <div class="level-sub">47 заказов · Следующий: «Эксперт» 🥇</div>
+        <div class="level-sub" id="levelSub">0 заказов</div>
       </div>
     </div>
     <div class="progress-wrap">
       <div class="progress-track"><div class="progress-fill" id="levelProgress" style="width:0%"></div></div>
-      <div class="progress-labels"><span>47 заказов</span><span>75 заказов</span></div>
+      <div class="progress-labels"><span id="progressCurrent">0 заказов</span><span>75 заказов</span></div>
     </div>
     <div class="next-level">🥇 До уровня «Эксперт» осталось <strong>28 заказов</strong>. Эксперты получают приоритетный показ в ленте и +5% к видимости.</div>
   </div>
@@ -410,7 +410,7 @@ const PERIODS = {
     total:'0 ₽', avg:'0 ₽', best:'0 ₽'
   },
   month: {
-    bars: [{l:'1н',v:4200},{l:'2н',v:6800},{l:'3н',v:3500},{l:'4н',v:3700}],
+    bars: [{l:'1н',v:0},{l:'2н',v:0},{l:'3н',v:0},{l:'4н',v:0}],
     total:'0 ₽', avg:'0 ₽', best:'0 ₽'
   },
   year: {
@@ -422,6 +422,18 @@ const PERIODS = {
 function renderBalance() {
   const balance = Shabashka.getWorkerBalance();
   document.getElementById('balanceAmount').textContent = balance.toLocaleString('ru') + ' ₽';
+  // Обновляем данные из профиля
+  var u = Shabashka.getUser();
+  var jobsDone = u.jobsDone || 0;
+  var rating = u.rating || 0;
+  var levelSub = document.getElementById('levelSub');
+  var progressCurrent = document.getElementById('progressCurrent');
+  if (levelSub) levelSub.textContent = jobsDone + ' заказов · Следующий: «Эксперт» 🥇';
+  if (progressCurrent) progressCurrent.textContent = jobsDone + ' заказов';
+  // Обновляем статистику
+  var statVals = document.querySelectorAll('.stat-val');
+  if (statVals[1]) statVals[1].textContent = jobsDone;
+  if (statVals[2]) statVals[2].textContent = rating > 0 ? rating.toFixed(1) : '—';
   document.getElementById('withdrawCurrentBalance').textContent = balance.toLocaleString('ru') + ' ₽';
   document.getElementById('topUpCurrentBalance').textContent = balance.toLocaleString('ru') + ' ₽';
 }

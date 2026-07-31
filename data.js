@@ -661,7 +661,7 @@
     { date: '8 июн', title: 'Пополнение баланса', amount: 30000, type: 'credit', status: 'Выполнен' },
   ];
 
-  const DEFAULT_WORKER_BALANCE = 12350;
+  const DEFAULT_WORKER_BALANCE = 0;
   const DEFAULT_WORKER_TX = [
     { date: '17 июн', title: 'Вывод на Сбербанк', amount: 5000, type: 'debit', status: 'Выполнен' },
     { date: '12 июн', title: 'Грузчики на переезд', amount: 3150, type: 'credit', status: 'Зачислено' },
