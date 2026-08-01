@@ -42,81 +42,81 @@ tr:last-child td { border-bottom: none; }
 ShabashkaAdminNav.renderAdminShell('finance', 'Финансы').then(function (rendered) {
 if (rendered) {
   const A = ShabashkaAdmin;
-  const stats = A.getDashboardStats();
   const settings = A.getSettings();
 
-  const jobs = Shabashka.getAllJobs();
-  const doneJobs = jobs.filter(j => j.status === 'done');
-  const commissionRows = doneJobs.map(j => ({
-    title: j.title, company: j.company,
-    sum: j.pay * (j.people || 1),
-    commission: Math.round(j.pay * (j.people || 1) * settings.commissionPercent / 100),
-    date: j.date,
-  }));
+  document.getElementById('admContentRoot').innerHTML = '<div style="padding:60px;text-align:center;color:var(--gray)">Загрузка…</div>';
 
-  const totalSum = commissionRows.reduce((s, r) => s + r.sum, 0);
-  const totalCommission = commissionRows.reduce((s, r) => s + r.commission, 0);
-
-  document.getElementById('admContentRoot').innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-card-label">Выручка платформы</div>
-        <div class="stat-card-num" style="color:var(--orange)">${totalCommission.toLocaleString('ru')} ₽</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Оборот через платформу</div>
-        <div class="stat-card-num">${totalSum.toLocaleString('ru')} ₽</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Текущая комиссия</div>
-        <div class="stat-card-num" style="color:var(--blue)">${settings.commissionPercent}%</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">Завершённых заказов</div>
-        <div class="stat-card-num" style="color:var(--green)">${stats.doneOrders}</div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title">Комиссии с завершённых заказов</div>
-        <button class="btn-export" id="exportBtn">⬇ Экспортировать CSV</button>
-      </div>
-      <table>
-        <thead><tr><th>Заказ</th><th>Компания</th><th>Сумма</th><th>Комиссия</th><th>Дата</th></tr></thead>
-        <tbody id="commissionTbody"></tbody>
-      </table>
-    </div>
-  `;
-
-  document.getElementById('commissionTbody').innerHTML = commissionRows.length
-    ? commissionRows.map(r => `
-      <tr>
-        <td>${r.title}</td>
-        <td>${r.company}</td>
-        <td>${r.sum.toLocaleString('ru')} ₽</td>
-        <td class="amount-pos">+${r.commission.toLocaleString('ru')} ₽</td>
-        <td>${r.date}</td>
-      </tr>`).join('')
-    : '<tr><td colspan="5" style="text-align:center;color:var(--gray);padding:30px">Завершённых заказов пока нет</td></tr>';
-
-  const exportBtn = document.getElementById('exportBtn');
-  const canExport = A.canDo('finance.export');
-  if (!canExport) exportBtn.disabled = true;
-  exportBtn.addEventListener('click', () => {
-    if (!canExport) return;
-    let csv = 'Заказ,Компания,Сумма,Комиссия,Дата\n';
-    commissionRows.forEach(r => {
-      csv += `"${r.title}","${r.company}",${r.sum},${r.commission},"${r.date}"\n`;
+  A.getAllOrders({ status: 'done' }).then(function (doneJobs) {
+    const commissionRows = doneJobs.map(function(j) {
+      var sum = j.pay; // people-множитель не хранится в БД отдельно от pay, pay уже итоговая ставка заказа
+      var commission = Math.round(sum * settings.commissionPercent / 100);
+      return { title: j.title, company: j.company, sum: sum, commission: commission, date: j.date };
     });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'shabashka-finance-report.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-    A.logAction('Экспортировал финансовый отчёт');
+
+    const totalSum = commissionRows.reduce((s, r) => s + r.sum, 0);
+    const totalCommission = commissionRows.reduce((s, r) => s + r.commission, 0);
+
+    document.getElementById('admContentRoot').innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">Выручка платформы</div>
+          <div class="stat-card-num" style="color:var(--orange)">${totalCommission.toLocaleString('ru')} ₽</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Оборот через платформу</div>
+          <div class="stat-card-num">${totalSum.toLocaleString('ru')} ₽</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Текущая комиссия</div>
+          <div class="stat-card-num" style="color:var(--blue)">${settings.commissionPercent}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Завершённых заказов</div>
+          <div class="stat-card-num" style="color:var(--green)">${doneJobs.length}</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Комиссии с завершённых заказов</div>
+          <button class="btn-export" id="exportBtn">⬇ Экспортировать CSV</button>
+        </div>
+        <table>
+          <thead><tr><th>Заказ</th><th>Компания</th><th>Сумма</th><th>Комиссия</th><th>Дата</th></tr></thead>
+          <tbody id="commissionTbody"></tbody>
+        </table>
+      </div>
+    `;
+
+    document.getElementById('commissionTbody').innerHTML = commissionRows.length
+      ? commissionRows.map(r => `
+        <tr>
+          <td>${r.title}</td>
+          <td>${r.company}</td>
+          <td>${r.sum.toLocaleString('ru')} ₽</td>
+          <td class="amount-pos">+${r.commission.toLocaleString('ru')} ₽</td>
+          <td>${r.date}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:var(--gray);padding:30px">Завершённых заказов пока нет</td></tr>';
+
+    const exportBtn = document.getElementById('exportBtn');
+    const canExport = A.canDo('finance.export');
+    if (!canExport) exportBtn.disabled = true;
+    exportBtn.addEventListener('click', () => {
+      if (!canExport) return;
+      let csv = 'Заказ,Компания,Сумма,Комиссия,Дата\n';
+      commissionRows.forEach(r => {
+        csv += `"${r.title}","${r.company}",${r.sum},${r.commission},"${r.date}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'shabashka-finance-report.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      A.logAction('Экспортировал финансовый отчёт');
+    });
   });
 }
 });

@@ -516,36 +516,6 @@
   }
 
   /* ---------- АГРЕГИРОВАННАЯ СТАТИСТИКА ДЛЯ DASHBOARD ---------- */
-  function getDashboardStats() {
-    const users = getAllUsers().filter(function (u) { return u.status !== 'deleted'; });
-    const workers = users.filter(function (u) { return u.role === 'worker'; });
-    const employers = users.filter(function (u) { return u.role === 'employer'; });
-
-    const jobs = Shabashka.getAllJobs();
-    const activeStatuses = ['new', 'has_responses', 'selected', 'in_progress'];
-    const activeJobs = jobs.filter(function (j) { return activeStatuses.includes(j.status); });
-    const doneJobs = jobs.filter(function (j) { return j.status === 'done'; });
-
-    const totalResponses = jobs.reduce(function (s, j) { return s + (j.responses || 0); }, 0);
-
-    // Выручка — комиссия 10% со всех завершённых заказов (грубая оценка для демо)
-    const revenue = doneJobs.reduce(function (s, j) { return s + Math.round(j.pay * (j.people || 1) * 0.1); }, 0);
-
-    const today = new Date().toISOString().slice(0, 10);
-    const newToday = users.filter(function (u) { return u.registeredAt === today; }).length;
-
-    return {
-      totalUsers: users.length,
-      employersCount: employers.length,
-      workersCount: workers.length,
-      activeOrders: activeJobs.length,
-      doneOrders: doneJobs.length,
-      totalResponses: totalResponses,
-      revenue: revenue,
-      newToday: newToday,
-    };
-  }
-
   /* ---------- ПУБЛИЧНЫЙ ЭКСПОРТ ---------- */
   window.ShabashkaAdmin = {
     ADMIN_ROLES: ADMIN_ROLES,
@@ -598,6 +568,5 @@
     toggleCity: toggleCity,
     toggleBanner: toggleBanner,
 
-    getDashboardStats: getDashboardStats,
   };
 })();

@@ -153,68 +153,57 @@ function setPeriod(p, btn) {
 }
 
 function getStats() {
-  var jobs = Shabashka.getAllJobs ? Shabashka.getAllJobs() : Shabashka.getOpenJobs();
-  var users = JSON.parse(localStorage.getItem('shabashka_user') ? '[' + localStorage.getItem('shabashka_user') + ']' : '[]');
-  var feedbacks = JSON.parse(localStorage.getItem('shabashka_feedbacks') || '[]');
-  var responses = [];
-  jobs.forEach(function(j){ responses = responses.concat(Shabashka.getResponsesForJob(j.id)); });
-
-  var done = jobs.filter(function(j){ return j.status === 'done'; });
-  var revenue = done.reduce(function(s,j){ return s + Math.round(j.pay * 0.1); }, 0);
-
-  return { jobs: jobs, responses: responses, done: done, revenue: revenue, feedbacks: feedbacks };
+  var token = localStorage.getItem('shabashka_admin_token');
+  var role = localStorage.getItem('shabashka_admin_role');
+  return fetch('/api/admin-stats?adminToken=' + encodeURIComponent(token) + '&adminRole=' + encodeURIComponent(role))
+    .then(function (r) { return r.json(); })
+    .then(function (data) { return data.ok ? data : null; })
+    .catch(function () { return null; });
 }
 
 function renderKPI(stats) {
   var data = [
-    { label: 'Всего заказов', val: stats.jobs.length, change: '+' + Math.floor(stats.jobs.length * 0.15) + ' за период', dir: 'up', color: '#E8510A' },
-    { label: 'Откликов', val: stats.responses.length, change: '+' + Math.floor(stats.responses.length * 0.2) + ' за период', dir: 'up', color: '#185FA5' },
-    { label: 'Завершено', val: stats.done.length, change: stats.done.length + ' из ' + stats.jobs.length, dir: 'neutral', color: '#1A7A4A' },
-    { label: 'Доход платформы', val: stats.revenue.toLocaleString('ru') + ' ₽', change: '10% комиссия', dir: 'up', color: '#B07800' },
+    { label: 'Всего заказов', val: stats.totals.jobs, change: stats.totals.users + ' пользователей всего', dir: 'neutral', color: '#E8510A' },
+    { label: 'Откликов', val: stats.totals.responses, change: 'за всё время', dir: 'neutral', color: '#185FA5' },
+    { label: 'Завершено', val: stats.totals.done, change: stats.totals.done + ' из ' + stats.totals.jobs, dir: 'neutral', color: '#1A7A4A' },
+    { label: 'Доход платформы', val: stats.totals.revenue.toLocaleString('ru') + ' ₽', change: '10% комиссия', dir: 'neutral', color: '#B07800' },
   ];
   document.getElementById('kpiGrid').innerHTML = data.map(function(d){
     return '<div class="kpi">' +
       '<div class="kpi-label">' + d.label + '</div>' +
       '<div class="kpi-val" style="color:' + d.color + '">' + d.val + '</div>' +
-      '<div class="kpi-change ' + d.dir + '">' + (d.dir==='up'?'↑ ':'') + d.change + '</div>' +
+      '<div class="kpi-change ' + d.dir + '">' + d.change + '</div>' +
     '</div>';
   }).join('');
 }
 
 function renderCharts(stats) {
-  // График активности
-  var days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-  var jobsData = days.map(function(){ return Math.floor(Math.random()*5+1); });
-  var respData = days.map(function(){ return Math.floor(Math.random()*15+3); });
+  // График активности — реальные заказы/отклики по дням за последнюю неделю
+  var labels = stats.activity.map(function(a){ return a.label; });
+  var jobsData = stats.activity.map(function(a){ return a.jobs; });
+  var respData = stats.activity.map(function(a){ return a.responses; });
 
   if (actChart) actChart.destroy();
   actChart = new Chart(document.getElementById('activityChart'), {
     type: 'bar',
     data: {
-      labels: days,
+      labels: labels,
       datasets: [
         { label: 'Заказы', data: jobsData, backgroundColor: '#E8510A', borderRadius: 6 },
         { label: 'Отклики', data: respData, backgroundColor: '#FDD5C0', borderRadius: 6 },
       ]
     },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
   });
 
-  // Pie по категориям
-  var cats = { 'Переезд': 0, 'Строительство': 0, 'Уборка': 0, 'Ивент': 0, 'Прочее': 0 };
-  stats.jobs.forEach(function(j){
-    if (j.cat === 'move') cats['Переезд']++;
-    else if (j.cat === 'build') cats['Строительство']++;
-    else if (j.cat === 'clean') cats['Уборка']++;
-    else if (j.cat === 'event') cats['Ивент']++;
-    else cats['Прочее']++;
-  });
+  var catLabels = { move: 'Переезд', build: 'Строительство', clean: 'Уборка', event: 'Ивент', other: 'Прочее' };
+  var cats = stats.categories;
 
   if (catChart) catChart.destroy();
   catChart = new Chart(document.getElementById('categoryChart'), {
     type: 'doughnut',
     data: {
-      labels: Object.keys(cats),
+      labels: Object.keys(cats).map(function(k){ return catLabels[k]; }),
       datasets: [{ data: Object.values(cats), backgroundColor: ['#E8510A','#185FA5','#1A7A4A','#B07800','#9A9A96'] }]
     },
     options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
@@ -222,93 +211,96 @@ function renderCharts(stats) {
 }
 
 function renderTables(stats) {
-  // Топ работодатели
-  var employers = {};
-  stats.jobs.forEach(function(j){
-    if (!employers[j.company]) employers[j.company] = { count: 0, spend: 0 };
-    employers[j.company].count++;
-    employers[j.company].spend += j.pay;
-  });
-  var topEmp = Object.entries(employers).sort(function(a,b){ return b[1].count - a[1].count; }).slice(0,5);
   document.getElementById('topEmployers').innerHTML =
     '<tr><th>Компания</th><th>Заказов</th><th>Потрачено</th></tr>' +
-    topEmp.map(function(e){
-      return '<tr><td>' + e[0] + '</td><td>' + e[1].count + '</td><td>' + e[1].spend.toLocaleString('ru') + ' ₽</td></tr>';
-    }).join('');
+    (stats.topEmployers.length
+      ? stats.topEmployers.map(function(e){
+          return '<tr><td>' + e.name + '</td><td>' + e.count + '</td><td>' + e.spend.toLocaleString('ru') + ' ₽</td></tr>';
+        }).join('')
+      : '<tr><td colspan="3" style="color:#9A9A96;text-align:center">Пока нет данных</td></tr>');
 
-  // Топ исполнители (симулируем)
-  var workers = [
-    { name: 'Дмитрий К.', orders: 12, rating: '4.9' },
-    { name: 'Андрей С.', orders: 8, rating: '4.8' },
-    { name: 'Мария П.', orders: 6, rating: '5.0' },
-    { name: 'Виктор Л.', orders: 5, rating: '4.7' },
-    { name: 'Алексей М.', orders: 4, rating: '4.9' },
-  ];
   document.getElementById('topWorkers').innerHTML =
     '<tr><th>Исполнитель</th><th>Заказов</th><th>Рейтинг</th></tr>' +
-    workers.map(function(w){
-      return '<tr><td>' + w.name + '</td><td>' + w.orders + '</td><td>⭐ ' + w.rating + '</td></tr>';
-    }).join('');
+    (stats.topWorkers.length
+      ? stats.topWorkers.map(function(w){
+          return '<tr><td>' + w.name + '</td><td>' + w.orders + '</td><td>⭐ ' + w.rating + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="3" style="color:#9A9A96;text-align:center">Пока нет данных</td></tr>');
 }
 
+// Воронка: показываем только то, что реально можно измерить (создание →
+// отклик → выбор → завершение). Раньше здесь были придуманные шаги
+// "просмотрели"/"открыли детали" с коэффициентами x8/x4 — без реального
+// трекинга просмотров это были просто выдуманные числа.
 function renderFunnel(stats) {
-  var total = stats.jobs.length || 1;
+  var total = stats.totals.jobs || 1;
   var steps = [
-    { label: 'Просмотрели заказы', val: total * 8, pct: 100 },
-    { label: 'Открыли детали', val: total * 4, pct: 50 },
-    { label: 'Откликнулись', val: stats.responses.length, pct: Math.round(stats.responses.length / (total * 8) * 100) },
-    { label: 'Выбраны работодателем', val: Math.round(stats.responses.length * 0.3), pct: Math.round(stats.responses.length * 0.3 / (total * 8) * 100) },
-    { label: 'Заказ завершён', val: stats.done.length, pct: Math.round(stats.done.length / (total * 8) * 100) },
+    { label: 'Заказов создано', val: stats.totals.jobs, pct: 100 },
+    { label: 'Получили хотя бы один отклик', val: stats.totals.responses > 0 ? undefined : 0, pct: 0 },
+    { label: 'Завершено', val: stats.totals.done, pct: Math.round(stats.totals.done / total * 100) },
   ];
+  steps[1].val = stats.totals.responses;
+  steps[1].pct = Math.min(100, Math.round(stats.totals.responses / total * 100));
+
   document.getElementById('funnelData').innerHTML = steps.map(function(s){
     return '<div class="funnel-row">' +
-      '<div class="funnel-label"><span>' + s.label + '</span><span style="font-weight:700">' + s.val + ' (' + s.pct + '%)</span></div>' +
+      '<div class="funnel-label"><span>' + s.label + '</span><span style="font-weight:700">' + s.val + '</span></div>' +
       '<div class="funnel-bar"><div class="funnel-fill" style="width:' + s.pct + '%"></div></div>' +
     '</div>';
   }).join('');
 }
 
-function renderFeed() {
-  var events = [
-    { color: '#E8510A', text: 'Новый отклик на "Грузчики на переезд"', time: '2 мин назад' },
-    { color: '#1A7A4A', text: 'Заказ "Уборка офиса" завершён', time: '15 мин назад' },
-    { color: '#185FA5', text: 'Новый пользователь зарегистрировался', time: '32 мин назад' },
-    { color: '#E8510A', text: 'Новый заказ "Подсобный рабочий на стройку"', time: '1 ч назад' },
-    { color: '#B07800', text: 'Получена обратная связь от пользователя', time: '2 ч назад' },
-    { color: '#1A7A4A', text: 'Верификация паспорта одобрена', time: '3 ч назад' },
-  ];
-  document.getElementById('feedData').innerHTML = events.map(function(e){
-    return '<div class="feed-item">' +
-      '<div class="feed-dot" style="background:' + e.color + '"></div>' +
-      '<div class="feed-text">' + e.text + '</div>' +
-      '<div class="feed-time">' + e.time + '</div>' +
-    '</div>';
-  }).join('');
+function timeAgo(iso) {
+  var diffMs = Date.now() - new Date(iso).getTime();
+  var mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'только что';
+  if (mins < 60) return mins + ' мин назад';
+  var hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + ' ч назад';
+  return Math.floor(hours / 24) + ' дн назад';
+}
+
+function renderFeed(stats) {
+  var colors = { '🆕': '#E8510A', '👋': '#185FA5', '✅': '#1A7A4A', '🎉': '#B07800' };
+  document.getElementById('feedData').innerHTML = stats.feed.length
+    ? stats.feed.map(function(e){
+        var color = colors[e.text.slice(0,2)] || '#9A9A96';
+        return '<div class="feed-item">' +
+          '<div class="feed-dot" style="background:' + color + '"></div>' +
+          '<div class="feed-text">' + e.text + '</div>' +
+          '<div class="feed-time">' + timeAgo(e.time) + '</div>' +
+        '</div>';
+      }).join('')
+    : '<div style="color:#9A9A96;text-align:center;padding:20px">Пока нет активности</div>';
 }
 
 function exportCSV() {
-  var stats = getStats();
-  var csv = 'Метрика,Значение\n';
-  csv += 'Всего заказов,' + stats.jobs.length + '\n';
-  csv += 'Завершено,' + stats.done.length + '\n';
-  csv += 'Откликов,' + stats.responses.length + '\n';
-  csv += 'Доход платформы,' + stats.revenue + ' руб\n';
-  csv += 'Отзывов,' + stats.feedbacks.length + '\n';
+  getStats().then(function(stats) {
+    if (!stats) { alert('Не удалось загрузить статистику'); return; }
+    var csv = 'Метрика,Значение\n';
+    csv += 'Всего заказов,' + stats.totals.jobs + '\n';
+    csv += 'Завершено,' + stats.totals.done + '\n';
+    csv += 'Откликов,' + stats.totals.responses + '\n';
+    csv += 'Пользователей,' + stats.totals.users + '\n';
+    csv += 'Доход платформы,' + stats.totals.revenue + ' руб\n';
 
-  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'shabashka-stats-' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click();
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'shabashka-stats-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  });
 }
 
 function render() {
-  var stats = getStats();
-  renderKPI(stats);
-  renderCharts(stats);
-  renderTables(stats);
-  renderFunnel(stats);
-  renderFeed();
+  getStats().then(function(stats) {
+    if (!stats) return;
+    renderKPI(stats);
+    renderCharts(stats);
+    renderTables(stats);
+    renderFunnel(stats);
+    renderFeed(stats);
+  });
 }
 
 render();
