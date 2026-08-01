@@ -28,10 +28,23 @@ module.exports = async function handler(req, res) {
       );
 
       // Обновляем статус заказа
-      await pool.query(
-        `UPDATE jobs SET status='has_responses', updated_at=NOW() WHERE id=$1 AND status='new'`,
+      const jobRes = await pool.query(
+        `UPDATE jobs SET status='has_responses', updated_at=NOW() WHERE id=$1 AND status='new' RETURNING *`,
         [job_id]
       );
+      const job = jobRes.rows[0] || (await pool.query('SELECT * FROM jobs WHERE id=$1', [job_id])).rows[0];
+
+      if (job && job.employer_id) {
+        try {
+          const { sendPushToUser } = require('../db/push');
+          sendPushToUser(job.employer_id, {
+            title: '🎉 Новый отклик на ваш заказ',
+            body: (worker_name || 'Исполнитель') + ' откликнулся на «' + job.title + '»',
+            url: '/employer',
+            tag: 'response-' + result.rows[0].id,
+          });
+        } catch (e) { console.error('push send skip:', e.message); }
+      }
 
       return res.json({ ok: true, response: result.rows[0] });
     }
@@ -70,8 +83,8 @@ module.exports = async function handler(req, res) {
       await pool.query('UPDATE responses SET status=$1 WHERE id=$2', [status, id]);
 
       if (status === 'accepted' && job_id && worker_id) {
-        await pool.query(
-          `UPDATE jobs SET status='selected', selected_worker_id=$1, updated_at=NOW() WHERE id=$2`,
+        const jobRes = await pool.query(
+          `UPDATE jobs SET status='selected', selected_worker_id=$1, updated_at=NOW() WHERE id=$2 RETURNING *`,
           [worker_id, job_id]
         );
         // Отклоняем остальных
@@ -79,6 +92,19 @@ module.exports = async function handler(req, res) {
           `UPDATE responses SET status='rejected' WHERE job_id=$1 AND id!=$2`,
           [job_id, id]
         );
+
+        const job = jobRes.rows[0];
+        if (job) {
+          try {
+            const { sendPushToUser } = require('../db/push');
+            sendPushToUser(worker_id, {
+              title: '🎉 Вас выбрали на заказ!',
+              body: '«' + job.title + '» — работодатель принял ваш отклик',
+              url: '/my-orders',
+              tag: 'accepted-' + job_id,
+            });
+          } catch (e) { console.error('push send skip:', e.message); }
+        }
       }
 
       return res.json({ ok: true });

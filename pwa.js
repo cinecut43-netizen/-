@@ -25,11 +25,11 @@
     if (!('serviceWorker' in navigator)) return;
     if (Notification.permission !== 'default') return; // уже ответил
 
-    // Проверяем что пользователь залогинен и он исполнитель
+    // Проверяем что пользователь залогинен
     if (!window.Shabashka) return;
     var user;
     try { user = Shabashka.getUser(); } catch (e) { return; }
-    if (!user || user.role !== 'worker') return;
+    if (!user || !user.name) return;
 
     // Показываем наш собственный банер вместо стандартного браузерного попапа —
     // конверсия в согласие намного выше, когда человек понимает зачем
@@ -72,8 +72,9 @@
       Notification.requestPermission().then(function (permission) {
         if (permission === 'granted') {
           localStorage.setItem('shabashka_push_granted', '1');
-          showToast('Уведомления включены ✓');
-          startJobPolling(); // сразу начинаем следить за заказами
+          subscribeToPush().then(function (ok) {
+            showToast(ok ? 'Уведомления включены ✓' : 'Уведомления включены, но подписка не удалась — попробуйте позже');
+          });
         }
       });
     });
@@ -101,7 +102,55 @@
     setTimeout(function () { t.remove(); }, 3000);
   }
 
+  // ===== НАСТОЯЩАЯ WEB PUSH ПОДПИСКА =====
+  // Работает даже при закрытом браузере — в отличие от старого поллинга,
+  // который требовал открытой вкладки. Подписка сохраняется в БД и сервер
+  // сам решает, когда отправлять (новый заказ, отклик, сообщение и т.д).
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+    for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+
+  function subscribeToPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return Promise.resolve(false);
+    if (!window.Shabashka) return Promise.resolve(false);
+
+    return fetch('/api/vapid-public-key')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.configured || !data.publicKey) {
+          console.log('[PWA] Web Push не настроен на сервере (нет VAPID-ключей)');
+          return false;
+        }
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.getSubscription().then(function (existing) {
+            return existing || reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(data.publicKey),
+            });
+          });
+        }).then(function (subscription) {
+          return Shabashka.ensureDbUserId().then(function (userId) {
+            if (!userId) return false;
+            return fetch('/api/push-subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: userId, subscription: subscription.toJSON ? subscription.toJSON() : subscription }),
+            }).then(function (r) { return r.ok; });
+          });
+        });
+      })
+      .catch(function (e) { console.warn('[PWA] Подписка на push не удалась:', e); return false; });
+  }
+
   // ===== POLLING НОВЫХ СРОЧНЫХ ЗАКАЗОВ =====
+  // Оставлен как запасной вариант на случай, если Web Push не настроен
+  // (нет VAPID-ключей на сервере) или не поддерживается браузером —
+  // работает только пока вкладка открыта.
   var lastCheckedAt = Date.now();
   var pollingInterval = null;
 
@@ -220,6 +269,17 @@
   };
 
   // ===== ЗАПУСК =====
+  function initPushOnReturn() {
+    var granted = localStorage.getItem('shabashka_push_granted');
+    if (!(granted && Notification.permission === 'granted')) return;
+    // Переподписываемся на всякий случай (подписка могла истечь) и,
+    // если Web Push не настроен на сервере, откатываемся на поллинг —
+    // так уведомления продолжат работать даже без VAPID-ключей.
+    subscribeToPush().then(function (ok) {
+      if (!ok) setTimeout(startJobPolling, 2000);
+    });
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       registerSW();
@@ -228,9 +288,7 @@
       if (!dismissed && !granted) {
         setTimeout(askForPushPermission, 5000);
       }
-      if (granted && Notification.permission === 'granted') {
-        setTimeout(startJobPolling, 2000);
-      }
+      initPushOnReturn();
     });
   } else {
     registerSW();
@@ -239,9 +297,6 @@
     if (!dismissed && !granted) {
       setTimeout(askForPushPermission, 5000);
     }
-    // Если разрешение уже было выдано — сразу запускаем polling
-    if (granted && Notification.permission === 'granted') {
-      setTimeout(startJobPolling, 2000);
-    }
+    initPushOnReturn();
   }
 })();

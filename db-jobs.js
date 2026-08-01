@@ -75,14 +75,25 @@ module.exports = async function handler(req, res) {
          lat, lng, date, urgent || false, allow_bargain || false]
       );
 
-      return res.json({ ok: true, job: result.rows[0] });
+      const job = result.rows[0];
+      try {
+        const { sendPushToRole } = require('../db/push');
+        sendPushToRole('worker', {
+          title: urgent ? '🔥 Срочный заказ рядом!' : '💼 Новый заказ — Шабашка',
+          body: title + '\n' + Number(pay).toLocaleString('ru') + ' ₽ · ' + (location || ''),
+          url: '/?job=' + job.id,
+          tag: 'new-job-' + job.id,
+        });
+      } catch (e) { console.error('push send skip:', e.message); }
+
+      return res.json({ ok: true, job: job });
     }
 
     // PATCH /api/db-jobs?action=status — обновить статус
     if (method === 'PATCH' && action === 'status') {
       const { id, status, worker_id } = req.body;
       await pool.query(
-        `UPDATE jobs SET status=$1, selected_worker_id=$2, updated_at=NOW() WHERE id=$3`,
+        `UPDATE jobs SET status=$1, selected_worker_id=COALESCE($2, selected_worker_id), updated_at=NOW() WHERE id=$3`,
         [status, worker_id || null, id]
       );
       return res.json({ ok: true });
