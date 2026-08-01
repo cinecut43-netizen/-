@@ -270,6 +270,47 @@
       .then(function () { logAction((verified ? 'Подтвердил' : 'Снял подтверждение') + ' аккаунт исполнителя #' + id); });
   }
 
+  /* ---------- ЗАКАЗЫ (для админки — все, любого работодателя и статуса) ---------- */
+  function normalizeOrder(j) {
+    return {
+      id: j.id,
+      emoji: j.emoji || '📦',
+      title: j.title,
+      company: j.employer_name || 'Работодатель',
+      pay: parseInt(j.pay),
+      payLabel: j.pay_label || 'за день',
+      date: j.date || (j.created_at ? j.created_at.slice(0, 10) : ''),
+      status: j.status,
+      responses: parseInt(j.responses_count) || 0,
+      desc: j.description || '',
+    };
+  }
+
+  function getAllOrders(params) {
+    params = params || {};
+    var qs = Object.keys(params).filter(function(k){ return params[k]; })
+      .map(function(k){ return k + '=' + encodeURIComponent(params[k]); }).join('&');
+    return adminFetch('/api/admin-orders' + (qs ? '?' + qs : ''))
+      .then(function (data) { return data.ok ? data.jobs.map(normalizeOrder) : []; })
+      .catch(function () { return []; });
+  }
+
+  function forceCloseJob(id) {
+    return adminFetch('/api/admin-orders', { method: 'PATCH', body: JSON.stringify({ id: id, status: 'cancelled' }) })
+      .then(function () { logAction('Принудительно закрыл заказ #' + id); });
+  }
+
+  function updateJob(id, fields) {
+    var body = Object.assign({ id: id }, fields);
+    return adminFetch('/api/admin-orders', { method: 'PATCH', body: JSON.stringify(body) })
+      .then(function () { logAction('Отредактировал заказ #' + id); });
+  }
+
+  function deleteJobAdmin(id) {
+    return adminFetch('/api/admin-orders?id=' + id, { method: 'DELETE' })
+      .then(function () { logAction('Удалил заказ #' + id); });
+  }
+
   /* ---------- ЖАЛОБЫ ---------- */
   const COMPLAINTS_KEY = 'shabashka_admin_complaints';
 
@@ -523,12 +564,18 @@
 
     getAllUsers: getAllUsers,
     getUserById: getUserById,
-    updateUser: updateUser,
     blockUser: blockUser,
     unblockUser: unblockUser,
     deleteUser: deleteUser,
     changeUserRole: changeUserRole,
     setWorkerVerified: setWorkerVerified,
+
+    getAllOrders: getAllOrders,
+    forceCloseJob: forceCloseJob,
+    updateJob: updateJob,
+    deleteJobAdmin: deleteJobAdmin,
+
+    getAdminToken: getAdminToken,
 
     getComplaints: getComplaints,
     resolveComplaint: resolveComplaint,

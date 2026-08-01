@@ -113,15 +113,10 @@ if (rendered) {
   `;
 
   function renderTable() {
-    let jobs = Shabashka.getAllJobs();
+    document.getElementById('ordersTbody').innerHTML = `<tr><td colspan="6"><div class="empty-state">Загрузка…</div></td></tr>`;
 
-    if (currentQuery) {
-      const q = currentQuery.toLowerCase();
-      jobs = jobs.filter(j => j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q));
-    }
-    if (currentStatusFilter !== 'all') jobs = jobs.filter(j => j.status === currentStatusFilter);
-
-    document.getElementById('resultCount').textContent = jobs.length + ' из ' + Shabashka.getAllJobs().length;
+    A.getAllOrders({ status: currentStatusFilter !== 'all' ? currentStatusFilter : 'all', q: currentQuery || undefined }).then(function (jobs) {
+    document.getElementById('resultCount').textContent = jobs.length + ' заказов';
 
     if (!jobs.length) {
       document.getElementById('ordersTbody').innerHTML = `<tr><td colspan="6"><div class="empty-state">Заказов по этому запросу не нашли</div></td></tr>`;
@@ -152,25 +147,27 @@ if (rendered) {
         </td>
       </tr>`;
     }).join('');
+    });
   }
 
   window.forceClose = function (id) {
     if (!confirm('Принудительно закрыть заказ? Статус станет «Отменён».')) return;
-    Shabashka.updateJobStatus(id, 'cancelled');
-    A.logAction('Принудительно закрыл заказ #' + id);
-    renderTable();
+    A.forceCloseJob(id).then(renderTable);
   };
 
   window.deleteJob = function (id) {
-    if (!confirm('Удалить заказ безвозвратно?')) return;
-    Shabashka.updateJobStatus(id, 'cancelled');
-    A.logAction('Удалил заказ #' + id);
-    renderTable();
+    if (!confirm('Удалить заказ безвозвратно? Это действие нельзя отменить.')) return;
+    A.deleteJobAdmin(id).then(renderTable);
   };
 
   window.openJobModal = function (id) {
-    const j = Shabashka.getJob(id);
-    if (!j) return;
+    document.getElementById('jobModalTitle').textContent = 'Загрузка…';
+    document.getElementById('jobModalBody').innerHTML = '';
+    document.getElementById('jobModal').classList.add('open');
+
+    A.getAllOrders({}).then(function (jobs) {
+    const j = jobs.find(x => x.id === id);
+    if (!j) { document.getElementById('jobModalBody').innerHTML = 'Заказ не найден'; return; }
     document.getElementById('jobModalTitle').textContent = j.title;
     const canEdit = A.canDo('order.edit');
     const canChangeStatus = A.canDo('order.changeStatus');
@@ -202,12 +199,12 @@ if (rendered) {
       </div>
 
       <div class="modal-section-title">Отклики (${j.responses || 0})</div>
-      <div id="jobResponses">${renderFakeResponses(j)}</div>
+      <div id="jobResponses">${renderResponsesSummary(j)}</div>
     `;
-    document.getElementById('jobModal').classList.add('open');
+    });
   };
 
-  function renderFakeResponses(j) {
+  function renderResponsesSummary(j) {
     if (!j.responses) return '<div class="resp-item" style="color:var(--gray)">Откликов пока нет</div>';
     return `<div class="resp-item" style="color:var(--gray)">${j.responses} исполнителей откликнулись на этот заказ. Подробный список откликов с именами доступен в кабинете работодателя.</div>`;
   }
@@ -218,24 +215,20 @@ if (rendered) {
     const desc = document.getElementById('editJobDesc').value;
     const status = document.getElementById('editJobStatus').value;
 
+    const fields = {};
     if (A.canDo('order.edit')) {
-      Shabashka.updateJobStatus(id, status);
-      const userJobsRaw = localStorage.getItem('shabashka_user_jobs');
-      const userJobs = userJobsRaw ? JSON.parse(userJobsRaw) : [];
-      const idx = userJobs.findIndex(x => x.id === id);
-      if (idx !== -1) {
-        userJobs[idx].title = title;
-        userJobs[idx].pay = pay;
-        userJobs[idx].desc = desc;
-        localStorage.setItem('shabashka_user_jobs', JSON.stringify(userJobs));
-      }
-    } else if (A.canDo('order.changeStatus')) {
-      Shabashka.updateJobStatus(id, status);
+      fields.title = title;
+      fields.pay = pay;
+      fields.description = desc;
+    }
+    if (A.canDo('order.edit') || A.canDo('order.changeStatus')) {
+      fields.status = status;
     }
 
-    A.logAction('Отредактировал заказ #' + id);
-    closeJobModal();
-    renderTable();
+    A.updateJob(id, fields).then(function () {
+      closeJobModal();
+      renderTable();
+    });
   };
 
   window.closeJobModal = function () { document.getElementById('jobModal').classList.remove('open'); };
