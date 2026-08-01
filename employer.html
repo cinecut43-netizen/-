@@ -522,6 +522,7 @@ function loadOrders() {
     responses: j.responses || 0,
     addr: j.location,
     desc: j.desc,
+    cat: j.cat,
   }));
 }
 
@@ -542,12 +543,15 @@ let ORDERS = loadOrders();
             icon: j.emoji || '📦',
             title: j.title,
             date: j.date || 'Сегодня',
+            createdAt: j.created_at,
+            updatedAt: j.updated_at,
             pay: parseInt(j.pay),
             people: j.people || 1,
             status: j.status,
             responses: parseInt(j.responses_count) || 0,
             addr: j.location,
             desc: j.description,
+            cat: j.category,
           };
         });
         var dbIds = dbOrders.map(function(o){ return o.id; });
@@ -663,16 +667,46 @@ function getAnalyticsPage() {
   const done = ORDERS.filter(o => o.status === 'done');
   const totalSpent = done.reduce((s,o) => s + o.pay * o.people, 0);
   const avgPay = done.length ? Math.round(totalSpent / done.length) : 0;
-  const avgRating = 4.8;
+  const avgRating = Shabashka.getUser().rating || 0;
+  const avgRatingLabel = Shabashka.getUser().reviewsCount > 0 ? avgRating.toFixed(1) : '—';
 
-  // Расходы по месяцам (последние 6 мес, демо)
-  const months = ['Янв','Фев','Мар','Апр','Май','Июн'];
-  const spendData = [18400, 22100, 19500, 31200, 27800, Math.round(totalSpent * 1.1)];
-  const maxSpend = Math.max(...spendData);
+  // Расходы по месяцам — реальные, по дате завершения заказа (updatedAt).
+  // Раньше первые 5 месяцев были захардкожены (18400, 22100, ...) —
+  // выдуманные цифры, никак не связанные с реальными заказами.
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ label: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'][d.getMonth()], year: d.getFullYear(), month: d.getMonth() });
+  }
+  const spendData = months.map(function(m) {
+    return done
+      .filter(function(o) {
+        const t = o.updatedAt ? new Date(o.updatedAt) : null;
+        return t && t.getFullYear() === m.year && t.getMonth() === m.month;
+      })
+      .reduce(function(s,o){ return s + o.pay * o.people; }, 0);
+  });
+  const maxSpend = Math.max.apply(null, spendData.concat([1]));
+
+  // Тренды — реальное сравнение с предыдущим месяцем, а не зашитые
+  // "+2" и "-5%" на все случаи жизни.
+  const thisMonthCount = done.filter(function(o){
+    const t = o.updatedAt ? new Date(o.updatedAt) : null;
+    return t && t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth();
+  }).length;
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthCount = done.filter(function(o){
+    const t = o.updatedAt ? new Date(o.updatedAt) : null;
+    return t && t.getFullYear() === lastMonthDate.getFullYear() && t.getMonth() === lastMonthDate.getMonth();
+  }).length;
+  const ordersTrend = thisMonthCount - lastMonthCount;
+  const ordersTrendLabel = lastMonthCount === 0 && thisMonthCount === 0 ? 'Пока нет заказов' :
+    (ordersTrend >= 0 ? '↑ +' : '↓ ') + ordersTrend + ' к прошлому мес.';
 
   // Заказы по категориям
   const cats = {};
-  ORDERS.forEach(o => { cats[o.cat] = (cats[o.cat]||0) + 1; });
+  ORDERS.forEach(o => { if (o.cat) cats[o.cat] = (cats[o.cat]||0) + 1; });
   const catLabels = { move:'Переезд', build:'Стройка', clean:'Уборка', event:'Ивент', other:'Прочее' };
   const catColors = { move:'#E8510A', build:'#185FA5', clean:'#1A7A4A', event:'#9B59B6', other:'#854F0B' };
   const catEntries = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
@@ -685,13 +719,13 @@ function getAnalyticsPage() {
     const h = Math.round((spendData[i] / maxSpend) * chartH);
     const x = padLeft + i * (barW + barGap);
     const y = chartH - h + 16;
-    const isLast = i === months.length - 1;
-    const val = (spendData[i] / 1000).toFixed(1) + 'к';
+    const isCurrent = i === months.length - 1;
+    const val = spendData[i] >= 1000 ? (spendData[i] / 1000).toFixed(1) + 'к' : String(spendData[i]);
     return `
-      <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="6"
-        fill="${isLast ? '#E8510A' : '#F4F3EF'}" stroke="${isLast ? '#B33D06' : '#E5E4E0'}" stroke-width="1"/>
-      ${h > 28 ? `<text x="${x + barW/2}" y="${y + h/2 + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="${isLast ? '#fff' : '#6B6B67'}">${val}</text>` : ''}
-      <text x="${x + barW/2}" y="${chartH + padBottom + 4}" text-anchor="middle" font-size="11" fill="#9A9A96">${m}</text>
+      <rect x="${x}" y="${y}" width="${barW}" height="${Math.max(h,2)}" rx="6"
+        fill="${isCurrent ? '#E8510A' : '#F4F3EF'}" stroke="${isCurrent ? '#B33D06' : '#E5E4E0'}" stroke-width="1"/>
+      ${h > 28 ? `<text x="${x + barW/2}" y="${y + h/2 + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="${isCurrent ? '#fff' : '#6B6B67'}">${val}</text>` : ''}
+      <text x="${x + barW/2}" y="${chartH + padBottom + 4}" text-anchor="middle" font-size="11" fill="#9A9A96">${m.label}</text>
     `;
   }).join('');
   // Горизонтальные линии
@@ -720,14 +754,13 @@ function getAnalyticsPage() {
     </div>`;
   }).join('') || '<div style="color:var(--gray);font-size:13px;text-align:center;padding:20px">Нет данных</div>';
 
-  // Топ исполнителей из откликов
-  const allResp = Shabashka.getAllResponses().filter(r => r.status === 'accepted');
-  const topWorkers = allResp.slice(0, 4).map(r => `
+  // Топ исполнителей из реальных откликов этого работодателя
+  const topWorkers = EMPLOYER_RESPONSES.filter(r => r.status === 'accepted').slice(0, 4).map(r => `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div style="width:36px;height:36px;border-radius:50%;background:${r.workerColor||'#E8510A'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${r.workerName[0]}</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:${colorFromId(r.worker_id)};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${(r.worker_name||'?')[0]}</div>
       <div style="flex:1">
-        <div style="font-size:13.5px;font-weight:600">${r.workerName}</div>
-        <div style="font-size:12px;color:var(--gray)">${r.workerRating}</div>
+        <div style="font-size:13.5px;font-weight:600">${r.worker_name || 'Исполнитель'}</div>
+        <div style="font-size:12px;color:var(--gray)">на «${r.job_title}»</div>
       </div>
       <div style="font-size:13px;font-weight:700;color:var(--green)">✓ Принят</div>
     </div>
@@ -738,22 +771,22 @@ function getAnalyticsPage() {
   <div class="stats-row" style="margin-bottom:20px">
     <div class="stat-card">
       <div class="stat-card-label">Всего потрачено</div>
-      <div class="stat-card-num" style="color:var(--orange)">${Math.round(totalSpent * 1.1).toLocaleString('ru')} ₽</div>
+      <div class="stat-card-num" style="color:var(--orange)">${totalSpent.toLocaleString('ru')} ₽</div>
       <div class="stat-card-sub" style="color:var(--gray)">Без комиссии</div>
     </div>
     <div class="stat-card">
       <div class="stat-card-label">Средний чек заказа</div>
       <div class="stat-card-num">${avgPay.toLocaleString('ru')} ₽</div>
-      <div class="stat-card-sub up">↓ −5% к прошлому мес.</div>
+      <div class="stat-card-sub" style="color:var(--gray)">${done.length ? 'По ' + done.length + ' заказ' + (done.length===1?'у':'ам') : 'Пока нет завершённых'}</div>
     </div>
     <div class="stat-card">
       <div class="stat-card-label">Выполнено заказов</div>
       <div class="stat-card-num" style="color:var(--green)">${done.length}</div>
-      <div class="stat-card-sub up">↑ +2 к прошлому мес.</div>
+      <div class="stat-card-sub" style="color:var(--gray)">${ordersTrendLabel}</div>
     </div>
     <div class="stat-card">
       <div class="stat-card-label">Средний рейтинг</div>
-      <div class="stat-card-num">⭐ ${avgRating}</div>
+      <div class="stat-card-num">⭐ ${avgRatingLabel}</div>
       <div class="stat-card-sub" style="color:var(--gray)">Ваши исполнители</div>
     </div>
   </div>
@@ -1658,6 +1691,7 @@ function submitDisputeForm() {
   renderPage();
 }
 
+Shabashka.refreshUserFromDb().then(function(){ if (currentPage === 'analytics') renderPage(); });
 renderPage();
 </script>
 
