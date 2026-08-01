@@ -315,9 +315,9 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
     <div class="section-title">Рейтинг и оценки</div>
     <div class="rating-main">
       <div class="big-rating">
-        <div class="big-num">0</div>
-        <div class="stars-row">⭐⭐⭐⭐⭐</div>
-        <div class="rating-count">0 отзывов</div>
+        <div class="big-num" id="bigRatingNum">0</div>
+        <div class="stars-row" id="bigRatingStars">⭐⭐⭐⭐⭐</div>
+        <div class="rating-count" id="bigRatingCount">0 отзывов</div>
       </div>
       <div class="bars" id="ratingBars"></div>
     </div>
@@ -579,6 +579,13 @@ function renderHero() {
 
   document.getElementById('profileName').textContent = u.name;
   document.getElementById('statOrders').textContent = u.completedOrders;
+
+  const bigNum = document.getElementById('bigRatingNum');
+  const bigStars = document.getElementById('bigRatingStars');
+  const bigCount = document.getElementById('bigRatingCount');
+  if (bigNum) bigNum.textContent = u.reviewsCount > 0 ? u.rating.toFixed(1) : '—';
+  if (bigStars) bigStars.textContent = '⭐'.repeat(Math.round(u.rating)) + '☆'.repeat(5 - Math.round(u.rating));
+  if (bigCount) bigCount.textContent = u.reviewsCount + ' ' + (u.reviewsCount === 1 ? 'отзыв' : u.reviewsCount < 5 ? 'отзыва' : 'отзывов');
 
   const avatarBox = document.getElementById('avatarBox');
   avatarBox.innerHTML = u.photo
@@ -884,6 +891,9 @@ document.getElementById('photoInput').addEventListener('change', function (e) {
   reader.readAsDataURL(file);
 });
 
+Shabashka.refreshUserFromDb().then(function() {
+  renderHero(); renderVerification(); renderBars(); renderActiveOrders(); renderHistory(); renderReviews();
+});
 renderHero(); renderVerification(); renderBars(); renderActiveOrders(); renderHistory(); renderReviews();
 </script>
 <style>

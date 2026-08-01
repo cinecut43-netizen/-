@@ -573,6 +573,7 @@ function showToast(msg) {
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
+Shabashka.refreshUserFromDb().then(function(){ renderBalance(); });
 renderBalance();
 renderChart('month');
 renderTx();

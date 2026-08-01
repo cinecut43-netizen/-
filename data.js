@@ -275,6 +275,27 @@
       .catch(function () { return null; });
   }
 
+  // Подтягивает актуальные rating/reviews_count/jobs_done из БД — их
+  // пересчитывает сервер при каждом новом отзыве, а локальная копия
+  // пользователя об этом ничего не знает, пока мы явно не спросим.
+  function refreshUserFromDb() {
+    const id = getUser().id;
+    if (!id) return Promise.resolve(null);
+    return fetch('/api/db-users?id=' + id)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok && data.user) {
+          DEFAULT_USER.rating = Number(data.user.rating) || 0;
+          DEFAULT_USER.reviewsCount = Number(data.user.reviews_count) || 0;
+          DEFAULT_USER.completedOrders = Number(data.user.jobs_done) || 0;
+          DEFAULT_USER.verified.passport = !!data.user.verified;
+          return DEFAULT_USER;
+        }
+        return null;
+      })
+      .catch(function () { return null; });
+  }
+
   function logout() {
     localStorage.removeItem('shabashka_logged_in');
   }
@@ -538,6 +559,29 @@
       date: todayLabel(),
     });
     localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+
+    // Синхронизируем с БД — именно там пересчитывается средний рейтинг
+    // исполнителя (users.rating), локальная копия сама по себе на него
+    // не влияет.
+    ensureDbUserId().then(function (reviewerId) {
+      if (!reviewerId) return;
+      fetch('/api/db-jobs?action=get&id=' + jobId)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var targetId = data.ok && data.job ? data.job.selected_worker_id : null;
+          if (!targetId) return;
+          return fetch('/api/db-reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              job_id: jobId, reviewer_id: reviewerId, target_id: targetId,
+              rating: rating, text: text.trim(), type: 'worker',
+            }),
+          });
+        })
+        .catch(function () { console.log('БД недоступна, отзыв сохранён только локально'); });
+    });
+
     return { ok: true };
   }
 
@@ -595,6 +639,27 @@
       reviewerName: getUser().name || 'Исполнитель',
     });
     localStorage.setItem(EMPLOYER_REVIEWS_KEY, JSON.stringify(reviews));
+
+    // Синхронизируем с БД — пересчёт рейтинга работодателя происходит там же.
+    ensureDbUserId().then(function (reviewerId) {
+      if (!reviewerId) return;
+      fetch('/api/db-jobs?action=get&id=' + jobId)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var targetId = data.ok && data.job ? data.job.employer_id : null;
+          if (!targetId) return;
+          return fetch('/api/db-reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              job_id: jobId, reviewer_id: reviewerId, target_id: targetId,
+              rating: rating, text: text.trim(), type: 'employer',
+            }),
+          });
+        })
+        .catch(function () { console.log('БД недоступна, отзыв сохранён только локально'); });
+    });
+
     return { ok: true };
   }
 
@@ -1042,6 +1107,7 @@
     isLoggedIn: isLoggedIn,
     completeRegistration: completeRegistration,
     ensureDbUserId: ensureDbUserId,
+    refreshUserFromDb: refreshUserFromDb,
     logout: logout,
     // PRO подписка
     PRO_PLANS: PRO_PLANS,
