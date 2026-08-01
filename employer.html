@@ -527,6 +527,40 @@ function loadOrders() {
 
 let ORDERS = loadOrders();
 
+// Догружаем заказы этого работодателя из БД — без этого кабинет показывал
+// только то, что было создано в ЭТОМ браузере на ЭТОМ устройстве.
+(function loadOrdersFromDB() {
+  Shabashka.ensureDbUserId().then(function (employerId) {
+    if (!employerId) return;
+    fetch('/api/db-jobs?employer_id=' + employerId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data.ok || !data.jobs) return;
+        var dbOrders = data.jobs.map(function(j) {
+          return {
+            id: j.id,
+            icon: j.emoji || '📦',
+            title: j.title,
+            date: j.date || 'Сегодня',
+            pay: parseInt(j.pay),
+            people: j.people || 1,
+            status: j.status,
+            responses: parseInt(j.responses_count) || 0,
+            addr: j.location,
+            desc: j.description,
+          };
+        });
+        var dbIds = dbOrders.map(function(o){ return o.id; });
+        // БД — источник истины там, где заказ уже там есть; локальные
+        // добавляем только если их ещё нет в БД (например, БД была недоступна
+        // в момент создания).
+        ORDERS = dbOrders.concat(ORDERS.filter(function(o){ return dbIds.indexOf(o.id) === -1; }));
+        renderPage();
+      })
+      .catch(function(){ console.log('БД недоступна, показываем локальные заказы'); });
+  });
+})();
+
 const ACTIVITY = [
   { color:'#E8510A', text:'<b>Дмитрий К.</b> откликнулся на «Разгрузка фуры»', time:'10 мин' },
   { color:'#1A7A4A', text:'Заказ <b>«Официанты на корпоратив»</b> успешно завершён', time:'2 ч' },
@@ -1282,8 +1316,50 @@ async function submitOrder() {
     }
   }
 
-  // Сначала сохраняем локально
-  Shabashka.addJob({
+  // Сначала пишем в БД — получаем настоящий id, и уже под ним сохраняем
+  // локальную копию. Раньше локальная и БД-копии заказа получали РАЗНЫЕ id
+  // (каждая сторона нумеровала сама), из-за чего отклики из БД не находили
+  // "свой" заказ в кабинете работодателя.
+  const dbUserId = await Shabashka.ensureDbUserId();
+  let dbJobId = null;
+
+  if (dbUserId) {
+    try {
+      const dbRes = await fetch('/api/db-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employer_id: dbUserId,
+          title: title,
+          description: document.getElementById('newDesc').value,
+          category: catInfo.cat,
+          emoji: catInfo.emoji,
+          pay: parseInt(pay),
+          pay_label: 'за день',
+          people: parseInt(document.getElementById('newCount').value) || 1,
+          location: addr || 'Адрес не указан',
+          address: addr,
+          lat: lat,
+          lng: lng,
+          date: 'Сегодня',
+          urgent: document.getElementById('newUrgent').checked,
+          allow_bargain: document.getElementById('newAllowBargain').checked,
+        })
+      });
+      const dbData = await dbRes.json();
+      if (dbData.ok && dbData.job) {
+        dbJobId = dbData.job.id;
+        console.log('✅ Заказ сохранён в БД, id=' + dbJobId);
+      }
+    } catch(e) {
+      console.log('БД недоступна, заказ сохранён только локально');
+    }
+  } else {
+    console.log('Нет id пользователя в БД — заказ сохранён только локально');
+  }
+
+  // Локальная копия — с тем же id, что и в БД, если запись удалась
+  Shabashka.addJob(Object.assign({
     cat: catInfo.cat,
     emoji: catInfo.emoji,
     title: title,
@@ -1299,40 +1375,7 @@ async function submitOrder() {
     lng: lng,
     desc: document.getElementById('newDesc').value,
     requirements: '—',
-  });
-
-  // Сохраняем в базу данных
-  const dbUserId = await Shabashka.ensureDbUserId();
-  if (!dbUserId) {
-    console.log('Нет id пользователя в БД — заказ сохранён только локально');
-  } else {
-  try {
-    await fetch('/api/db-jobs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        employer_id: dbUserId,
-        title: title,
-        description: document.getElementById('newDesc').value,
-        category: catInfo.cat,
-        emoji: catInfo.emoji,
-        pay: parseInt(pay),
-        pay_label: 'за день',
-        people: parseInt(document.getElementById('newCount').value) || 1,
-        location: addr || 'Адрес не указан',
-        address: addr,
-        lat: lat,
-        lng: lng,
-        date: 'Сегодня',
-        urgent: document.getElementById('newUrgent').checked,
-        allow_bargain: document.getElementById('newAllowBargain').checked,
-      })
-    });
-    console.log('✅ Заказ сохранён в БД');
-  } catch(e) {
-    console.log('БД недоступна, заказ сохранён локально');
-  }
-  }
+  }, dbJobId ? { id: dbJobId } : {}));
 
   // Уведомление в Telegram
   try {
