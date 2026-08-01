@@ -136,7 +136,14 @@
     DEFAULT_USER.photo = savedPhoto || null;
 
     const savedRegisteredAt = localStorage.getItem('shabashka_registered_at');
-    if (savedRegisteredAt) DEFAULT_USER.registeredAt = savedRegisteredAt;
+    if (savedRegisteredAt) {
+      DEFAULT_USER.registeredAt = savedRegisteredAt;
+    } else if (isLoggedIn()) {
+      // Уже зарегистрированный пользователь, у которого дата ещё не была
+      // зафиксирована (баг в старой версии) — фиксируем сейчас, чтобы
+      // дальше дата не менялась при каждом заходе.
+      localStorage.setItem('shabashka_registered_at', DEFAULT_USER.registeredAt);
+    }
 
     const savedVerified = localStorage.getItem('shabashka_verified');
     if (savedVerified) {
@@ -180,6 +187,11 @@
     localStorage.setItem('shabashka_role', data.role || 'worker');
     if (data.name) localStorage.setItem('shabashka_name', data.name);
     if (data.company) localStorage.setItem('shabashka_company', data.company);
+    // Фиксируем дату регистрации ОДИН раз — без этого она "плыла" на
+    // текущую дату при каждом заходе на сайт, потому что нигде не сохранялась.
+    if (!localStorage.getItem('shabashka_registered_at')) {
+      localStorage.setItem('shabashka_registered_at', new Date().toISOString().slice(0,10));
+    }
   }
 
   function logout() {
