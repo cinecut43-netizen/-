@@ -329,17 +329,15 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
     </div>
   </div>
 
+  <div class="card" id="bioCard" style="display:none">
+    <div class="section-title">О себе</div>
+    <div id="bioText" style="font-size:14px;color:#14151A;line-height:1.5"></div>
+  </div>
+
   <div class="card">
     <div class="section-title">Навыки</div>
-    <div class="skills-grid">
-      
-      
-      
-      
-      
-      
-      
-      
+    <div class="skills-grid" id="skillsGrid">
+      <div id="skillsEmpty" style="font-size:13px;color:var(--gray)">Навыки пока не указаны</div>
     </div>
   </div>
 
@@ -397,39 +395,34 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Имя</label>
-        <input class="form-input" id="editName" value="Дмитрий Козлов">
+        <input class="form-input" id="editName">
       </div>
       <div class="form-group">
         <label class="form-label">Возраст</label>
-        <input class="form-input" type="number" id="editAge" min="18" max="80" value="32">
+        <input class="form-input" type="number" id="editAge" min="18" max="80">
       </div>
     </div>
     <div class="form-group">
       <label class="form-label">Город</label>
-      <input class="form-input" id="editCity" value="Москва">
+      <input class="form-input" id="editCity">
     </div>
     <div class="form-group">
       <label class="form-label">О себе</label>
-      <textarea class="form-textarea">Опытный разнорабочий с 5-летним стажем. Всегда прихожу вовремя, работаю аккуратно и быстро.</textarea>
+      <textarea class="form-textarea" id="editBio" placeholder="Расскажите работодателям о своём опыте"></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Основная категория</label>
-      <select class="form-select">
-        <option>📦 Грузчик / переезды</option>
-        <option>🔨 Строительство</option>
-        <option>🧹 Уборка</option>
-        <option>🎉 Ивент / промо</option>
-        <option>⚡ Разное</option>
-      </select>
+      <label class="form-label">Навыки</label>
+      <input class="form-input" id="editSkills" placeholder="Например: грузчик, сборка мебели, покраска">
+      <div style="font-size:12px;color:var(--gray);margin-top:4px">Через запятую</div>
     </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Телефон</label>
-        <input class="form-input" value="+7 (916) 555-01-23">
+        <input class="form-input" id="editPhone" disabled style="opacity:.6">
       </div>
       <div class="form-group">
         <label class="form-label">Желаемая ставка (₽/день)</label>
-        <input class="form-input" type="number" value="3000">
+        <input class="form-input" type="number" id="editRate" min="0" placeholder="Не указана">
       </div>
     </div>
     <button class="save-btn" onclick="saveProfile()">Сохранить</button>
@@ -603,6 +596,25 @@ function renderHero() {
   const verifiedBadge = document.getElementById('verifiedBadge');
   const fullyVerified = u.verified.phone && u.verified.passport;
   verifiedBadge.style.display = fullyVerified ? 'flex' : 'none';
+
+  // О себе
+  const bioCard = document.getElementById('bioCard');
+  if (u.bio) {
+    bioCard.style.display = '';
+    document.getElementById('bioText').textContent = u.bio;
+  } else {
+    bioCard.style.display = 'none';
+  }
+
+  // Навыки
+  const skillsGrid = document.getElementById('skillsGrid');
+  if (u.skills && u.skills.length) {
+    skillsGrid.innerHTML = u.skills.map(function(s) {
+      return '<span class="skill-tag">' + s + '</span>';
+    }).join('');
+  } else {
+    skillsGrid.innerHTML = '<div id="skillsEmpty" style="font-size:13px;color:var(--gray)">Навыки пока не указаны</div>';
+  }
 
   // PRO бейдж и кнопка (десктоп)
   const proWrap = document.getElementById('proBadgeWrap');
@@ -817,8 +829,12 @@ function submitPassport() {
 function openEdit() {
   const u = Shabashka.getUser();
   document.getElementById('editName').value = u.name;
-  document.getElementById('editAge').value = u.age;
+  document.getElementById('editAge').value = u.age || '';
   document.getElementById('editCity').value = u.city;
+  document.getElementById('editBio').value = u.bio || '';
+  document.getElementById('editSkills').value = (u.skills || []).join(', ');
+  document.getElementById('editRate').value = u.dayRate || '';
+  document.getElementById('editPhone').value = u.phone ? Shabashka.maskPhone(u.phone) : 'Не подтверждён';
   document.getElementById('editModal').classList.add('open');
 }
 function closeEdit() { document.getElementById('editModal').classList.remove('open'); }
@@ -827,13 +843,16 @@ function saveProfile() {
   const name = document.getElementById('editName').value.trim();
   const age = document.getElementById('editAge').value;
   const city = document.getElementById('editCity').value.trim();
+  const bio = document.getElementById('editBio').value.trim();
+  const skills = document.getElementById('editSkills').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  const dayRate = document.getElementById('editRate').value;
 
   if (!name || !city) {
     alert('Заполните имя и город');
     return;
   }
 
-  Shabashka.updateProfile({ name, age, city });
+  Shabashka.updateProfile({ name, age, city, bio, skills, dayRate });
   renderHero();
   closeEdit();
 }

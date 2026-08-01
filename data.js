@@ -30,6 +30,10 @@
     initials: '',
     age: null,
     city: '',
+    bio: '',
+    skills: [],
+    dayRate: null, // желаемая ставка ₽/день, null = не указана
+    phone: '',
     photo: null, // base64 data-URL, если пользователь загрузил фото
     registeredAt: new Date().toISOString().slice(0,10), // ISO-дата для расчёта «на платформе с...»
     role: localStorage.getItem('shabashka_role') || 'worker',
@@ -137,6 +141,19 @@
     const savedCity = localStorage.getItem('shabashka_city');
     if (savedCity) DEFAULT_USER.city = savedCity;
 
+    const savedBio = localStorage.getItem('shabashka_bio');
+    if (savedBio) DEFAULT_USER.bio = savedBio;
+
+    const savedSkills = localStorage.getItem('shabashka_skills');
+    if (savedSkills) {
+      try { DEFAULT_USER.skills = JSON.parse(savedSkills); } catch (e) { /* оставляем дефолт */ }
+    }
+
+    const savedRate = localStorage.getItem('shabashka_day_rate');
+    DEFAULT_USER.dayRate = savedRate ? Number(savedRate) : null;
+
+    DEFAULT_USER.phone = localStorage.getItem('shabashka_phone') || '';
+
     const savedPhoto = localStorage.getItem('shabashka_photo');
     DEFAULT_USER.photo = savedPhoto || null;
 
@@ -165,7 +182,34 @@
     if (fields.age !== undefined && fields.age !== null && fields.age !== '') {
       localStorage.setItem('shabashka_age', String(fields.age));
     }
+    if (fields.bio !== undefined) localStorage.setItem('shabashka_bio', fields.bio);
+    if (fields.skills !== undefined) localStorage.setItem('shabashka_skills', JSON.stringify(fields.skills));
+    if (fields.dayRate !== undefined && fields.dayRate !== null && fields.dayRate !== '') {
+      localStorage.setItem('shabashka_day_rate', String(fields.dayRate));
+    }
     if (fields.photo) localStorage.setItem('shabashka_photo', fields.photo);
+
+    // Синхронизируем с БД в фоне — чтобы новый город/навыки/ставка были
+    // видны другим пользователям в поиске (workers.html), а не только
+    // на этом устройстве.
+    if (fields.city || fields.bio !== undefined || fields.skills !== undefined || fields.dayRate !== undefined) {
+      ensureDbUserId().then(function (id) {
+        if (!id) return;
+        fetch('/api/db-users?action=update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: id,
+            name: fields.name || getUser().name,
+            company: getUser().company,
+            city: fields.city || null,
+            bio: fields.bio !== undefined ? fields.bio : null,
+            skills: fields.skills !== undefined ? fields.skills : null,
+            day_rate: fields.dayRate !== undefined && fields.dayRate !== '' ? Number(fields.dayRate) : null,
+          }),
+        }).catch(function () { /* офлайн — останется хотя бы локально */ });
+      });
+    }
   }
 
   function initialsFromName(name) {
