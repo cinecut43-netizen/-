@@ -240,31 +240,135 @@
 
   // ===== КНОПКА "УСТАНОВИТЬ ПРИЛОЖЕНИЕ" =====
   // A2HS (Add to Home Screen) — появляется автоматически в Chrome/Android
-  // когда браузер видит manifest + SW. Можно перехватить событие
-  // и показать свою кнопку вместо стандартного пузыря.
+  // когда браузер видит manifest + SW. Перехватываем событие и показываем
+  // свой баннер вместо стандартного пузыря (конверсия выше, когда понятно
+  // зачем). ВАЖНО: раньше здесь стандартный попап подавлялся (preventDefault),
+  // а свой баннер никогда не был реализован — установка была никак недоступна.
   var deferredPrompt = null;
+  var INSTALL_DISMISSED_KEY = 'shabashka_install_dismissed';
+
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  function isIOS() {
+    return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+  }
+
+  function showInstallButton() {
+    if (isStandalone()) return; // уже установлено
+    if (localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
+    if (document.getElementById('install-banner')) return;
+    if (document.getElementById('push-banner')) {
+      // Не показываем два баннера поверх друг друга — подождём, пока
+      // человек ответит на вопрос про уведомления, и попробуем позже.
+      setTimeout(showInstallButton, 4000);
+      return;
+    }
+
+    var banner = document.createElement('div');
+    banner.id = 'install-banner';
+    banner.innerHTML = [
+      '<div style="display:flex;align-items:center;gap:12px;flex:1">',
+      '<span style="font-size:24px">📲</span>',
+      '<div>',
+      '<div style="font-size:13.5px;font-weight:600;color:#14151A">Установить Шабашку на телефон?</div>',
+      '<div style="font-size:12px;color:#6B6B67;margin-top:2px">Быстрый доступ с экрана, без браузера</div>',
+      '</div>',
+      '</div>',
+      '<button id="install-yes" style="padding:8px 16px;background:#E8510A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">Установить</button>',
+      '<button id="install-no" style="padding:8px 12px;background:none;border:none;color:#6B6B67;font-size:13px;cursor:pointer;font-family:inherit">Не сейчас</button>',
+    ].join('');
+
+    Object.assign(banner.style, {
+      position: 'fixed', bottom: '80px', left: '16px', right: '16px',
+      background: '#fff', border: '1px solid #E5E4E0', borderRadius: '14px',
+      padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px',
+      zIndex: '300', boxShadow: '0 4px 24px rgba(0,0,0,0.10)', maxWidth: '480px', margin: '0 auto',
+    });
+
+    document.body.appendChild(banner);
+
+    document.getElementById('install-yes').addEventListener('click', function () {
+      banner.remove();
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (result) {
+          deferredPrompt = null;
+          if (result.outcome === 'accepted') showToast('Приложение установлено ✓');
+        });
+      } else if (isIOS()) {
+        showIOSInstallInstructions();
+      }
+    });
+
+    document.getElementById('install-no').addEventListener('click', function () {
+      banner.remove();
+      localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
+    });
+  }
+
+  // iOS Safari не поддерживает beforeinstallprompt вообще — единственный
+  // способ установить PWA там: Поделиться → На экран «Домой», вручную.
+  function showIOSInstallInstructions() {
+    var overlay = document.createElement('div');
+    overlay.id = 'ios-install-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end';
+    overlay.addEventListener('click', function () { overlay.remove(); });
+
+    var sheet = document.createElement('div');
+    sheet.style.cssText = 'background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;margin:0 auto';
+    sheet.addEventListener('click', function (e) { e.stopPropagation(); });
+    sheet.innerHTML = [
+      '<div style="font-size:16px;font-weight:700;margin-bottom:12px">Как установить на iPhone</div>',
+      '<div style="font-size:14px;line-height:1.8;color:#14151A">',
+      '1. Нажмите кнопку <b>«Поделиться»</b> внизу экрана (значок ⬆️ в квадрате)<br>',
+      '2. Прокрутите вниз и выберите <b>«На экран «Домой»»</b><br>',
+      '3. Нажмите <b>«Добавить»</b> в правом верхнем углу',
+      '</div>',
+      '<button id="ios-install-close" style="width:100%;margin-top:16px;padding:12px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Понятно</button>',
+    ].join('');
+
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+    sheet.querySelector('#ios-install-close').addEventListener('click', function () { overlay.remove(); });
+  }
 
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
     deferredPrompt = e;
-
-    // Показываем кнопку установки в профиле если функция есть
-    if (window.showInstallButton) window.showInstallButton();
+    setTimeout(showInstallButton, 3000);
   });
+
+  window.addEventListener('appinstalled', function () {
+    localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
+    var b = document.getElementById('install-banner');
+    if (b) b.remove();
+  });
+
+  // iOS: beforeinstallprompt никогда не сработает, поэтому показываем
+  // баннер сами по таймеру, если сайт открыт в Safari не как standalone.
+  if (isIOS() && !isStandalone()) {
+    setTimeout(showInstallButton, 8000);
+  }
 
   // Публичный API для вызова из страниц (например, из profile.html)
   window.ShabashkaPWA = {
     install: function () {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function (result) {
-        deferredPrompt = null;
-        if (result.outcome === 'accepted') {
-          showToast('Приложение установлено ✓');
-        }
-      });
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (result) {
+          deferredPrompt = null;
+          if (result.outcome === 'accepted') showToast('Приложение установлено ✓');
+        });
+      } else if (isIOS()) {
+        showIOSInstallInstructions();
+      } else {
+        showToast('Установка недоступна в этом браузере');
+      }
     },
-    isInstallable: function () { return !!deferredPrompt; },
+    isInstallable: function () { return !!deferredPrompt || isIOS(); },
+    isInstalled: isStandalone,
     showToast: showToast,
   };
 

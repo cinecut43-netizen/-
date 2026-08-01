@@ -1,7 +1,7 @@
 /* sw.js — Service Worker Шабашки
    Версия кэша: при обновлении сайта меняй CACHE_VERSION,
    чтобы старый кэш сбросился автоматически. */
-const CACHE_VERSION = 'shabashka-v14';
+const CACHE_VERSION = 'shabashka-v15';
 const CACHE_STATIC = CACHE_VERSION; // раньше было отдельной константой и никогда не менялось —
 // из-за этого старый кэш (в т.ч. data.js) не сбрасывался при обновлении сайта
 
@@ -12,7 +12,8 @@ const PRECACHE = [
   '/data.js',
   '/nav.js',
   '/icons.js',
-  '/logo-v2.png',
+  '/icon-512.png',
+  '/favicon-192.png',
   'https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css',
 ];
 
@@ -122,8 +123,8 @@ self.addEventListener('push', function (e) {
   var title = data.title || 'Шабашка';
   var options = {
     body: data.body || 'У вас новое уведомление',
-    icon: '/logo-v2.png',
-    badge: '/logo-v2.png',
+    icon: '/icon-512.png',
+    badge: '/favicon-192.png',
     tag: data.tag || 'shabashka-notification',
     data: { url: data.url || '/' },
     actions: data.actions || [
