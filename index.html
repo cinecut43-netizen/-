@@ -1272,11 +1272,6 @@ function applyAndChat(jobId) {
     }).catch(function(){});
   }
 
-  // Push уведомление
-  if (job && window.ShabashkaNotify && Notification.permission === 'granted') {
-    ShabashkaNotify.showResponse(job.title, user.name || 'Исполнитель');
-  }
-
   goToChat(jobId);
 }
 
