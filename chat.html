@@ -269,17 +269,6 @@ if ('serviceWorker' in navigator) {
 
     <div class="messages" id="messages" style="display:none"></div>
 
-    <div class="confirm-panel" id="confirmPanel" style="display:none">
-      <div class="confirm-text">
-        <strong>✅ Исполнитель готов взяться за заказ</strong>
-        Дмитрий П. хочет подтвердить участие. Комиссия платформы (10%) спишется после подтверждения.
-      </div>
-      <div class="confirm-btns">
-        <button class="btn-accept" onclick="acceptWorker()">Принять</button>
-        <button class="btn-decline" onclick="document.getElementById('confirmPanel').style.display='none'">Отклонить</button>
-      </div>
-    </div>
-
     <div class="quick-replies" id="quickReplies"></div>
 
     <div class="input-area">
@@ -296,41 +285,11 @@ if ('serviceWorker' in navigator) {
 <script>
 Shabashka.renderNav('chat');
 
-const CONVOS = [];
+let CONVOS = [];
 
-const MESSAGES_DB = {
-  1: [
-    
-    { type:'them', text:'Здравствуйте! Видел ваш отклик. Опыт сборки ИКЕА есть?', time:'10:05' },
-    { type:'me', text:'Добрый день! Да, собирал неоднократно — кухни, шкафы, кровати. Дрель своя есть.', time:'10:08' },
-    { type:'them', text:'Отлично. Шкаф-купе PAX и кухня METOD. Справитесь за день?', time:'10:12' },
-    { type:'me', text:'Должен справиться, PAX собирал раза 3. Уточните — сколько секций шкафа?', time:'10:15' },
-    { type:'them', text:'3 секции, высота 236. Кухня небольшая, 10 модулей.', time:'10:20' },
-    { type:'ai', text:'💡 Подсказка: на PAX из 3 секций обычно уходит 2–3 часа, на кухню из 10 модулей — 3–4 часа. Итого ~7 часов. Рекомендую уточнить время начала, чтобы успеть засветло.', time:'10:21', isAI:true },
-    { type:'me', text:'Хорошо, буду вовремя!', time:'10:32' },
-  ],
-  2: [
-    { type:'sys', text:'Вы откликнулись на заказ «Разгрузка фуры на складе»' },
-    { type:'them', text:'Привет! Нужно ещё 2 человека, можете кого-то привести?', time:'09:10' },
-    { type:'them', text:'Доплатим по 500 ₽ за каждого приведённого.', time:'09:15' },
-  ],
-  3: [
-    { type:'sys', text:'Вы откликнулись на заказ «Официант на свадьбу»' },
-    { type:'them', text:'Форму привезут за час до начала, вас устроит?', time:'Вчера' },
-  ],
-  4: [
-    { type:'sys', text:'Заказ «Грузчики на переезд» завершён' },
-    { type:'them', text:'Ребята, огромное спасибо за работу! Всё аккуратно, быстро. 👍', time:'Вчера' },
-    { type:'me', text:'Спасибо за отзыв, рады помочь!', time:'Вчера' },
-  ],
-};
+const MESSAGES_DB = {};
 
-const QUICK = {
-  1: ['Во сколько начинаем?', 'Есть парковка?', 'Оплата наличными или картой?', 'Инструменты нужны свои?'],
-  2: ['Есть напарник 👍', 'Только один, сорри', 'Во сколько подъезжать?', 'Какой адрес точно?'],
-  3: ['Да, устроит ✓', 'Можно чуть раньше?', 'Какой дресс-код?', 'Форма будет?'],
-  4: ['Спасибо за работу! 🙏', 'Всё отлично получилось', 'Работали очень хорошо'],
-};
+const QUICK = {};
 
 // Умные ответы исходя из последнего сообщения
 function getSmartReplies(convoId) {
@@ -367,8 +326,14 @@ Object.keys(MESSAGES_DB).forEach(function(convoId) {
   });
 });
 
-let currentConvo = 1;
+let currentConvo = null;
 let typingTimeout = null;
+let myId = null; // id текущего пользователя в БД — резолвится асинхронно при загрузке
+
+function colorFromId(id) {
+  var palette = ['#E8510A','#185FA5','#1A7A4A','#7C3AED','#DB2777','#0891B2'];
+  return palette[(id || 0) % palette.length];
+}
 
 function searchChats(query) {
   var q = query.toLowerCase().trim();
@@ -387,7 +352,7 @@ function searchChats(query) {
   }
   list.innerHTML = filtered.map(function(c) {
     var isActive = c.id === currentConvo;
-    return '<div class="convo-item' + (isActive ? ' active' : '') + '" onclick="selectConvo(' + c.id + ')">' +
+    return '<div class="convo-item' + (isActive ? ' active' : '') + '" onclick="switchConvo(' + c.id + ')">' +
       '<div class="convo-avatar" style="background:' + c.color + '">' + c.name[0] + '</div>' +
       '<div class="convo-info">' +
         '<div class="convo-name">' + highlightMatch(c.name, q) + '</div>' +
@@ -457,6 +422,39 @@ function switchConvo(id) {
   renderMessages();
   renderQuickReplies();
   if (confirmPanel) confirmPanel.style.display = 'none';
+
+  // Реальные сообщения из БД
+  if (myId) {
+    fetch('/api/db-messages?job_id=' + id + '&user_id=' + myId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (currentConvo !== id) return; // уже переключились на другой чат
+        if (data.ok && data.messages) {
+          MESSAGES_DB[id] = data.messages.map(function(m) {
+            return {
+              type: m.sender_id === myId ? 'me' : 'them',
+              text: m.text,
+              time: formatMsgTime(m.created_at),
+              read: m.is_read ? 'read' : 'sent',
+            };
+          });
+          renderMessages();
+        }
+        // Отмечаем прочитанным
+        fetch('/api/db-messages', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ job_id: id, user_id: myId }),
+        }).catch(function(){});
+      })
+      .catch(function(){ console.log('БД недоступна, показываем локальную историю'); });
+  }
+}
+
+function formatMsgTime(iso) {
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 
 function renderMessages() {
@@ -527,57 +525,19 @@ function sendMsg() {
   renderSidebar();
   renderQuickReplies();
 
-  // Сохраняем в базу данных
-  var user = window.Shabashka ? Shabashka.getUser() : null;
-  if (user && user.id) {
+  // Сохраняем в базу данных — job_id это и есть id диалога (у нас 1 чат = 1 заказ),
+  // receiver_id берём из собеседника в этом диалоге.
+  if (myId) {
     fetch('/api/db-messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         job_id: currentConvo,
-        sender_id: user.id,
-        receiver_id: null,
+        sender_id: myId,
+        receiver_id: c ? c.otherId || null : null,
         text: text,
       })
-    }).catch(function(){});
-  }
-
-  // Прогрессия статуса: отправлено → доставлено → прочитано
-  var msgs = MESSAGES_DB[currentConvo];
-  var lastMsg = msgs[msgs.length - 1];
-  setTimeout(function() {
-    lastMsg.read = 'delivered';
-    renderMessages();
-  }, 800);
-  setTimeout(function() {
-    lastMsg.read = 'read';
-    renderMessages();
-  }, 2000);
-
-  // simulate reply
-  if (currentConvo === 1) {
-    setTimeout(() => showTyping(), 1000);
-    setTimeout(() => {
-      hideTyping();
-      const replies = [
-        'Хорошо, понял вас!',
-        'Договорились, до завтра 👍',
-        'Ок, буду в 9 утра.',
-        'Отлично, тогда до встречи!'
-      ];
-      const reply = replies[Math.floor(Math.random() * replies.length)];
-      MESSAGES_DB[1].push({ type:'them', text: reply, time });
-      c.preview = reply;
-      renderMessages();
-      renderSidebar();
-
-      // after a bit, show confirm panel
-      if (MESSAGES_DB[1].length > 9) {
-        setTimeout(() => {
-          document.getElementById('confirmPanel').style.display = 'flex';
-        }, 800);
-      }
-    }, 2500);
+    }).catch(function(){ console.log('БД недоступна, сообщение сохранено только локально'); });
   }
 }
 
@@ -664,30 +624,121 @@ function nowTime() {
   return now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
 }
 
-function acceptWorker() {
-  document.getElementById('confirmPanel').style.display = 'none';
-  const now = new Date();
-  const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
-  MESSAGES_DB[currentConvo].push({ type:'sys', text:'✅ Заказ подтверждён! Комиссия 10% списана. Удачной работы!' });
-  renderMessages();
-}
-
 // Обновляем глобальный счётчик непрочитанных из текущего состояния CONVOS
 function syncUnreadCount() {
   var total = CONVOS.reduce(function(s, c) { return s + (c.unread || 0); }, 0);
   Shabashka.setUnreadCount(total);
 }
 
-// init
-// При открытии чата обнуляем непрочитанные текущего разговора
-CONVOS.forEach(function(c) {
-  if (c.id === currentConvo) c.unread = 0;
-});
-syncUnreadCount();
-renderSidebar();
+// init перенесён в async-блок ниже (загружает реальные диалоги из БД
+// перед первым рендером)
+(function init() {
+  Shabashka.ensureDbUserId().then(function (id) {
+    myId = id;
 
-// Мобильная инициализация чата
-(function initMobileChat() {
+    function afterConvosLoaded() {
+      handleQueryParams();
+      CONVOS.forEach(function(c) { if (c.id === currentConvo) c.unread = 0; });
+      syncUnreadCount();
+      renderSidebar();
+      renderQuickReplies();
+      initMobileChatList();
+    }
+
+    if (!myId) { afterConvosLoaded(); return; }
+
+    fetch('/api/db-messages?user_id=' + myId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.conversations) {
+          CONVOS = data.conversations.map(function(c) {
+            return {
+              id: c.job_id,
+              jobId: c.job_id,
+              name: c.other_name || 'Собеседник',
+              job: c.job_title,
+              icon: c.emoji || '📦',
+              pay: '',
+              date: '',
+              color: colorFromId(c.other_id),
+              otherId: c.other_id,
+              unread: (!c.is_read && c.other_id !== myId) ? 0 : 0, // грубая оценка, см. ниже
+              time: formatMsgTime(c.created_at),
+              preview: c.text,
+            };
+          });
+        }
+        afterConvosLoaded();
+      })
+      .catch(function() {
+        console.log('БД недоступна, список диалогов пуст');
+        afterConvosLoaded();
+      });
+  });
+})();
+
+function handleQueryParams() {
+  const jobId = Shabashka.jobIdFromQuery();
+  if (jobId) {
+    const existing = CONVOS.find(c => c.jobId === Number(jobId));
+    if (existing) {
+      currentConvo = existing.id;
+      switchConvo(currentConvo);
+      return;
+    }
+    const job = Shabashka.getJob(jobId);
+    if (job) {
+      const newConvo = {
+        id: job.id, // id диалога = id заказа в БД — без этого сообщения "терялись"
+        name: job.company,
+        job: job.title,
+        icon: job.emoji,
+        pay: Shabashka.rub(job.pay),
+        date: job.date + ' · ' + job.location,
+        color: job.colors[0],
+        unread: 0,
+        time: 'сейчас',
+        preview: 'Чат начат',
+        jobId: job.id,
+        otherId: null,
+      };
+      CONVOS.unshift(newConvo);
+      MESSAGES_DB[newConvo.id] = [
+        { type: 'sys', text: 'Вы откликнулись на заказ «' + job.title + '»' },
+      ];
+      currentConvo = newConvo.id;
+      renderSidebar();
+
+      // Локальный объект заказа не хранит employer_id — подтягиваем
+      // из БД, иначе сообщение не будет знать, кому его доставить.
+      fetch('/api/db-jobs?action=get&id=' + job.id)
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          if (data.ok && data.job) newConvo.otherId = data.job.employer_id;
+        })
+        .catch(function(){})
+        .finally(function() { switchConvo(currentConvo); });
+      return;
+    }
+  }
+
+  if (!currentConvo) {
+    const workerParam = new URLSearchParams(window.location.search).get('worker');
+    if (workerParam && !CONVOS.length) {
+      // Прямого сообщения без привязки к заказу пока не поддерживаем —
+      // переписка в этой версии всегда идёт в контексте конкретного заказа.
+      document.getElementById('emptyChat').innerHTML =
+        '<div style="font-size:48px;margin-bottom:16px">💬</div>' +
+        '<div style="font-size:17px;font-weight:700;color:#14151A;margin-bottom:8px">Пока нет общего заказа</div>' +
+        '<div style="font-size:14px;line-height:1.6">Чат открывается по конкретному заказу.<br>Дождитесь отклика от исполнителя на ваш заказ,<br>чтобы начать переписку.</div>';
+      return;
+    }
+  }
+
+  if (currentConvo) switchConvo(currentConvo);
+}
+
+function initMobileChatList() {
   var isMobile = window.innerWidth <= 600;
   var mobileHeader = document.getElementById('mobileChatHeader');
   if (mobileHeader) mobileHeader.style.display = isMobile ? 'block' : 'none';
@@ -697,7 +748,7 @@ renderSidebar();
   if (!listEl) return;
   listEl.innerHTML = CONVOS.map(function(c) {
     var isActive = c.id === currentConvo;
-    return '<div onclick="selectConvo(' + c.id + ')" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;min-width:48px">' +
+    return '<div onclick="switchConvo(' + c.id + ')" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;min-width:48px">' +
       '<div style="width:44px;height:44px;border-radius:50%;background:' + (c.color||'#E8510A') + ';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;border:' + (isActive?'2.5px solid #E8510A':'2.5px solid transparent') + ';position:relative;box-sizing:border-box">' +
       c.name[0] +
       (c.unread > 0 ? '<span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;background:#E8510A;border-radius:50%;border:2px solid #fff;font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 2px">' + c.unread + '</span>' : '') +
@@ -705,42 +756,7 @@ renderSidebar();
       '<div style="font-size:9.5px;color:' + (isActive?'#E8510A':'#6B6B67') + ';font-weight:' + (isActive?'700':'500') + ';max-width:48px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + c.name.split(' ')[0] + '</div>' +
       '</div>';
   }).join('');
-})();
-
-(function initFromQuery() {
-  const jobId = Shabashka.jobIdFromQuery();
-  if (jobId) {
-    const existing = CONVOS.find(c => c.jobId === Number(jobId));
-    if (existing) {
-      currentConvo = existing.id;
-    } else {
-      const job = Shabashka.getJob(jobId);
-      if (job) {
-        const newConvo = {
-          id: CONVOS.length + 1,
-          name: job.company,
-          job: job.title,
-          icon: job.emoji,
-          pay: Shabashka.rub(job.pay),
-          date: job.date + ' · ' + job.location,
-          color: job.colors[0],
-          unread: 0,
-          time: 'сейчас',
-          preview: 'Чат начат',
-          jobId: job.id,
-        };
-        CONVOS.unshift(newConvo);
-        MESSAGES_DB[newConvo.id] = [
-          { type: 'sys', text: 'Вы откликнулись на заказ «' + job.title + '»' },
-        ];
-        QUICK[newConvo.id] = ['Во сколько начинать?', 'Адрес уточните?', 'Какая оплата точно?'];
-        currentConvo = newConvo.id;
-        renderSidebar();
-      }
-    }
-  }
-  switchConvo(currentConvo);
-})();
+}
 
 renderQuickReplies();
 </script>
