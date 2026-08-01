@@ -135,7 +135,31 @@ function render() {
 }
 
 function renderJobs() {
-  var jobs = Shabashka.getSavedJobs();
+  document.getElementById('mainContent').innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray)">Загрузка…</div>';
+
+  Shabashka.ensureDbUserId().then(function (userId) {
+    if (!userId) { renderJobsFallback(); return; }
+    fetch('/api/db-favorites?user_id=' + userId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data.ok) { renderJobsFallback(); return; }
+        renderJobsList(data.favorites.map(function(f) {
+          return {
+            id: f.job_id, emoji: f.emoji || '📦', title: f.title,
+            company: f.company || 'Работодатель', location: f.location || '—',
+            date: f.date || '', pay: parseInt(f.pay), status: f.status, urgent: false,
+          };
+        }));
+      })
+      .catch(renderJobsFallback);
+  });
+}
+
+function renderJobsFallback() {
+  renderJobsList(Shabashka.getSavedJobs());
+}
+
+function renderJobsList(jobs) {
   if (!jobs.length) {
     document.getElementById('mainContent').innerHTML = '<div class="empty-state-v2">' +
       '<div class="es-icon es-orange">❤️</div>' +
@@ -165,7 +189,31 @@ function renderJobs() {
 }
 
 function renderWorkers() {
-  var workers = Shabashka.getSavedWorkers();
+  document.getElementById('mainContent').innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray)">Загрузка…</div>';
+
+  Shabashka.ensureDbUserId().then(function (userId) {
+    if (!userId) { renderWorkersList([]); return; }
+    fetch('/api/db-favorites?user_id=' + userId + '&type=workers')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data.ok) { renderWorkersList([]); return; }
+        renderWorkersList(data.workers.map(function(w) {
+          return {
+            id: w.worker_id, name: w.name || 'Без имени',
+            color: ['#E8510A','#185FA5','#1A7A4A','#7C3AED','#DB2777','#0891B2'][w.worker_id % 6],
+            verified: !!w.verified,
+            rating: w.reviews_count > 0 ? Number(w.rating) : 0,
+            orders: w.jobs_done || 0,
+            location: w.city || '—',
+            price: w.day_rate,
+          };
+        }));
+      })
+      .catch(function(){ renderWorkersList([]); });
+  });
+}
+
+function renderWorkersList(workers) {
   if (!workers.length) {
     document.getElementById('mainContent').innerHTML = '<div class="empty-state-v2">' +
       '<div class="es-icon es-blue">👥</div>' +
@@ -177,11 +225,12 @@ function renderWorkers() {
   }
   document.getElementById('mainContent').innerHTML = workers.map(function(w) {
     var verBadge = w.verified ? '<span class="verified-badge"><i class="ph-bold ph-seal-check"></i>Проверен</span>' : '';
+    var priceLabel = w.price ? 'от ' + w.price.toLocaleString('ru') + ' ₽/день' : 'цена по договорённости';
     return '<div class="saved-worker">' +
       '<div class="saved-worker-avatar" style="background:' + w.color + '">' + w.name[0] + '</div>' +
       '<div class="saved-worker-body">' +
       '<div class="saved-worker-name">' + w.name + verBadge + '</div>' +
-      '<div class="saved-worker-meta">⭐ ' + w.rating.toFixed(1) + ' · ' + w.orders + ' заказов · ' + w.location + ' · от ' + w.price.toLocaleString('ru') + ' ₽/день</div>' +
+      '<div class="saved-worker-meta">' + (w.rating ? '⭐ ' + w.rating.toFixed(1) + ' · ' : '') + w.orders + ' заказов · ' + w.location + ' · ' + priceLabel + '</div>' +
       '</div>' +
       '<div class="saved-worker-actions">' +
       '<button class="btn-contact" onclick="location.href=\'/chat?worker=' + w.id + '\'"><i class="ph-bold ph-chat-circle-dots"></i>Написать</button>' +
@@ -192,10 +241,26 @@ function renderWorkers() {
 
 function unsaveJob(id) {
   Shabashka.toggleFavJob(id);
+  Shabashka.ensureDbUserId().then(function (userId) {
+    if (!userId) return;
+    fetch('/api/db-favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, job_id: id })
+    }).finally(render);
+  });
   render();
 }
 function unsaveWorker(id) {
   Shabashka.toggleFavWorker(id);
+  Shabashka.ensureDbUserId().then(function (userId) {
+    if (!userId) return;
+    fetch('/api/db-favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, worker_id: id })
+    }).finally(render);
+  });
   render();
 }
 

@@ -1600,14 +1600,14 @@ function toggleFav(jobId, btn) {
   }
 
   // Сохраняем в БД
-  const user = Shabashka.getUser();
-  if (user && user.id) {
+  Shabashka.ensureDbUserId().then(function (userId) {
+    if (!userId) return;
     fetch('/api/db-favorites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id, job_id: jobId })
+      body: JSON.stringify({ user_id: userId, job_id: jobId })
     }).catch(function(){});
-  }
+  });
 }
 
 function markOnTheWay(jobId) {

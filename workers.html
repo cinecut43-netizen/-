@@ -266,13 +266,68 @@ function toggleVerified() {
   applyFilters();
 }
 
+let DB_WORKERS = [];
+
+function colorFromId(id) {
+  var palette = ['#E8510A','#185FA5','#1A7A4A','#7C3AED','#DB2777','#0891B2'];
+  return palette[id % palette.length];
+}
+
+function mapDbWorker(u) {
+  return {
+    id: u.id,
+    name: u.name || 'Без имени',
+    color: colorFromId(u.id),
+    location: u.city || '—',
+    rating: u.reviews_count > 0 ? Number(u.rating) : 0,
+    orders: u.jobs_done || 0,
+    responseTime: '—',
+    bio: u.bio || 'Профиль пока не заполнен',
+    skills: Array.isArray(u.skills) ? u.skills : [],
+    price: u.day_rate || null,
+    verified: !!u.verified,
+  };
+}
+
+// Подгружаем реальных исполнителей из БД. Фильтр по категории пока не
+// применяем к ним — категория работ у исполнителя в базе не хранится,
+// это следующий шаг (нужно расширить профиль исполнителя).
+(function loadWorkersFromDB() {
+  fetch('/api/db-users?role=worker&limit=100')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.ok && data.users) {
+        DB_WORKERS = data.users.map(mapDbWorker);
+        applyFilters();
+      }
+    })
+    .catch(function(){ console.log('БД недоступна, список исполнителей пуст'); });
+})();
+
 function applyFilters() {
-  var workers = Shabashka.searchWorkers({
-    cat: currentCat,
-    query: document.getElementById('searchInp').value,
-    verified: verifiedOnly,
-    sort: document.getElementById('sortSelect').value,
-  });
+  var query = document.getElementById('searchInp').value.toLowerCase().trim();
+  var sort = document.getElementById('sortSelect').value;
+  var workers = DB_WORKERS.slice();
+
+  if (query) {
+    workers = workers.filter(function (w) {
+      return w.name.toLowerCase().indexOf(query) !== -1 ||
+        w.bio.toLowerCase().indexOf(query) !== -1 ||
+        w.skills.some(function (s) { return s.toLowerCase().indexOf(query) !== -1; });
+    });
+  }
+  if (verifiedOnly) {
+    workers = workers.filter(function (w) { return w.verified; });
+  }
+  if (sort === 'rating') {
+    workers.sort(function (a, b) { return b.rating - a.rating; });
+  } else if (sort === 'orders') {
+    workers.sort(function (a, b) { return b.orders - a.orders; });
+  } else if (sort === 'price_asc') {
+    workers.sort(function (a, b) { return (a.price || 0) - (b.price || 0); });
+  } else if (sort === 'price_desc') {
+    workers.sort(function (a, b) { return (b.price || 0) - (a.price || 0); });
+  }
   render(workers);
 }
 
@@ -313,16 +368,18 @@ function workerCard(w) {
     '<div class="worker-bio">' + w.bio + '</div>' +
     '<div class="worker-skills">' + skills + '</div>' +
     '<div class="worker-footer">' +
-    '<div><div class="worker-price">' + w.price.toLocaleString('ru') + ' ₽ <span>/ день</span></div></div>' +
+    '<div><div class="worker-price">' + (w.price ? w.price.toLocaleString('ru') + ' ₽ <span>/ день</span>' : '<span style="font-size:13px;color:var(--gray)">Цена по договорённости</span>') + '</div></div>' +
     '<button class="contact-btn" onclick="event.stopPropagation();openProfile(' + w.id + ')"><i class="ph-bold ph-chat-circle-dots"></i>Связаться</button>' +
     '</div></div>';
 }
 
 function openProfile(id) {
-  var w = Shabashka.getAllWorkers().find(function(x){ return x.id === id; });
+  var w = DB_WORKERS.find(function(x){ return x.id === id; });
   if (!w) return;
   var verBadge = w.verified ? '<span class="verified-badge" style="font-size:12px"><i class="ph-bold ph-seal-check"></i>Проверенный исполнитель</span>' : '';
-  var skills = w.skills.map(function(s){ return '<span class="modal-skill">' + s + '</span>'; }).join('');
+  var skills = w.skills.length
+    ? w.skills.map(function(s){ return '<span class="modal-skill">' + s + '</span>'; }).join('')
+    : '<span style="font-size:13px;color:var(--gray)">Пока не указаны</span>';
   document.getElementById('profileModalContent').innerHTML =
     '<div class="modal-header">' +
     '<div></div>' +
@@ -338,7 +395,7 @@ function openProfile(id) {
     '</div>' +
     '<div class="modal-section" style="margin-top:16px"><h3>О себе</h3><div class="modal-bio">' + w.bio + '</div></div>' +
     '<div class="modal-section"><h3>Навыки</h3><div class="modal-skills">' + skills + '</div></div>' +
-    '<div class="modal-section"><h3>Ставка</h3><div style="font-size:24px;font-weight:800">' + w.price.toLocaleString('ru') + ' ₽ <span style="font-size:14px;font-weight:400;color:var(--gray)">/ день</span></div></div>' +
+    '<div class="modal-section"><h3>Ставка</h3><div style="font-size:24px;font-weight:800">' + (w.price ? w.price.toLocaleString('ru') + ' ₽ <span style="font-size:14px;font-weight:400;color:var(--gray)">/ день</span>' : '<span style="font-size:15px;font-weight:400;color:var(--gray)">Цена по договорённости</span>') + '</div></div>' +
     '<div class="modal-actions">' +
     '<button class="modal-btn modal-btn-primary" onclick="contactWorker(' + w.id + ')"><i class="ph-bold ph-chat-circle-dots"></i>Написать</button>' +
     '<button class="modal-btn modal-btn-secondary" onclick="closeModal()"><i class="ph-bold ph-x"></i>Закрыть</button>' +
@@ -356,6 +413,15 @@ function favWorker(id, btn) {
   var i = btn.querySelector('i');
   i.className = 'ph-bold ' + (added ? 'ph-heart-fill' : 'ph-heart');
   i.style.color = added ? '#E8510A' : '#9A9A96';
+
+  Shabashka.ensureDbUserId().then(function (userId) {
+    if (!userId) return;
+    fetch('/api/db-favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, worker_id: id })
+    }).catch(function(){});
+  });
 }
 
 function closeModal() {

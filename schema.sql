@@ -132,9 +132,17 @@ CREATE TABLE IF NOT EXISTS favorites (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id),
   job_id INTEGER REFERENCES jobs(id),
+  worker_id INTEGER REFERENCES users(id),
   created_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(user_id, job_id)
+  UNIQUE(user_id, job_id),
+  UNIQUE(user_id, worker_id)
 );
+ALTER TABLE favorites ADD COLUMN IF NOT EXISTS worker_id INTEGER REFERENCES users(id);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorites_user_id_worker_id_key') THEN
+    ALTER TABLE favorites ADD CONSTRAINT favorites_user_id_worker_id_key UNIQUE(user_id, worker_id);
+  END IF;
+END $$;
 
 -- Отзывы и обращения пользователей
 CREATE TABLE IF NOT EXISTS feedbacks (
