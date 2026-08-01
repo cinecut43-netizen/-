@@ -971,20 +971,41 @@ function getOrdersPage() {
 }
 
 function getResponsesPage() {
-  const grouped = {};
-  Shabashka.getAllResponses().filter(r => r.status === 'pending').forEach(r => { if(!grouped[r.jobId]) grouped[r.jobId]=[]; grouped[r.jobId].push(r); });
-  const groupedEntries = Object.entries(grouped);
-  if (!groupedEntries.length) {
+  const pending = EMPLOYER_RESPONSES.filter(r => r.status === 'pending').map(function(r) {
+    return {
+      source: 'db',
+      id: r.id,
+      jobId: r.job_id,
+      jobTitle: r.job_title,
+      jobEmoji: r.emoji || '📦',
+      jobDate: r.date || '',
+      workerId: r.worker_id,
+      workerName: r.worker_name || 'Исполнитель',
+      workerColor: colorFromId(r.worker_id),
+      workerRating: r.jobs_done > 0 ? Number(r.rating).toFixed(1) + ' ⭐' : 'Новый исполнитель',
+      proposedPay: r.proposed_pay,
+      message: r.message || 'Готов выполнить эту работу.',
+      status: r.status,
+      verified: !!r.verified,
+    };
+  });
+  // Делаем доступными для acceptResp/declineResp — они ищут отклик именно здесь
+  currentJobResponses = pending;
+
+  if (!pending.length) {
     return `<div class="section-title" style="margin-bottom:16px">Отклики на ваши заказы</div>
     <div class="responses-card"><div style="padding:24px;text-align:center;color:var(--gray);font-size:13px">Новых откликов нет</div></div>`;
   }
+
+  const grouped = {};
+  pending.forEach(r => { if(!grouped[r.jobId]) grouped[r.jobId]=[]; grouped[r.jobId].push(r); });
+
   return `
   <div class="section-title" style="margin-bottom:16px">Отклики на ваши заказы</div>
-  ${groupedEntries.map(([oid, resps]) => {
-    const order = ORDERS.find(o => o.id == oid);
-    if (!order) return '';
+  ${Object.entries(grouped).map(([jobId, resps]) => {
+    const first = resps[0];
     return `<div class="responses-card" style="margin-bottom:16px">
-      <div class="resp-header">${order.emoji} ${order.title} <span class="resp-count">${resps.length} откликов · ${order.date}</span></div>
+      <div class="resp-header">${first.jobEmoji} ${first.jobTitle} <span class="resp-count">${resps.length} откликов · ${first.jobDate}</span></div>
       ${resps.map(r => respItem(r)).join('')}
     </div>`;
   }).join('')}`;
