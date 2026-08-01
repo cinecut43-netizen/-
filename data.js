@@ -24,6 +24,8 @@
   /* ---------- ТЕКУЩИЙ ПОЛЬЗОВАТЕЛЬ ---------- */
   // role: 'worker' (я ищу работу) | 'employer' (я ищу работников)
   const DEFAULT_USER = {
+    id: null, // числовой id записи в PostgreSQL — без него нельзя привязать
+              // заказы/отклики/отзывы к правильному пользователю в БД
     name: '',
     initials: '',
     age: null,
@@ -118,6 +120,9 @@
   function getUser() {
     DEFAULT_USER.role = localStorage.getItem('shabashka_role') || 'worker';
 
+    const savedUserId = localStorage.getItem('shabashka_user_id');
+    DEFAULT_USER.id = savedUserId ? Number(savedUserId) : null;
+
     const savedName = localStorage.getItem('shabashka_name');
     if (savedName) {
       DEFAULT_USER.name = savedName;
@@ -187,11 +192,43 @@
     localStorage.setItem('shabashka_role', data.role || 'worker');
     if (data.name) localStorage.setItem('shabashka_name', data.name);
     if (data.company) localStorage.setItem('shabashka_company', data.company);
+    // id записи в PostgreSQL — критично для привязки заказов/откликов
+    // к правильному пользователю. Без него all writes падают на employer_id=1.
+    if (data.id) localStorage.setItem('shabashka_user_id', String(data.id));
     // Фиксируем дату регистрации ОДИН раз — без этого она "плыла" на
     // текущую дату при каждом заходе на сайт, потому что нигде не сохранялась.
     if (!localStorage.getItem('shabashka_registered_at')) {
       localStorage.setItem('shabashka_registered_at', new Date().toISOString().slice(0,10));
     }
+  }
+
+  // Гарантирует, что у пользователя есть id записи в PostgreSQL. Если id уже
+  // есть — просто возвращает его. Если нет (например, регистрировался до
+  // того, как id стал сохраняться) — пробует найти/создать запись по
+  // сохранённому телефону через тот же upsert-эндпоинт, что и register.html.
+  // Без этого id все запросы к БД (заказы, отклики) будут падать в общую
+  // "чужую" запись employer_id/worker_id=1.
+  function ensureDbUserId() {
+    const user = getUser();
+    if (user.id) return Promise.resolve(user.id);
+
+    const phone = localStorage.getItem('shabashka_phone');
+    if (!phone || !user.name) return Promise.resolve(null);
+
+    return fetch('/api/db-users?action=register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone, name: user.name, role: user.role, company: user.company || null }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok && data.user && data.user.id) {
+          localStorage.setItem('shabashka_user_id', String(data.user.id));
+          return data.user.id;
+        }
+        return null;
+      })
+      .catch(function () { return null; });
   }
 
   function logout() {
@@ -960,6 +997,7 @@
     setRole: setRole,
     isLoggedIn: isLoggedIn,
     completeRegistration: completeRegistration,
+    ensureDbUserId: ensureDbUserId,
     logout: logout,
     // PRO подписка
     PRO_PLANS: PRO_PLANS,

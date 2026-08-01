@@ -1302,12 +1302,16 @@ async function submitOrder() {
   });
 
   // Сохраняем в базу данных
+  const dbUserId = await Shabashka.ensureDbUserId();
+  if (!dbUserId) {
+    console.log('Нет id пользователя в БД — заказ сохранён только локально');
+  } else {
   try {
     await fetch('/api/db-jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        employer_id: user.id || 1,
+        employer_id: dbUserId,
         title: title,
         description: document.getElementById('newDesc').value,
         category: catInfo.cat,
@@ -1327,6 +1331,7 @@ async function submitOrder() {
     console.log('✅ Заказ сохранён в БД');
   } catch(e) {
     console.log('БД недоступна, заказ сохранён локально');
+  }
   }
 
   // Уведомление в Telegram

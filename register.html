@@ -487,31 +487,19 @@ function attachHandlers() {
       .then(function(r){ return r.json(); })
       .then(function(data) {
         if (data.ok && data.user) {
-          // Сохраняем в localStorage для работы сайта
-          var userObj = {
-            id: data.user.id,
-            phone: state.phone,
-            name: state.name,
-            role: state.role,
-            company: state.company || '',
-            rating: 0,
-            reviewsCount: 0,
-            jobsDone: 0,
-            age: null,
-            city: '',
-            verified: false,
-            passportVerified: false,
-            registeredAt: new Date().toISOString().slice(0,10),
-          };
-          localStorage.setItem('shabashka_user', JSON.stringify(userObj));
+          state.dbUserId = data.user.id;
         }
       })
       .catch(function(e){ console.log('DB save error:', e); })
       .finally(function() {
-        // Сохраняем локально в любом случае
+        // Телефон сохраняем локально — нужен, чтобы при следующем визите
+        // можно было восстановить связь с записью в БД.
+        if (state.phone) localStorage.setItem('shabashka_phone', state.phone);
+
         if (window.Shabashka && Shabashka.completeRegistration) {
           const notifyConsent = document.getElementById('consentNotify');
           Shabashka.completeRegistration({
+            id: state.dbUserId || null,
             role: state.role,
             name: state.name,
             company: state.company,
