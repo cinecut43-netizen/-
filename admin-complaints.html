@@ -69,7 +69,10 @@ if (rendered) {
   `;
 
   function renderDisputes() {
-    let disputes = Shabashka.getAllDisputes();
+    document.getElementById('listRoot').innerHTML = '<div class="empty-state">Загрузка…</div>';
+
+    A.getDisputes().then(function (allDisputes) {
+    let disputes = allDisputes;
     if (filter === 'open') disputes = disputes.filter(d => d.status === 'open');
     if (filter === 'resolved') disputes = disputes.filter(d => d.status !== 'open');
 
@@ -83,29 +86,34 @@ if (rendered) {
     document.getElementById('listRoot').innerHTML = disputes.map(d => {
       const pillCls = d.status === 'open' ? 'pill-open' : d.status === 'refunded' ? 'pill-resolved' : 'pill-rejected';
       const pillLabel = d.status === 'open' ? 'Открыт' : d.status === 'refunded' ? 'Возврат заказчику' : 'Отклонён';
+      const resolutionText = d.status === 'refunded' ? 'Деньги возвращены заказчику' : d.status === 'rejected' ? 'Спор отклонён, оплата исполнителю подтверждена' : '';
       return `
       <div class="complaint-card">
         <div class="complaint-top">
-          <div class="complaint-parties">Заказ #${d.jobId} «${d.jobTitle}»</div>
-          <div class="complaint-date">${d.date}</div>
+          <div class="complaint-parties">Заказ #${d.job_id} «${d.job_title || ''}» · открыл ${d.opened_by_name || '—'}</div>
+          <div class="complaint-date">${new Date(d.created_at).toLocaleDateString('ru')}</div>
         </div>
-        <div class="complaint-reason">${d.reasonLabel}: ${d.comment}</div>
+        <div class="complaint-reason">${d.reason_label}: ${d.comment}</div>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span class="pill ${pillCls}">${pillLabel}</span>
-          <span class="dispute-amount">${d.amount.toLocaleString('ru')} ₽</span>
+          <span class="dispute-amount">${Number(d.amount).toLocaleString('ru')} ₽</span>
         </div>
         ${d.status === 'open' ? `
         <div class="complaint-actions">
-          <button class="btn-sm btn-sm-green" ${canResolve?'':'disabled'} onclick="refund(${d.jobId})">Вернуть деньги заказчику</button>
-          <button class="btn-sm btn-sm-gray" ${canResolve?'':'disabled'} onclick="reject(${d.jobId})">Отклонить спор (оплатить исполнителю)</button>
-        </div>` : `<div style="font-size:12px;color:var(--gray);margin-top:8px">${d.resolution}</div>`}
+          <button class="btn-sm btn-sm-green" ${canResolve?'':'disabled'} onclick="refund(${d.id},${d.job_id})">Вернуть деньги заказчику</button>
+          <button class="btn-sm btn-sm-gray" ${canResolve?'':'disabled'} onclick="reject(${d.id},${d.job_id})">Отклонить спор (оплатить исполнителю)</button>
+        </div>` : `<div style="font-size:12px;color:var(--gray);margin-top:8px">${resolutionText}</div>`}
       </div>
     `;
     }).join('');
+    });
   }
 
   function renderComplaints() {
-    let complaints = A.getComplaints();
+    document.getElementById('listRoot').innerHTML = '<div class="empty-state">Загрузка…</div>';
+
+    A.getComplaints().then(function (allComplaints) {
+    let complaints = allComplaints;
     if (filter !== 'all') complaints = complaints.filter(c => c.status === filter);
 
     if (!complaints.length) {
@@ -119,18 +127,19 @@ if (rendered) {
     document.getElementById('listRoot').innerHTML = complaints.map(c => `
       <div class="complaint-card">
         <div class="complaint-top">
-          <div class="complaint-parties">${c.reporterName}<span class="arrow">→</span>${c.targetName}</div>
-          <div class="complaint-date">${c.date}</div>
+          <div class="complaint-parties">${c.reporter_name || '—'}<span class="arrow">→</span>${c.target_name || '—'}</div>
+          <div class="complaint-date">${new Date(c.created_at).toLocaleDateString('ru')}</div>
         </div>
-        <div class="complaint-reason">${c.reason}</div>
+        <div class="complaint-reason">${c.reason}${c.job_title ? ' · заказ «' + c.job_title + '»' : ''}</div>
         <span class="pill ${c.status === 'open' ? 'pill-open' : 'pill-resolved'}">${c.status === 'open' ? 'Открыта' : 'Закрыта'}</span>
         ${c.status === 'open' ? `
         <div class="complaint-actions">
           <button class="btn-sm btn-sm-green" ${canResolve?'':'disabled'} onclick="resolve(${c.id})">Закрыть жалобу</button>
-          <button class="btn-sm btn-sm-red" ${canBlock?'':'disabled'} onclick="resolveAndBlock(${c.id})">Закрыть и заблокировать нарушителя</button>
+          <button class="btn-sm btn-sm-red" ${canBlock?'':'disabled'} onclick="resolveAndBlock(${c.id},${c.target_id})">Закрыть и заблокировать нарушителя</button>
         </div>` : ''}
       </div>
     `).join('');
+    });
   }
 
   function render() {
@@ -138,21 +147,18 @@ if (rendered) {
     else renderComplaints();
   }
 
-  window.refund = function (jobId) {
+  window.refund = function (disputeId, jobId) {
     if (!confirm('Вернуть деньги заказчику? Заказ будет отменён.')) return;
-    A.resolveDisputeRefund(jobId);
-    render();
+    A.resolveDisputeRefund(disputeId, jobId).then(render);
   };
-  window.reject = function (jobId) {
+  window.reject = function (disputeId, jobId) {
     if (!confirm('Отклонить спор? Заказ будет считаться выполненным, оплата пройдёт исполнителю.')) return;
-    A.resolveDisputeReject(jobId);
-    render();
+    A.resolveDisputeReject(disputeId, jobId).then(render);
   };
-  window.resolve = function (id) { A.resolveComplaint(id); render(); };
-  window.resolveAndBlock = function (id) {
+  window.resolve = function (id) { A.resolveComplaint(id).then(render); };
+  window.resolveAndBlock = function (id, targetId) {
     if (!confirm('Заблокировать пользователя и закрыть жалобу?')) return;
-    A.resolveComplaintAndBlock(id);
-    render();
+    A.resolveComplaintAndBlock(id, targetId).then(render);
   };
 
   document.getElementById('filterSelect').addEventListener('change', e => { filter = e.target.value; render(); });

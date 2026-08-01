@@ -312,76 +312,49 @@
   }
 
   /* ---------- ЖАЛОБЫ ---------- */
-  const COMPLAINTS_KEY = 'shabashka_admin_complaints';
 
-  const DEMO_COMPLAINTS = [
-    { id: 1, reporterName: 'Мария Лебедева', targetName: 'Иван Петров', targetUserId: 1004, reason: 'Не пришёл на заказ без предупреждения', date: '16 июн', status: 'open' },
-    { id: 2, reporterName: 'ООО ТрансЛогист', targetName: 'Сергей Морозов', targetUserId: 1003, reason: 'Грубое поведение на объекте', date: '15 июн', status: 'open' },
-    { id: 3, reporterName: 'Андрей Кравцов', targetName: 'Магазин «Уют»', targetUserId: 2003, reason: 'Задержка оплаты больше недели', date: '14 июн', status: 'resolved' },
-    { id: 4, reporterName: 'Алексей Соколов', targetName: 'Иван Петров', targetUserId: 1004, reason: 'Подозрение на фейковый профиль', date: '12 июн', status: 'open' },
-  ];
+  // Жалобы и споры теперь честно живут в БД (таблицы disputes и complaints).
+  // Раньше жалобы были 4 выдуманными примерами, а споры хранились только
+  // в localStorage браузера админа.
+  function getDisputes() {
+    return adminFetch('/api/admin-complaints?kind=disputes')
+      .then(function (data) { return data.ok ? data.disputes : []; })
+      .catch(function () { return []; });
+  }
 
   function getComplaints() {
-    try {
-      const raw = localStorage.getItem(COMPLAINTS_KEY);
-      const stored = raw ? JSON.parse(raw) : null;
-      return stored || DEMO_COMPLAINTS;
-    } catch (e) {
-      return DEMO_COMPLAINTS;
-    }
+    return adminFetch('/api/admin-complaints?kind=complaints')
+      .then(function (data) { return data.ok ? data.complaints : []; })
+      .catch(function () { return []; });
   }
 
   function resolveComplaint(id) {
-    const complaints = getComplaints().map(function (c) {
-      return c.id === id ? Object.assign({}, c, { status: 'resolved' }) : c;
-    });
-    localStorage.setItem(COMPLAINTS_KEY, JSON.stringify(complaints));
-    logAction('Закрыл жалобу #' + id);
+    return adminFetch('/api/admin-complaints', { method: 'PATCH', body: JSON.stringify({ kind: 'complaint', id: id, decision: 'resolved' }) })
+      .then(function () { logAction('Закрыл жалобу #' + id); });
   }
 
-  function resolveComplaintAndBlock(id) {
-    const complaints = getComplaints();
-    const complaint = complaints.find(function (c) { return c.id === id; });
-    if (complaint && complaint.targetUserId) {
-      blockUser(complaint.targetUserId);
-    }
-    resolveComplaint(id);
-    logAction('Заблокировал нарушителя по жалобе #' + id);
+  function resolveComplaintAndBlock(id, targetUserId) {
+    return Promise.all([
+      resolveComplaint(id),
+      targetUserId ? blockUser(targetUserId) : Promise.resolve(),
+    ]).then(function () { logAction('Заблокировал нарушителя по жалобе #' + id); });
   }
 
   /* ---------- РАЗРЕШЕНИЕ СПОРОВ ----------
      Shabashka.openDispute() переводит заказ в статус disputed и создаёт
-     запись спора. Здесь — административная сторона: посмотреть спор и
-     принять решение. resolveDisputeRefund возвращает деньги заказчику
+     запись спора в БД. Здесь — административная сторона: посмотреть спор
+     и принять решение. resolveDisputeRefund возвращает деньги заказчику
      (заказ закрывается как cancelled, эскроу не выплачивается исполнителю).
      resolveDisputeReject отклоняет спор — заказ считается выполненным,
      оплата исполнителю проходит как обычно. */
-  function resolveDisputeRefund(jobId) {
-    const disputes = Shabashka.getAllDisputes();
-    const dispute = disputes.find(function (d) { return d.jobId === Number(jobId) && d.status === 'open'; });
-    if (!dispute) return { ok: false, error: 'Открытый спор по этому заказу не найден' };
-
-    dispute.status = 'refunded';
-    dispute.resolution = 'Деньги возвращены заказчику';
-    localStorage.setItem('shabashka_disputes', JSON.stringify(disputes));
-
-    Shabashka.updateJobStatus(jobId, 'cancelled');
-    logAction('Разрешил спор по заказу #' + jobId + ' в пользу заказчика (возврат)');
-    return { ok: true };
+  function resolveDisputeRefund(disputeId, jobId) {
+    return adminFetch('/api/admin-complaints', { method: 'PATCH', body: JSON.stringify({ kind: 'dispute', id: disputeId, decision: 'refunded' }) })
+      .then(function () { logAction('Разрешил спор по заказу #' + jobId + ' в пользу заказчика (возврат)'); });
   }
 
-  function resolveDisputeReject(jobId) {
-    const disputes = Shabashka.getAllDisputes();
-    const dispute = disputes.find(function (d) { return d.jobId === Number(jobId) && d.status === 'open'; });
-    if (!dispute) return { ok: false, error: 'Открытый спор по этому заказу не найден' };
-
-    dispute.status = 'rejected';
-    dispute.resolution = 'Спор отклонён, оплата исполнителю подтверждена';
-    localStorage.setItem('shabashka_disputes', JSON.stringify(disputes));
-
-    Shabashka.updateJobStatus(jobId, 'done');
-    logAction('Разрешил спор по заказу #' + jobId + ' в пользу исполнителя (отказ в споре)');
-    return { ok: true };
+  function resolveDisputeReject(disputeId, jobId) {
+    return adminFetch('/api/admin-complaints', { method: 'PATCH', body: JSON.stringify({ kind: 'dispute', id: disputeId, decision: 'rejected' }) })
+      .then(function () { logAction('Разрешил спор по заказу #' + jobId + ' в пользу исполнителя (отказ в споре)'); });
   }
 
   /* ---------- СКРЫТЫЕ/УДАЛЁННЫЕ ОТЗЫВЫ ----------
@@ -550,6 +523,7 @@
     getComplaints: getComplaints,
     resolveComplaint: resolveComplaint,
     resolveComplaintAndBlock: resolveComplaintAndBlock,
+    getDisputes: getDisputes,
 
     resolveDisputeRefund: resolveDisputeRefund,
     resolveDisputeReject: resolveDisputeReject,

@@ -99,6 +99,34 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Споры (открывает заказчик или исполнитель, если что-то пошло не так —
+-- деньги замораживаются в эскроу пока администратор не примет решение)
+CREATE TABLE IF NOT EXISTS disputes (
+  id SERIAL PRIMARY KEY,
+  job_id INTEGER REFERENCES jobs(id),
+  opened_by INTEGER REFERENCES users(id),
+  reason_id VARCHAR(50),
+  reason_label VARCHAR(200),
+  comment TEXT,
+  amount INTEGER,
+  status VARCHAR(20) DEFAULT 'open', -- open | refunded | rejected
+  resolution TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  resolved_at TIMESTAMP
+);
+
+-- Жалобы на пользователей (общее нарушение поведения, не привязанное
+-- к конкретному денежному спору)
+CREATE TABLE IF NOT EXISTS complaints (
+  id SERIAL PRIMARY KEY,
+  reporter_id INTEGER REFERENCES users(id),
+  target_id INTEGER REFERENCES users(id),
+  job_id INTEGER REFERENCES jobs(id),
+  reason TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'open', -- open | resolved
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Избранное
 CREATE TABLE IF NOT EXISTS favorites (
   id SERIAL PRIMARY KEY,

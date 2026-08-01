@@ -296,6 +296,18 @@
       .catch(function () { return null; });
   }
 
+  // Синхронизирует смену статуса заказа (в пути/в работе/завершён/отменён)
+  // с БД. updateJobStatus() сам по себе меняет только localStorage —
+  // без этого статус расходился между устройствами так же, как раньше
+  // расходились id заказов.
+  function syncJobStatusToDb(jobId, status, workerId) {
+    fetch('/api/db-jobs?action=status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: jobId, status: status, worker_id: workerId || null }),
+    }).catch(function () { console.log('БД недоступна, статус сохранён только локально'); });
+  }
+
   function logout() {
     localStorage.removeItem('shabashka_logged_in');
   }
@@ -728,6 +740,19 @@
     // Замораживаем заказ — статус disputed скрывает его из обычных списков
     // "в работе"/"завершён", чтобы не запутывать стороны, пока идёт разбор.
     updateJobStatus(jobId, 'disputed');
+    syncJobStatusToDb(jobId, 'disputed');
+
+    ensureDbUserId().then(function (myId) {
+      fetch('/api/db-disputes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: jobId, opened_by: myId, reason_id: reason.id,
+          reason_label: reason.label, comment: comment.trim(),
+          amount: job.pay * (job.people || 1),
+        }),
+      }).catch(function () { console.log('БД недоступна, спор сохранён только локально'); });
+    });
 
     return { ok: true };
   }
@@ -1108,6 +1133,7 @@
     completeRegistration: completeRegistration,
     ensureDbUserId: ensureDbUserId,
     refreshUserFromDb: refreshUserFromDb,
+    syncJobStatusToDb: syncJobStatusToDb,
     logout: logout,
     // PRO подписка
     PRO_PLANS: PRO_PLANS,
