@@ -62,6 +62,7 @@ try { app.post('/api/verify-code',   require(path.join(ROOT, 'api/verify-code'))
 try { app.post('/api/upload-doc',    require(path.join(ROOT, 'api/upload-doc'))); } catch(e) {}
 try { app.post('/api/get-doc',       require(path.join(ROOT, 'api/get-doc'))); } catch(e) {}
 try { app.all('/api/admin-verifications', require(path.join(ROOT, 'api/admin-verifications'))); } catch(e) {}
+try { app.all('/api/admin-users', require(path.join(ROOT, 'api/admin-users'))); } catch(e) {}
 try { app.get('/api/check-new-jobs', require(path.join(ROOT, 'api/check-new-jobs'))); } catch(e) {}
 try { app.get('/api/vapid-public-key', require(path.join(ROOT, 'api/vapid-public-key'))); } catch(e) {}
 try { app.all('/api/push-subscribe', require(path.join(ROOT, 'api/push-subscribe'))); } catch(e) {}

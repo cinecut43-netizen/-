@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   reviews_count INTEGER DEFAULT 0,
   jobs_done INTEGER DEFAULT 0,
   verified BOOLEAN DEFAULT false,
+  status VARCHAR(20) DEFAULT 'active', -- active | blocked | deleted
   passport_url TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
@@ -27,6 +28,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS skills TEXT[] DEFAULT '{}';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS day_rate INTEGER;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';
 
 -- Заказы
 CREATE TABLE IF NOT EXISTS jobs (

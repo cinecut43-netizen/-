@@ -75,15 +75,26 @@ if (rendered) {
     <div id="tabContent"></div>
   `;
 
-  // Показываем badge если есть ожидающие заявки
-  var vs = S.getVerificationStatus();
-  if (vs && vs.status === 'pending') {
-    document.getElementById('verifTabBtn').innerHTML =
-      'Верификация паспорта <span style="background:#E8510A;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px">1</span>';
-  }
+  // Показываем badge если есть ожидающие заявки — реальное число из БД,
+  // а не локальное эхо (у админа в браузере могло вообще не быть заявки).
+  var token0 = localStorage.getItem('shabashka_admin_token');
+  var role0 = localStorage.getItem('shabashka_admin_role');
+  fetch('/api/admin-verifications?adminToken=' + encodeURIComponent(token0) + '&adminRole=' + encodeURIComponent(role0))
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var count = data.ok ? data.items.length : 0;
+      if (count > 0) {
+        document.getElementById('verifTabBtn').innerHTML =
+          'Верификация паспорта <span style="background:#E8510A;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px">' + count + '</span>';
+      }
+    })
+    .catch(function(){});
 
   function renderWorkers() {
-    var workers = A.getAllUsers().filter(function(u){ return u.role === 'worker' && u.status !== 'deleted'; });
+    document.getElementById('tabContent').innerHTML = '<div style="padding:40px;color:var(--gray);text-align:center">Загрузка…</div>';
+
+    A.getAllUsers({ role: 'worker' }).then(function (allWorkers) {
+    var workers = allWorkers;
     if (filter === 'verified') workers = workers.filter(function(w){ return w.verifiedPassport; });
     if (filter === 'unverified') workers = workers.filter(function(w){ return !w.verifiedPassport; });
     if (filter === 'blocked') workers = workers.filter(function(w){ return w.status === 'blocked'; });
@@ -125,6 +136,7 @@ if (rendered) {
       '<div class="cards-grid" id="workersGrid">' + gridHtml + '</div>';
 
     document.getElementById('filterSelect').addEventListener('change', function(e){ filter = e.target.value; renderWorkers(); });
+    });
   }
 
   function renderVerifQueue() {
@@ -256,9 +268,9 @@ if (rendered) {
       })
       .catch(function(){ alert('БД недоступна, попробуйте ещё раз'); });
   };
-  window.toggleVerify = function (id, verified) { A.setWorkerVerified(id, verified); renderWorkers(); };
-  window.block = function (id) { A.blockUser(id); renderWorkers(); };
-  window.unblock = function (id) { A.unblockUser(id); renderWorkers(); };
+  window.toggleVerify = function (id, verified) { A.setWorkerVerified(id, verified).then(renderWorkers); };
+  window.block = function (id) { A.blockUser(id).then(renderWorkers); };
+  window.unblock = function (id) { A.unblockUser(id).then(renderWorkers); };
 
   document.getElementById('tabs').addEventListener('click', function(e) {
     var btn = e.target.closest('.tab-btn');

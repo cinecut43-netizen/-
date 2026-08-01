@@ -130,27 +130,18 @@ if (rendered) {
   };
 
   function renderTable() {
-    let users = A.getAllUsers().filter(u => u.status !== 'deleted');
+    document.getElementById('usersTbody').innerHTML = `<tr><td colspan="7"><div class="empty-state">Загрузка…</div></td></tr>`;
 
-    if (currentQuery) {
-      const q = currentQuery.toLowerCase();
-      users = users.filter(u =>
-        u.name.toLowerCase().includes(q) ||
-        (u.email && u.email.toLowerCase().includes(q)) ||
-        (u.phone && u.phone.toLowerCase().includes(q))
-      );
-    }
-    if (currentRoleFilter !== 'all') users = users.filter(u => u.role === currentRoleFilter);
-    if (currentStatusFilter !== 'all') users = users.filter(u => u.status === currentStatusFilter);
+    A.getAllUsers({ role: currentRoleFilter !== 'all' ? currentRoleFilter : undefined, status: currentStatusFilter !== 'all' ? currentStatusFilter : undefined, q: currentQuery || undefined })
+      .then(function (users) {
+        document.getElementById('resultCount').textContent = users.length + ' пользователей';
 
-    document.getElementById('resultCount').textContent = users.length + ' из ' + A.getAllUsers().filter(u=>u.status!=='deleted').length;
+        if (!users.length) {
+          document.getElementById('usersTbody').innerHTML = `<tr><td colspan="7"><div class="empty-state">Никого не нашли по этому запросу</div></td></tr>`;
+          return;
+        }
 
-    if (!users.length) {
-      document.getElementById('usersTbody').innerHTML = `<tr><td colspan="7"><div class="empty-state">Никого не нашли по этому запросу</div></td></tr>`;
-      return;
-    }
-
-    document.getElementById('usersTbody').innerHTML = users.map(u => {
+        document.getElementById('usersTbody').innerHTML = users.map(u => {
       const statusInfo = STATUS_PILL[u.status] || STATUS_PILL.active;
       const canBlock = A.canDo('user.block');
       const canDelete = A.canDo('user.delete');
@@ -159,7 +150,7 @@ if (rendered) {
         <td>
           <div class="user-cell">
             <div class="user-avatar">${initials(u.name)}</div>
-            <div><div class="user-name">${u.name}</div><div class="user-sub">${u.email}</div></div>
+            <div><div class="user-name">${u.name}</div><div class="user-sub">${u.phone || '—'}</div></div>
           </div>
         </td>
         <td><span class="pill ${u.role === 'worker' ? 'pill-worker' : 'pill-employer'}">${u.role === 'worker' ? 'Исполнитель' : 'Работодатель'}</span></td>
@@ -176,52 +167,55 @@ if (rendered) {
           </div>
         </td>
       </tr>`;
-    }).join('');
+        }).join('');
+      });
   }
 
-  window.doBlock = function (id) { A.blockUser(id); renderTable(); };
-  window.doUnblock = function (id) { A.unblockUser(id); renderTable(); };
+  window.doBlock = function (id) { A.blockUser(id).then(renderTable); };
+  window.doUnblock = function (id) { A.unblockUser(id).then(renderTable); };
   window.doDelete = function (id) {
     if (!confirm('Удалить пользователя? Это действие нельзя отменить.')) return;
-    A.deleteUser(id);
-    renderTable();
+    A.deleteUser(id).then(renderTable);
   };
 
   window.openUserModal = function (id) {
-    const u = A.getUserById(id);
-    if (!u) return;
-    document.getElementById('userModalName').textContent = u.name;
-
-    const jobs = Shabashka.getAllJobs().filter(j => j.company === u.name);
-    const reviews = Shabashka.getAllReviews().slice(0, 3);
-    const canChangeRole = A.canDo('user.changeRole');
-
-    document.getElementById('userModalBody').innerHTML = `
-      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${u.email}</span></div>
-      <div class="detail-row"><span class="detail-label">Телефон</span><span class="detail-value">${u.phone}</span></div>
-      <div class="detail-row"><span class="detail-label">Город</span><span class="detail-value">${u.city}</span></div>
-      <div class="detail-row"><span class="detail-label">Зарегистрирован</span><span class="detail-value">${u.registeredAt}</span></div>
-      <div class="detail-row"><span class="detail-label">Паспорт проверен</span><span class="detail-value">${u.verifiedPassport ? '✅ Да' : '⏳ Нет'}</span></div>
-      <div class="detail-row">
-        <span class="detail-label">Роль</span>
-        <select class="role-select" id="roleSelectModal" ${canChangeRole ? '' : 'disabled'} onchange="changeRole(${u.id}, this.value)">
-          <option value="worker" ${u.role==='worker'?'selected':''}>Исполнитель</option>
-          <option value="employer" ${u.role==='employer'?'selected':''}>Работодатель</option>
-        </select>
-      </div>
-
-      <div class="modal-section-title">История заказов ${u.role==='employer' ? '(размещённых)' : ''}</div>
-      ${jobs.length ? jobs.map(j => `<div class="history-item">${j.emoji} ${j.title} — ${Shabashka.rub(j.pay)} · ${Shabashka.STATUS_MAP[j.status].label}</div>`).join('') : '<div class="history-item" style="color:var(--gray)">Заказов пока нет</div>'}
-
-      <div class="modal-section-title">Отзывы о пользователе</div>
-      ${reviews.length ? reviews.map(r => `<div class="review-item">${'⭐'.repeat(r.rating)} «${r.text}»</div>`).join('') : '<div class="review-item" style="color:var(--gray)">Отзывов пока нет</div>'}
-    `;
+    document.getElementById('userModalName').textContent = 'Загрузка…';
+    document.getElementById('userModalBody').innerHTML = '';
     document.getElementById('userModal').classList.add('open');
+
+    Promise.all([
+      A.getUserById(id),
+      fetch('/api/db-reviews?target_id=' + id).then(function(r){ return r.json(); }).catch(function(){ return { reviews: [] }; }),
+    ]).then(function (results) {
+      const u = results[0];
+      const reviews = (results[1].reviews || []).slice(0, 3);
+      if (!u) { document.getElementById('userModalBody').innerHTML = 'Пользователь не найден'; return; }
+
+      document.getElementById('userModalName').textContent = u.name;
+      const canChangeRole = A.canDo('user.changeRole');
+
+      document.getElementById('userModalBody').innerHTML = `
+        <div class="detail-row"><span class="detail-label">Телефон</span><span class="detail-value">${u.phone}</span></div>
+        <div class="detail-row"><span class="detail-label">Город</span><span class="detail-value">${u.city}</span></div>
+        <div class="detail-row"><span class="detail-label">Зарегистрирован</span><span class="detail-value">${u.registeredAt}</span></div>
+        <div class="detail-row"><span class="detail-label">Заказов выполнено</span><span class="detail-value">${u.completedOrders}</span></div>
+        <div class="detail-row"><span class="detail-label">Паспорт проверен</span><span class="detail-value">${u.verifiedPassport ? '✅ Да' : '⏳ Нет'}</span></div>
+        <div class="detail-row">
+          <span class="detail-label">Роль</span>
+          <select class="role-select" id="roleSelectModal" ${canChangeRole ? '' : 'disabled'} onchange="changeRole(${u.id}, this.value)">
+            <option value="worker" ${u.role==='worker'?'selected':''}>Исполнитель</option>
+            <option value="employer" ${u.role==='employer'?'selected':''}>Работодатель</option>
+          </select>
+        </div>
+
+        <div class="modal-section-title">Отзывы о пользователе</div>
+        ${reviews.length ? reviews.map(r => `<div class="review-item">${'⭐'.repeat(r.rating)} «${r.text}»</div>`).join('') : '<div class="review-item" style="color:var(--gray)">Отзывов пока нет</div>'}
+      `;
+    });
   };
 
   window.changeRole = function (id, role) {
-    A.changeUserRole(id, role);
-    renderTable();
+    A.changeUserRole(id, role).then(renderTable);
   };
 
   window.closeUserModal = function () {

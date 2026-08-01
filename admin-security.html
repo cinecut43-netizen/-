@@ -43,7 +43,8 @@ ShabashkaAdminNav.renderAdminShell('security', 'Безопасность').then(
 if (rendered) {
   const A = ShabashkaAdmin;
 
-  const suspicious = A.getAllUsers().filter(u => u.status !== 'deleted' && u.rating > 0 && u.rating < 3);
+  A.getAllUsers().then(function (users) {
+  const suspicious = users.filter(u => u.rating > 0 && u.rating < 3);
 
   document.getElementById('admContentRoot').innerHTML = `
     ${suspicious.length ? `
@@ -94,10 +95,12 @@ if (rendered) {
   bulkBlockBtn.addEventListener('click', () => {
     if (!canBulkBlock || !suspicious.length) return;
     if (!confirm('Заблокировать ' + suspicious.length + ' пользователей?')) return;
-    suspicious.forEach(u => A.blockUser(u.id));
-    A.logAction('Массовая блокировка подозрительных пользователей (' + suspicious.length + ')');
-    window.location.reload();
+    Promise.all(suspicious.map(u => A.blockUser(u.id))).then(function() {
+      A.logAction('Массовая блокировка подозрительных пользователей (' + suspicious.length + ')');
+      window.location.reload();
+    });
   });
+  }); // конец A.getAllUsers().then
 }
 });
 </script>

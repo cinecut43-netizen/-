@@ -91,6 +91,10 @@
     localStorage.setItem(ADMIN_TOKEN_KEY, token);
   }
 
+  function getAdminToken() {
+    return localStorage.getItem(ADMIN_TOKEN_KEY) || null;
+  }
+
   // УСТАРЕЛО: токен теперь подписан секретом, который знает только сервер,
   // поэтому окончательное решение о валидности должен принимать сервер
   // (см. verifyTokenWithServer). Эта функция оставлена только как быстрая
@@ -184,101 +188,86 @@
      зарегистрированный пользователь (если есть) подмешивается первым,
      чтобы админка показывала и реальные локальные данные. */
 
-  const USERS_KEY = 'shabashka_admin_users_overrides';
-
-  const DEMO_USERS = [
-    { id: 1001, name: 'Дмитрий Козлов', email: 'dmitry.kozlov@mail.ru', phone: '+7 900 123-45-67', role: 'worker', city: 'Москва', registeredAt: '2024-03-01', status: 'active', completedOrders: 47, rating: 4.9, verifiedPassport: true },
-    { id: 1002, name: 'Андрей Кравцов', email: 'andrey.k@yandex.ru', phone: '+7 916 234-56-78', role: 'worker', city: 'Москва', registeredAt: '2024-05-12', status: 'active', completedOrders: 12, rating: 4.7, verifiedPassport: true },
-    { id: 1003, name: 'Сергей Морозов', email: 's.morozov@gmail.com', phone: '+7 925 345-67-89', role: 'worker', city: 'Мытищи', registeredAt: '2024-06-20', status: 'active', completedOrders: 5, rating: 4.5, verifiedPassport: false },
-    { id: 1004, name: 'Иван Петров', email: 'petrov.ivan@mail.ru', phone: '+7 903 456-78-90', role: 'worker', city: 'Казань', registeredAt: '2025-01-15', status: 'blocked', completedOrders: 2, rating: 2.1, verifiedPassport: false },
-    { id: 1005, name: 'Мария Лебедева', email: 'maria.l@gmail.com', phone: '+7 909 567-89-01', role: 'worker', city: 'Москва', registeredAt: '2025-02-03', status: 'active', completedOrders: 19, rating: 4.8, verifiedPassport: true },
-    { id: 1006, name: 'Алексей Соколов', email: 'a.sokolov@yandex.ru', phone: '+7 911 678-90-12', role: 'worker', city: 'Санкт-Петербург', registeredAt: '2025-04-22', status: 'active', completedOrders: 31, rating: 4.95, verifiedPassport: true },
-    { id: 2001, name: 'ООО ТрансЛогист', email: 'hr@translogist.ru', phone: '+7 495 111-22-33', role: 'employer', city: 'Москва', registeredAt: '2024-02-10', status: 'active', completedOrders: 0, rating: 4.6, verifiedPassport: true },
-    { id: 2002, name: 'СК Горизонт', email: 'office@gorizont-sk.ru', phone: '+7 495 222-33-44', role: 'employer', city: 'Мытищи', registeredAt: '2024-04-18', status: 'active', completedOrders: 0, rating: 4.3, verifiedPassport: true },
-    { id: 2003, name: 'Магазин «Уют»', email: 'uyut.shop@mail.ru', phone: '+7 495 333-44-55', role: 'employer', city: 'Химки', registeredAt: '2024-07-02', status: 'active', completedOrders: 0, rating: 4.8, verifiedPassport: false },
-    { id: 2004, name: 'Агентство «Праздник»', email: 'info@prazdnik-agency.ru', phone: '+7 495 444-55-66', role: 'employer', city: 'Москва', registeredAt: '2025-01-09', status: 'pending_review', completedOrders: 0, rating: 0, verifiedPassport: false },
-    { id: 2005, name: 'ООО Техносфера', email: 'admin@technosfera.ru', phone: '+7 495 555-66-77', role: 'employer', city: 'Москва', registeredAt: '2025-03-30', status: 'active', completedOrders: 0, rating: 4.4, verifiedPassport: true },
-  ];
-
-  function readOverrides() {
-    try {
-      const raw = localStorage.getItem(USERS_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) {
-      return {};
+  // Реальные пользователи из БД — раньше здесь был захардкоженный
+  // DEMO_USERS (11 выдуманных людей) с "изменениями" поверх него в
+  // localStorage. Админка показывала не настоящих пользователей сайта,
+  // а вымышленный список. Теперь все операции идут прямо в БД.
+  function adminFetch(url, options) {
+    var token = getAdminToken();
+    var role = getAdminRole();
+    var sep = url.indexOf('?') === -1 ? '?' : '&';
+    if (!options || options.method === 'GET' || !options.method) {
+      return fetch(url + sep + 'adminToken=' + encodeURIComponent(token) + '&adminRole=' + encodeURIComponent(role))
+        .then(function (r) { return r.json(); });
     }
+    var body = options.body ? JSON.parse(options.body) : {};
+    body.adminToken = token;
+    body.adminRole = role;
+    return fetch(url, {
+      method: options.method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(function (r) { return r.json(); });
   }
 
-  function saveOverrides(overrides) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(overrides));
+  // Возвращает Promise<Array<user>>. params: { role, status, q }
+  function getAllUsers(params) {
+    params = params || {};
+    var qs = Object.keys(params).filter(function(k){ return params[k]; })
+      .map(function(k){ return k + '=' + encodeURIComponent(params[k]); }).join('&');
+    return adminFetch('/api/admin-users' + (qs ? '?' + qs : ''))
+      .then(function (data) {
+        if (!data.ok) return [];
+        return data.users.map(normalizeUser);
+      })
+      .catch(function () { return []; });
   }
 
-  // Объединяем демо-пользователей с локальными изменениями (блокировка,
-  // смена роли и т.д.), плюс реального текущего пользователя сайта,
-  // если он прошёл register.html.
-  function getAllUsers() {
-    const overrides = readOverrides();
-    const merged = DEMO_USERS.map(function (u) {
-      return overrides[u.id] ? Object.assign({}, u, overrides[u.id]) : Object.assign({}, u);
-    });
-
-    if (Shabashka.isLoggedIn && Shabashka.isLoggedIn()) {
-      const current = Shabashka.getUser();
-      const currentId = 9999;
-      const override = overrides[currentId] || {};
-      merged.unshift(Object.assign({
-        id: currentId,
-        name: current.name,
-        email: '—',
-        phone: '—',
-        role: current.role,
-        city: current.city,
-        registeredAt: current.registeredAt,
-        status: 'active',
-        completedOrders: current.completedOrders || 0,
-        rating: current.rating || 0,
-        verifiedPassport: !!(current.verified && current.verified.passport),
-      }, override));
-    }
-
-    return merged;
+  function normalizeUser(u) {
+    return {
+      id: u.id,
+      name: u.name || 'Без имени',
+      phone: u.phone,
+      email: '—', // email в модели не собирается — регистрация только по телефону
+      role: u.role,
+      city: u.city || '—',
+      registeredAt: u.created_at ? u.created_at.slice(0, 10) : '',
+      status: u.status || 'active',
+      completedOrders: u.jobs_done || 0,
+      rating: u.rating ? Number(u.rating) : 0,
+      verifiedPassport: !!u.verified,
+    };
   }
 
   function getUserById(id) {
-    return getAllUsers().find(function (u) { return u.id === Number(id); }) || null;
-  }
-
-  function updateUser(id, fields) {
-    const overrides = readOverrides();
-    overrides[id] = Object.assign({}, overrides[id], fields);
-    saveOverrides(overrides);
+    return adminFetch('/api/admin-users?id=' + id).then(function (data) {
+      return data.ok ? normalizeUser(data.user) : null;
+    });
   }
 
   function blockUser(id) {
-    updateUser(id, { status: 'blocked' });
-    logAction('Заблокировал пользователя #' + id);
+    return adminFetch('/api/admin-users', { method: 'PATCH', body: JSON.stringify({ id: id, status: 'blocked' }) })
+      .then(function () { logAction('Заблокировал пользователя #' + id); });
   }
 
   function unblockUser(id) {
-    updateUser(id, { status: 'active' });
-    logAction('Разблокировал пользователя #' + id);
+    return adminFetch('/api/admin-users', { method: 'PATCH', body: JSON.stringify({ id: id, status: 'active' }) })
+      .then(function () { logAction('Разблокировал пользователя #' + id); });
   }
 
   function deleteUser(id) {
-    const overrides = readOverrides();
-    overrides[id] = Object.assign({}, overrides[id], { status: 'deleted' });
-    saveOverrides(overrides);
-    logAction('Удалил пользователя #' + id);
+    return adminFetch('/api/admin-users', { method: 'PATCH', body: JSON.stringify({ id: id, status: 'deleted' }) })
+      .then(function () { logAction('Удалил пользователя #' + id); });
   }
 
   function changeUserRole(id, newRole) {
-    updateUser(id, { role: newRole });
-    logAction('Изменил роль пользователя #' + id + ' на «' + newRole + '»');
+    return adminFetch('/api/admin-users', { method: 'PATCH', body: JSON.stringify({ id: id, role: newRole }) })
+      .then(function () { logAction('Изменил роль пользователя #' + id + ' на «' + newRole + '»'); });
   }
 
   function setWorkerVerified(id, verified) {
-    updateUser(id, { verifiedPassport: verified, badge: verified ? 'trusted' : null });
-    logAction((verified ? 'Подтвердил' : 'Снял подтверждение') + ' аккаунт исполнителя #' + id);
+    return adminFetch('/api/admin-verifications', { method: 'PATCH', body: JSON.stringify({ userId: id, decision: verified ? 'approved' : 'rejected' }) })
+      .then(function () { logAction((verified ? 'Подтвердил' : 'Снял подтверждение') + ' аккаунт исполнителя #' + id); });
   }
 
   /* ---------- ЖАЛОБЫ ---------- */
