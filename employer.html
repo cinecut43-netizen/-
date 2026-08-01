@@ -987,7 +987,7 @@ function respItem(r) {
 }
 
 function openWorkerProfile(respId) {
-  const r = Shabashka.getAllResponses().find(function(x){ return x.id === respId; });
+  const r = currentJobResponses.find(function(x){ return x.id === respId; });
   if (!r) return;
 
   const reviews = ['Отличный работник, всё сделал быстро и аккуратно. Рекомендую!',
@@ -1006,7 +1006,7 @@ function openWorkerProfile(respId) {
       <div style="flex:1">
         <div style="font-size:18px;font-weight:800;color:#14151A">${r.workerName}</div>
         <div style="font-size:13px;color:#6B6B67;margin-top:2px">${r.workerRating}</div>
-        <div style="display:inline-flex;align-items:center;gap:4px;background:#E8F5EE;color:#1A7A4A;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:4px">
+        <div style="display:inline-flex;align-items:center;gap:4px;background:#E8F5EE;color:#1A7A4A;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:4px${r.verified ? '' : ';display:none'}">
           <span>✓</span> Верифицирован
         </div>
       </div>
@@ -1088,36 +1088,116 @@ function repeatOrder(id) {
 }
 
 function acceptResp(responseId) {
+  const r = currentJobResponses.find(function(x){ return x.id === responseId; });
+
+  if (r && r.source === 'db') {
+    fetch('/api/db-responses', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: r.id, status: 'accepted', job_id: r.jobId, worker_id: r.workerId }),
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(data) {
+        if (!data.ok) { alert('Не удалось принять отклик'); return; }
+        Shabashka.updateJobStatus(r.jobId, 'selected'); // держим локальную копию статуса в согласии с БД
+        closeModal('detailModal');
+        ORDERS = loadOrders();
+        renderPage();
+      })
+      .catch(function(){ alert('БД недоступна, попробуйте ещё раз'); });
+    return;
+  }
+
   const result = Shabashka.acceptResponse(responseId);
   if (!result.ok) { alert(result.error); return; }
+  closeModal('detailModal');
   ORDERS = loadOrders();
   renderPage();
 }
 
 function declineResp(responseId) {
+  const r = currentJobResponses.find(function(x){ return x.id === responseId; });
+
+  if (r && r.source === 'db') {
+    fetch('/api/db-responses', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: r.id, status: 'rejected' }),
+    })
+      .then(function() {
+        currentJobResponses = currentJobResponses.filter(function(x){ return x.id !== responseId; });
+        openDetail(currentJobId);
+      })
+      .catch(function(){ alert('БД недоступна, попробуйте ещё раз'); });
+    return;
+  }
+
   Shabashka.declineResponse(responseId);
   renderPage();
 }
 
+let currentJobId = null;
+let currentJobResponses = []; // отклики текущего открытого заказа (из БД + локальные-фолбэк)
+
+function colorFromId(id) {
+  var palette = ['#E8510A','#185FA5','#1A7A4A','#7C3AED','#DB2777','#0891B2'];
+  return palette[(id || 0) % palette.length];
+}
+
 function openDetail(id) {
+  currentJobId = id;
   const o = ORDERS.find(x => x.id === id);
   const s = STATUS_MAP[o.status];
   const commission = 0;
   document.getElementById('detailTitle').textContent = o.title;
-  document.getElementById('detailBody').innerHTML = `
-    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-      <span class="status-pill ${s.cls}">${s.label}</span>
-      <span style="font-size:12px;color:var(--gray)">📅 ${o.date} · 👥 ${o.people} чел · 📍 ${o.addr}</span>
-    </div>
-    <p style="font-size:14px;line-height:1.7;margin-bottom:16px;color:var(--dark)">${o.desc}</p>
-    <div style="background:var(--gray-light);border-radius:10px;padding:16px;display:flex;justify-content:space-between;margin-bottom:16px">
-      <div><div style="font-size:13px;color:var(--gray)">Оплата исполнителям</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people).toLocaleString('ru')} ₽</div></div>
-      <div style="text-align:center"><div style="font-size:13px;color:var(--gray)">Комиссия (10%)</div><div style="font-size:20px;font-weight:700;color:var(--orange)">${commission.toLocaleString('ru')} ₽</div></div>
-      <div style="text-align:right"><div style="font-size:13px;color:var(--gray)">Итого</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people+commission).toLocaleString('ru')} ₽</div></div>
-    </div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:10px">Отклики (${Shabashka.getResponsesForJob(o.id).filter(r=>r.status==='pending').length})</div>
-    <div class="responses-card">${Shabashka.getResponsesForJob(o.id).filter(r=>r.status==='pending').map(r => respItem(r)).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Откликов пока нет</div>'}</div>
-    ${renderDetailActions(o)}`;
+
+  function renderBody(responses) {
+    if (currentJobId !== id) return; // модалку уже закрыли/открыли другую, пока грузилось
+    currentJobResponses = responses;
+    const pending = responses.filter(r => r.status === 'pending');
+    document.getElementById('detailBody').innerHTML = `
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <span class="status-pill ${s.cls}">${s.label}</span>
+        <span style="font-size:12px;color:var(--gray)">📅 ${o.date} · 👥 ${o.people} чел · 📍 ${o.addr}</span>
+      </div>
+      <p style="font-size:14px;line-height:1.7;margin-bottom:16px;color:var(--dark)">${o.desc}</p>
+      <div style="background:var(--gray-light);border-radius:10px;padding:16px;display:flex;justify-content:space-between;margin-bottom:16px">
+        <div><div style="font-size:13px;color:var(--gray)">Оплата исполнителям</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people).toLocaleString('ru')} ₽</div></div>
+        <div style="text-align:center"><div style="font-size:13px;color:var(--gray)">Комиссия (10%)</div><div style="font-size:20px;font-weight:700;color:var(--orange)">${commission.toLocaleString('ru')} ₽</div></div>
+        <div style="text-align:right"><div style="font-size:13px;color:var(--gray)">Итого</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people+commission).toLocaleString('ru')} ₽</div></div>
+      </div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px">Отклики (${pending.length})</div>
+      <div class="responses-card">${pending.map(r => respItem(r)).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Откликов пока нет</div>'}</div>
+      ${renderDetailActions(o)}`;
+  }
+
+  // Пока грузим из БД — показываем локальные как временную заглушку,
+  // чтобы модалка не была пустой.
+  renderBody(Shabashka.getResponsesForJob(o.id).map(r => Object.assign({ source: 'local' }, r)));
+
+  fetch('/api/db-responses?job_id=' + o.id)
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.ok && data.responses) {
+        renderBody(data.responses.map(function(r) {
+          return {
+            source: 'db',
+            id: r.id,
+            jobId: r.job_id,
+            workerId: r.worker_id,
+            workerName: r.worker_name || 'Исполнитель',
+            workerColor: colorFromId(r.worker_id),
+            workerRating: r.jobs_done > 0 ? Number(r.rating).toFixed(1) + ' ⭐' : 'Новый исполнитель',
+            verified: !!r.verified,
+            proposedPay: r.proposed_pay,
+            message: r.message || 'Готов выполнить эту работу.',
+            status: r.status,
+          };
+        }));
+      }
+    })
+    .catch(function(){ console.log('БД недоступна, показываем локальные отклики'); });
+
   document.getElementById('detailModal').classList.add('open');
 }
 
