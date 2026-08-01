@@ -61,6 +61,7 @@ try { app.post('/api/send-code',     require(path.join(ROOT, 'api/send-code')));
 try { app.post('/api/verify-code',   require(path.join(ROOT, 'api/verify-code'))); } catch(e) {}
 try { app.post('/api/upload-doc',    require(path.join(ROOT, 'api/upload-doc'))); } catch(e) {}
 try { app.post('/api/get-doc',       require(path.join(ROOT, 'api/get-doc'))); } catch(e) {}
+try { app.all('/api/admin-verifications', require(path.join(ROOT, 'api/admin-verifications'))); } catch(e) {}
 try { app.get('/api/check-new-jobs', require(path.join(ROOT, 'api/check-new-jobs'))); } catch(e) {}
 try { app.post('/api/admin-login',   require(path.join(ROOT, 'api/admin-login'))); } catch(e) {}
 try { app.post('/api/admin-verify',  require(path.join(ROOT, 'api/admin-verify'))); } catch(e) {}

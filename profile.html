@@ -796,10 +796,11 @@ function submitPassport() {
   if (btn) { btn.disabled = true; btn.textContent = 'Отправляем…'; }
 
   // Отправляем фото на сервер — НЕ храним в localStorage
+  Shabashka.ensureDbUserId().then(function (userId) {
   fetch('/api/upload-doc', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ photo: passportPhotoBase64, type: 'passport' }),
+    body: JSON.stringify({ photo: passportPhotoBase64, type: 'passport', userId: userId }),
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
@@ -830,6 +831,7 @@ function submitPassport() {
     errEl.textContent = 'Не удалось загрузить фото. Проверьте соединение.';
     errEl.style.display = 'block';
     if (btn) { btn.disabled = false; btn.textContent = 'Отправить на проверку'; }
+  });
   });
 }
 

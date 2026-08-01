@@ -128,50 +128,66 @@ if (rendered) {
   }
 
   function renderVerifQueue() {
-    var vs = S.getVerificationStatus();
     const canVerify = A.canDo('worker.verify');
+    var token = localStorage.getItem('shabashka_admin_token');
+    var role = localStorage.getItem('shabashka_admin_role');
 
-    if (!vs || vs.status === 'none') {
+    document.getElementById('tabContent').innerHTML = '<div style="padding:60px;text-align:center;color:var(--gray)">Загрузка…</div>';
+
+    fetch('/api/admin-verifications?adminToken=' + encodeURIComponent(token) + '&adminRole=' + encodeURIComponent(role))
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data.ok) {
+          document.getElementById('tabContent').innerHTML =
+            '<div style="padding:60px;text-align:center;color:var(--red)">' + (data.error || 'Ошибка загрузки') + '</div>';
+          return;
+        }
+        renderVerifList(data.items, canVerify);
+      })
+      .catch(function() {
+        document.getElementById('tabContent').innerHTML =
+          '<div style="padding:60px;text-align:center;color:var(--red)">Не удалось загрузить заявки</div>';
+      });
+  }
+
+  function renderVerifList(items, canVerify) {
+    if (!items.length) {
       document.getElementById('tabContent').innerHTML =
         '<div style="padding:60px;text-align:center;color:var(--gray)"><div style="font-size:40px;margin-bottom:12px">📄</div><div>Заявок на верификацию нет</div></div>';
       return;
     }
 
-    const statusColors = { pending:'#B07800', approved:'#1A7A4A', rejected:'#B91C1C' };
-    const statusLabels = { pending:'На проверке', approved:'Одобрена', rejected:'Отклонена' };
-
-    var docPhotoHtml = vs.docId
-      ? '<div id="docPhotoWrap" style="margin-bottom:12px">' +
-        '<button onclick="loadDocPhoto(this.dataset.id)" data-id="' + vs.docId + '" id="loadPhotoBtn"' +
+    document.getElementById('tabContent').innerHTML = items.map(function(vs) {
+      var docPhotoHtml = '<div id="docPhotoWrap-' + vs.docId + '" style="margin-bottom:12px">' +
+        '<button onclick="loadDocPhoto(\'' + vs.docId + '\')" id="loadPhotoBtn-' + vs.docId + '"' +
         ' style="width:100%;padding:10px;border:1px dashed var(--border);border-radius:10px;background:var(--gray-light);cursor:pointer;font-size:13px;color:var(--gray);font-family:inherit">' +
-        '🔍 Загрузить фото документа (только для администраторов)</button></div>'
-      : '';
+        '🔍 Загрузить фото документа (только для администраторов)</button></div>';
 
-    var actionsHtml = vs.status === 'pending'
-      ? '<div class="verif-actions">' +
-        '<button class="btn-sm btn-sm-green" style="flex:1;padding:10px" ' + (canVerify?'':'disabled') + ' onclick="approveVerif()">&#10003; Одобрить</button>' +
-        '<button class="btn-sm btn-sm-red" style="flex:1;padding:10px" ' + (canVerify?'':'disabled') + ' onclick="showRejectForm()">&#10007; Отклонить</button>' +
-        '</div><div class="reject-form" id="rejectForm">' +
-        '<input class="reject-input" id="rejectReason" placeholder="Причина отклонения (например: фото нечёткое)">' +
-        '<button class="btn-sm btn-sm-red" style="width:100%;padding:9px" onclick="rejectVerif()">Отклонить заявку</button></div>'
-      : vs.status === 'approved'
-        ? '<div style="background:var(--green-bg);color:var(--green);padding:12px;border-radius:9px;font-size:13px;font-weight:600">&#9989; Заявка одобрена' + (vs.reviewedAt ? ' &middot; ' + vs.reviewedAt : '') + '</div>'
-        : '<div style="background:var(--red-bg);color:var(--red);padding:12px;border-radius:9px;font-size:13px">&#10060; Отклонена: ' + (vs.rejectReason || '&mdash;') + '</div>';
+      var actionsHtml = vs.status === 'pending'
+        ? '<div class="verif-actions">' +
+          '<button class="btn-sm btn-sm-green" style="flex:1;padding:10px" ' + (canVerify?'':'disabled') + ' onclick="approveVerif(\'' + vs.docId + '\')">&#10003; Одобрить</button>' +
+          '<button class="btn-sm btn-sm-red" style="flex:1;padding:10px" ' + (canVerify?'':'disabled') + ' onclick="showRejectForm(\'' + vs.docId + '\')">&#10007; Отклонить</button>' +
+          '</div><div class="reject-form" id="rejectForm-' + vs.docId + '" style="display:none">' +
+          '<input class="reject-input" id="rejectReason-' + vs.docId + '" placeholder="Причина отклонения (например: фото нечёткое)">' +
+          '<button class="btn-sm btn-sm-red" style="width:100%;padding:9px" onclick="rejectVerif(\'' + vs.docId + '\')">Отклонить заявку</button></div>'
+        : vs.status === 'approved'
+          ? '<div style="background:var(--green-bg);color:var(--green);padding:12px;border-radius:9px;font-size:13px;font-weight:600">&#9989; Заявка одобрена</div>'
+          : '<div style="background:var(--red-bg);color:var(--red);padding:12px;border-radius:9px;font-size:13px">&#10060; Отклонена: ' + (vs.rejectReason || '&mdash;') + '</div>';
 
-    document.getElementById('tabContent').innerHTML =
-      '<div class="verif-card">' +
-      '<div class="verif-top"><div>' +
-      '<div class="verif-name">' + vs.userId + '</div>' +
-      '<div class="verif-date">Подана: ' + vs.submittedAt + '</div>' +
-      '</div><span class="pill" style="background:#F4F3EF;color:' + statusColors[vs.status] + '">' + statusLabels[vs.status] + '</span></div>' +
-      docPhotoHtml +
-      '<div style="font-size:12px;color:var(--gray);margin-bottom:12px">Нажмите на фото для просмотра в полном размере</div>' +
-      actionsHtml +
-      '</div>';
+      return '<div class="verif-card" style="margin-bottom:14px">' +
+        '<div class="verif-top"><div>' +
+        '<div class="verif-name">' + vs.userName + (vs.userPhone ? ' · ' + vs.userPhone : '') + '</div>' +
+        '<div class="verif-date">Подана: ' + new Date(vs.uploadedAt).toLocaleString('ru') + '</div>' +
+        '</div></div>' +
+        docPhotoHtml +
+        '<div style="font-size:12px;color:var(--gray);margin-bottom:12px">Нажмите на фото для просмотра в полном размере</div>' +
+        actionsHtml +
+        '</div>';
+    }).join('');
   }
 
   window.loadDocPhoto = function(docId) {
-    var btn = document.getElementById('loadPhotoBtn');
+    var btn = document.getElementById('loadPhotoBtn-' + docId);
     if (btn) { btn.textContent = 'Загружаем…'; btn.disabled = true; }
 
     var token = localStorage.getItem('shabashka_admin_token');
@@ -184,39 +200,61 @@ if (rendered) {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
+      var wrap = document.getElementById('docPhotoWrap-' + docId);
       if (!data.ok) {
-        var wrap = document.getElementById('docPhotoWrap');
         if (wrap) wrap.innerHTML = '<div style="color:var(--red);font-size:13px;padding:10px">' + (data.error || 'Ошибка загрузки') + '</div>';
         return;
       }
-      var wrap = document.getElementById('docPhotoWrap');
       if (wrap) {
         wrap.innerHTML = '<img src="' + data.photo + '" alt="Документ" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;border:1px solid var(--border);cursor:pointer;margin-bottom:8px" onclick="window.open(this.src,\'_blank\')">' +
           '<div style="font-size:11px;color:var(--gray)">Нажмите для просмотра в полном размере · Доступ зафиксирован в журнале</div>';
       }
     })
     .catch(function() {
-      var wrap = document.getElementById('docPhotoWrap');
+      var wrap = document.getElementById('docPhotoWrap-' + docId);
       if (wrap) wrap.innerHTML = '<div style="color:var(--red);font-size:13px;padding:10px">Не удалось загрузить документ</div>';
     });
   };
 
-  window.showRejectForm = function() {
-    var f = document.getElementById('rejectForm');
+  window.showRejectForm = function(docId) {
+    var f = document.getElementById('rejectForm-' + docId);
     if (f) f.style.display = 'block';
   };
 
-  window.approveVerif = function() {
+  window.approveVerif = function(docId) {
     if (!confirm('Одобрить верификацию паспорта?')) return;
-    S.approveVerification();
-    A.logAction('Одобрил верификацию паспорта исполнителя');
-    renderVerifQueue();
+    var token = localStorage.getItem('shabashka_admin_token');
+    var role = localStorage.getItem('shabashka_admin_role');
+    fetch('/api/admin-verifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docId: docId, decision: 'approved', adminToken: token, adminRole: role }),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data.ok) { alert(data.error || 'Не удалось одобрить заявку'); return; }
+        A.logAction('Одобрил верификацию паспорта исполнителя');
+        renderVerifQueue();
+      })
+      .catch(function(){ alert('БД недоступна, попробуйте ещё раз'); });
   };
-  window.rejectVerif = function() {
-    var reason = document.getElementById('rejectReason').value.trim() || 'Документ нечёткий или неподходящий';
-    S.rejectVerification(reason);
-    A.logAction('Отклонил верификацию: ' + reason);
-    renderVerifQueue();
+  window.rejectVerif = function(docId) {
+    var reasonEl = document.getElementById('rejectReason-' + docId);
+    var reason = (reasonEl ? reasonEl.value.trim() : '') || 'Документ нечёткий или неподходящий';
+    var token = localStorage.getItem('shabashka_admin_token');
+    var role = localStorage.getItem('shabashka_admin_role');
+    fetch('/api/admin-verifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docId: docId, decision: 'rejected', reason: reason, adminToken: token, adminRole: role }),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data.ok) { alert(data.error || 'Не удалось отклонить заявку'); return; }
+        A.logAction('Отклонил верификацию: ' + reason);
+        renderVerifQueue();
+      })
+      .catch(function(){ alert('БД недоступна, попробуйте ещё раз'); });
   };
   window.toggleVerify = function (id, verified) { A.setWorkerVerified(id, verified); renderWorkers(); };
   window.block = function (id) { A.blockUser(id); renderWorkers(); };

@@ -1061,10 +1061,10 @@
     record.status = 'approved';
     record.reviewedAt = todayLabel();
     localStorage.setItem(VERIFICATION_KEY, JSON.stringify(record));
-    // Обновляем флаг в профиле пользователя
-    var user = BASE_USER;
-    user.verified.passport = true;
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    // Локальное эхо для текущего пользователя в этом браузере — основной
+    // источник истины теперь /api/admin-verifications (пишет в БД).
+    var verified = { phone: getUser().verified.phone, passport: true };
+    localStorage.setItem('shabashka_verified', JSON.stringify(verified));
     return { ok: true };
   }
 
