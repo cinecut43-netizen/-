@@ -129,17 +129,64 @@ var STATUS_LABELS = {
   'rejected':    { text: '❌ Не выбрали',         cls: 'status-rejected' },
 };
 
-function getMyResponses() {
-  var allResponses = Shabashka.getAllJobs
-    ? []
-    : [];
+var dbResponses = []; // отклики из БД, подгружаются асинхронно ниже
 
+function mapDbResponseToItem(r) {
+  var job = {
+    id: r.job_id,
+    emoji: r.emoji || '📦',
+    title: r.title,
+    company: r.employer_company || r.employer_name || 'Работодатель',
+    location: r.location || '—',
+    pay: parseInt(r.pay) || 0,
+    payLabel: r.pay_label || 'за день',
+    date: r.date || '—',
+    status: r.job_status,
+  };
+  var response = {
+    status: r.status,
+    proposedPay: r.proposed_pay,
+    message: r.message || '',
+  };
+  var respStatus = response.status;
+  if (response.status === 'pending') {
+    if (job.status === 'done' || job.status === 'cancelled') respStatus = 'rejected';
+  } else if (response.status === 'accepted' || response.status === 'selected') {
+    respStatus = job.status === 'done' ? 'done' :
+                 job.status === 'on_the_way' ? 'on_the_way' :
+                 job.status === 'in_progress' ? 'in_progress' : 'selected';
+  } else if (response.status === 'rejected') {
+    respStatus = 'rejected';
+  }
+  return { job: job, response: response, status: respStatus };
+}
+
+// Подгружаем отклики этого исполнителя из БД — без этого my-orders
+// показывал только то, что сохранено в localStorage на этом устройстве.
+(function loadResponsesFromDB() {
+  Shabashka.ensureDbUserId().then(function (workerId) {
+    if (!workerId) return;
+    fetch('/api/db-responses?worker_id=' + workerId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.responses) {
+          dbResponses = data.responses.map(mapDbResponseToItem);
+          render();
+        }
+      })
+      .catch(function(){ console.log('БД недоступна, показываем локальные отклики'); });
+  });
+})();
+
+function getMyResponses() {
   // Получаем все отклики текущего пользователя
   var jobs = Shabashka.getOpenJobs ? Shabashka.getOpenJobs() : [];
   var allJobs = Shabashka.getAllJobs ? Shabashka.getAllJobs() : jobs;
 
   var result = [];
+  var dbJobIds = dbResponses.map(function(i){ return i.job.id; });
   allJobs.forEach(function(job) {
+    if (dbJobIds.indexOf(job.id) !== -1) return; // уже есть версия из БД — не дублируем
     var responses = Shabashka.getResponsesForJob(job.id);
     var myResp = responses.find(function(r) { return r.workerName === myName; });
     if (myResp) {
@@ -158,7 +205,7 @@ function getMyResponses() {
     }
   });
 
-  return result;
+  return dbResponses.concat(result);
 }
 
 function filterByTab(items, tab) {

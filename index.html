@@ -1243,19 +1243,21 @@ function applyAndChat(jobId) {
 
   // Сохраняем отклик в базу данных
   const user = Shabashka.getUser();
-  fetch('/api/db-responses', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      job_id: jobId,
-      worker_id: user.id || null,
-      worker_name: user.name,
-      proposed_pay: proposedPay,
-      message: '',
-    })
-  }).then(function(r){ return r.json(); })
-    .then(function(d){ if(d.ok) console.log('✅ Отклик сохранён в БД'); })
-    .catch(function(){ console.log('БД недоступна, отклик сохранён локально'); });
+  Shabashka.ensureDbUserId().then(function (workerId) {
+    fetch('/api/db-responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job_id: jobId,
+        worker_id: workerId,
+        worker_name: user.name,
+        proposed_pay: proposedPay,
+        message: '',
+      })
+    }).then(function(r){ return r.json(); })
+      .then(function(d){ if(d.ok) console.log('✅ Отклик сохранён в БД'); })
+      .catch(function(){ console.log('БД недоступна, отклик сохранён локально'); });
+  });
 
   // Уведомление в Telegram
   const job = Shabashka.getJob(jobId);
