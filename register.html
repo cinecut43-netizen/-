@@ -482,6 +482,7 @@ function attachHandlers() {
           name: state.name,
           role: state.role,
           company: state.company || null,
+          consentText: 'Согласен(-на) на обработку персональных данных (152-ФЗ), с Пользовательским соглашением и Офертой',
         })
       })
       .then(function(r){ return r.json(); })
@@ -509,6 +510,15 @@ function attachHandlers() {
 
         localStorage.setItem('shabashka_access', '1');
         localStorage.setItem('shabashka_onboarding_done', '1');
+
+        fetch('/api/telegram-notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'new_user',
+            data: { name: state.name, phone: state.phone, role: state.role }
+          })
+        }).catch(function(){});
 
         if (state.role === 'employer') {
           window.location.href = '/employer';
@@ -609,5 +619,6 @@ render();
 </script>
 <script src="/pwa.js"></script>
 
+<script src="/cookie-banner.js"></script>
 </body>
 </html>
