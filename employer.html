@@ -1045,12 +1045,15 @@ function getPaymentsPage() {
   return `
   <div class="section-header">
     <span class="section-title">Платежи и баланс</span>
-    <button class="post-btn" style="font-size:13px;padding:7px 14px" onclick="openTopUpModal()">+ Пополнить баланс</button>
+  </div>
+  <div style="background:var(--green-bg,#E8F5EE);border:1px solid var(--green);border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:20px">🎉</span>
+    <span style="font-size:13.5px;color:var(--dark)">Платформа сейчас полностью бесплатна — размещение заказов и работа с исполнителями не тарифицируются. Пополнение баланса пока не требуется.</span>
   </div>
   <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
     <div class="stat-card"><div class="stat-card-label">Баланс</div><div class="stat-card-num" style="color:var(--green)" id="employerBalanceNum">${Shabashka.getEmployerBalance().toLocaleString('ru')} ₽</div></div>
     <div class="stat-card"><div class="stat-card-label">Резерв (эскроу)</div><div class="stat-card-num" style="color:var(--amber)">${reserved.toLocaleString('ru')} ₽</div></div>
-    <div class="stat-card"><div class="stat-card-label">Всего потрачено</div><div class="stat-card-num">${spent.toLocaleString('ru')} ₽</div></div>
+    <div class="stat-card"><div class="stat-card-label">Всего оплачено исполнителям</div><div class="stat-card-num">${spent.toLocaleString('ru')} ₽</div></div>
   </div>
   <div class="orders-card" id="employerTxList">
     <div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Загрузка…</div>
@@ -1307,7 +1310,7 @@ function openDetail(id) {
       <p style="font-size:14px;line-height:1.7;margin-bottom:16px;color:var(--dark)">${o.desc}</p>
       <div style="background:var(--gray-light);border-radius:10px;padding:16px;display:flex;justify-content:space-between;margin-bottom:16px">
         <div><div style="font-size:13px;color:var(--gray)">Оплата исполнителям</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people).toLocaleString('ru')} ₽</div></div>
-        <div style="text-align:center"><div style="font-size:13px;color:var(--gray)">Комиссия (10%)</div><div style="font-size:20px;font-weight:700;color:var(--orange)">${commission.toLocaleString('ru')} ₽</div></div>
+        <div style="text-align:center"><div style="font-size:13px;color:var(--gray)">Комиссия платформы</div><div style="font-size:20px;font-weight:700;color:var(--green)">${commission === 0 ? 'Не взимается' : commission.toLocaleString('ru') + ' ₽'}</div></div>
         <div style="text-align:right"><div style="font-size:13px;color:var(--gray)">Итого</div><div style="font-size:20px;font-weight:700">${(o.pay*o.people+commission).toLocaleString('ru')} ₽</div></div>
       </div>
       <div style="font-size:14px;font-weight:600;margin-bottom:10px">Отклики (${pending.length})</div>

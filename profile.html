@@ -224,9 +224,6 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
         <button onclick="openEdit()" style="width:36px;height:36px;border-radius:50%;background:#F4F3EF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
           <i class="ph-bold ph-pencil" style="font-size:17px;color:#6B6B67"></i>
         </button>
-        <a href="/pro" style="width:36px;height:36px;border-radius:50%;background:#FFF0E8;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none">
-          <i class="ph-bold ph-lightning" style="font-size:17px;color:#E8510A"></i>
-        </a>
       </div>
     </div>
 
@@ -268,7 +265,6 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
 <nav>
   <div class="nav-right">
     <button class="nav-btn" onclick="openEdit()"><i class="ph-bold ph-pencil" style="font-size:13px;vertical-align:-1px"></i> Редактировать</button>
-    <a class="nav-btn primary" href="/pro" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none"><i class="ph-bold ph-lightning" style="font-size:13px"></i> PRO</a>
   </div>
 </nav>
 
@@ -634,15 +630,10 @@ function renderHero() {
     skillsGrid.innerHTML = '<div id="skillsEmpty" style="font-size:13px;color:var(--gray)">Навыки пока не указаны</div>';
   }
 
-  // PRO бейдж и кнопка (десктоп)
+  // PRO подписка временно отключена (сайт сейчас полностью бесплатный) —
+  // не показываем ни бейдж, ни призыв подключить.
   const proWrap = document.getElementById('proBadgeWrap');
-  if (proWrap) {
-    if (isPro) {
-      proWrap.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#F5A623,#E8510A);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:0.3px"><i class="ph-bold ph-lightning" style="font-size:13px"></i> PRO</span>`;
-    } else {
-      proWrap.innerHTML = `<a href="/pro" style="display:inline-flex;align-items:center;gap:5px;background:#FEF6E4;color:#E8510A;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;text-decoration:none;border:1px solid #F5A623"><i class="ph-bold ph-lightning" style="font-size:13px"></i> Подключить PRO</a>`;
-    }
-  }
+  if (proWrap) proWrap.innerHTML = '';
 
   // Заполняем МОБИЛЬНУЮ шапку
   const mobileAvatar = document.getElementById('mobileAvatarBox');
@@ -664,13 +655,7 @@ function renderHero() {
   if (mobileMeta) mobileMeta.textContent = `📍 ${u.city} · ${u.age ? "🎂 " + u.age + " лет" : ""}`;
 
   const mobileProWrap = document.getElementById('mobileProBadgeWrap');
-  if (mobileProWrap) {
-    if (isPro) {
-      mobileProWrap.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#F5A623,#E8510A);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px"><i class="ph-bold ph-lightning" style="font-size:12px"></i> PRO</span>`;
-    } else {
-      mobileProWrap.innerHTML = `<a href="/pro" style="display:inline-flex;align-items:center;gap:5px;background:#FEF6E4;color:#E8510A;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-decoration:none"><i class="ph-bold ph-lightning" style="font-size:12px"></i> Подключить PRO</a>`;
-    }
-  }
+  if (mobileProWrap) mobileProWrap.innerHTML = '';
 }
 
 function renderVerification() {
