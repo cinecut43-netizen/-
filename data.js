@@ -32,6 +32,7 @@
     city: '',
     bio: '',
     skills: [],
+    categories: [], // move|build|clean|event|other — в каких категориях заказов работает
     dayRate: null, // желаемая ставка ₽/день, null = не указана
     phone: '',
     balance: 0, // ₽, реальный баланс из БД (пополняется через ЮKassa)
@@ -150,6 +151,11 @@
       try { DEFAULT_USER.skills = JSON.parse(savedSkills); } catch (e) { /* оставляем дефолт */ }
     }
 
+    const savedCategories = localStorage.getItem('shabashka_categories');
+    if (savedCategories) {
+      try { DEFAULT_USER.categories = JSON.parse(savedCategories); } catch (e) { /* оставляем дефолт */ }
+    }
+
     const savedRate = localStorage.getItem('shabashka_day_rate');
     DEFAULT_USER.dayRate = savedRate ? Number(savedRate) : null;
 
@@ -185,6 +191,7 @@
     }
     if (fields.bio !== undefined) localStorage.setItem('shabashka_bio', fields.bio);
     if (fields.skills !== undefined) localStorage.setItem('shabashka_skills', JSON.stringify(fields.skills));
+    if (fields.categories !== undefined) localStorage.setItem('shabashka_categories', JSON.stringify(fields.categories));
     if (fields.dayRate !== undefined && fields.dayRate !== null && fields.dayRate !== '') {
       localStorage.setItem('shabashka_day_rate', String(fields.dayRate));
     }
@@ -193,7 +200,7 @@
     // Синхронизируем с БД в фоне — чтобы новый город/навыки/ставка были
     // видны другим пользователям в поиске (workers.html), а не только
     // на этом устройстве.
-    if (fields.city || fields.bio !== undefined || fields.skills !== undefined || fields.dayRate !== undefined) {
+    if (fields.city || fields.bio !== undefined || fields.skills !== undefined || fields.dayRate !== undefined || fields.categories !== undefined) {
       ensureDbUserId().then(function (id) {
         if (!id) return;
         fetch('/api/db-users?action=update', {
@@ -207,6 +214,7 @@
             bio: fields.bio !== undefined ? fields.bio : null,
             skills: fields.skills !== undefined ? fields.skills : null,
             day_rate: fields.dayRate !== undefined && fields.dayRate !== '' ? Number(fields.dayRate) : null,
+            categories: fields.categories !== undefined ? fields.categories : null,
           }),
         }).catch(function () { /* офлайн — останется хотя бы локально */ });
       });

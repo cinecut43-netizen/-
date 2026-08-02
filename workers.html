@@ -284,14 +284,13 @@ function mapDbWorker(u) {
     responseTime: '—',
     bio: u.bio || 'Профиль пока не заполнен',
     skills: Array.isArray(u.skills) ? u.skills : [],
+    categories: Array.isArray(u.categories) ? u.categories : [],
     price: u.day_rate || null,
     verified: !!u.verified,
   };
 }
 
-// Подгружаем реальных исполнителей из БД. Фильтр по категории пока не
-// применяем к ним — категория работ у исполнителя в базе не хранится,
-// это следующий шаг (нужно расширить профиль исполнителя).
+// Подгружаем реальных исполнителей из БД.
 (function loadWorkersFromDB() {
   fetch('/api/db-users?role=worker&limit=100')
     .then(function(r){ return r.json(); })
@@ -309,6 +308,9 @@ function applyFilters() {
   var sort = document.getElementById('sortSelect').value;
   var workers = DB_WORKERS.slice();
 
+  if (currentCat !== 'all') {
+    workers = workers.filter(function (w) { return w.categories.indexOf(currentCat) !== -1; });
+  }
   if (query) {
     workers = workers.filter(function (w) {
       return w.name.toLowerCase().indexOf(query) !== -1 ||
@@ -452,5 +454,6 @@ applyFilters();
     <div class="footer-copy">© 2025 Шабашка · 18+</div>
   </div>
 </footer>
+<script src="/cookie-banner.js"></script>
 </body>
 </html>

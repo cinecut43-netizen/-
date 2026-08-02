@@ -8,11 +8,14 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(100),
   role VARCHAR(20) DEFAULT 'worker', -- worker | employer
   balance INTEGER DEFAULT 0, -- ₽, пополняется через реальные платежи (ЮKassa)
+  consent_at TIMESTAMP, -- когда пользователь дал согласие на обработку ПДн (152-ФЗ)
+  consent_text TEXT, -- какой именно текст согласия он видел в момент регистрации
   company VARCHAR(200),
   avatar_url TEXT,
   city VARCHAR(100),
   bio TEXT,
   skills TEXT[] DEFAULT '{}',
+  categories TEXT[] DEFAULT '{}', -- move|build|clean|event|other — для фильтра поиска работодателя
   day_rate INTEGER,
   rating DECIMAL(3,2) DEFAULT 0,
   reviews_count INTEGER DEFAULT 0,
@@ -28,9 +31,12 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS skills TEXT[] DEFAULT '{}';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS categories TEXT[] DEFAULT '{}';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS day_rate INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_at TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_text TEXT;
 
 -- Реальные платежи через ЮKassa (пополнение баланса работодателя)
 CREATE TABLE IF NOT EXISTS payments (

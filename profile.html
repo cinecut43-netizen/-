@@ -422,6 +422,27 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
       <input class="form-input" id="editSkills" placeholder="Например: грузчик, сборка мебели, покраска">
       <div style="font-size:12px;color:var(--gray);margin-top:4px">Через запятую</div>
     </div>
+    <div class="form-group">
+      <label class="form-label">В каких категориях работаете</label>
+      <div id="editCategories" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px">
+          <input type="checkbox" value="move" style="accent-color:var(--orange)"> 📦 Переезд
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px">
+          <input type="checkbox" value="build" style="accent-color:var(--orange)"> 🔨 Стройка
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px">
+          <input type="checkbox" value="clean" style="accent-color:var(--orange)"> 🧹 Уборка
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px">
+          <input type="checkbox" value="event" style="accent-color:var(--orange)"> 🎉 Ивент
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px">
+          <input type="checkbox" value="other" style="accent-color:var(--orange)"> ⚡ Прочее
+        </label>
+      </div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px">По этим категориям вас найдут работодатели в поиске</div>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Телефон</label>
@@ -756,6 +777,11 @@ function openPassportModal() {
         🔒 Фото документа хранится только для проверки и не передаётся третьим лицам
       </div>
 
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:16px;cursor:pointer">
+        <input type="checkbox" id="passportConsent" style="width:17px;height:17px;margin-top:1px;accent-color:#E8510A;flex-shrink:0;cursor:pointer">
+        <span style="font-size:12.5px;line-height:1.5;color:#14151A">Согласен(-на) на обработку данных документа, удостоверяющего личность, в целях верификации аккаунта (<a href="/privacy" target="_blank" style="color:#E8510A">подробнее</a>)</span>
+      </label>
+
       <button onclick="submitPassport()" style="width:100%;padding:13px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Отправить на проверку</button>
     </div>
   `;
@@ -787,6 +813,13 @@ function submitPassport() {
     errEl.style.display = 'block';
     return;
   }
+  var consentEl = document.getElementById('passportConsent');
+  if (!consentEl || !consentEl.checked) {
+    errEl.textContent = 'Нужно согласие на обработку данных документа';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
 
   var btn = document.querySelector('#passportModal button[onclick="submitPassport()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Отправляем…'; }
@@ -840,6 +873,10 @@ function openEdit() {
   document.getElementById('editSkills').value = (u.skills || []).join(', ');
   document.getElementById('editRate').value = u.dayRate || '';
   document.getElementById('editPhone').value = u.phone ? Shabashka.maskPhone(u.phone) : 'Не подтверждён';
+  var cats = u.categories || [];
+  document.querySelectorAll('#editCategories input[type=checkbox]').forEach(function(cb) {
+    cb.checked = cats.indexOf(cb.value) !== -1;
+  });
   document.getElementById('editModal').classList.add('open');
 }
 function closeEdit() { document.getElementById('editModal').classList.remove('open'); }
@@ -851,13 +888,14 @@ function saveProfile() {
   const bio = document.getElementById('editBio').value.trim();
   const skills = document.getElementById('editSkills').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
   const dayRate = document.getElementById('editRate').value;
+  const categories = Array.from(document.querySelectorAll('#editCategories input[type=checkbox]:checked')).map(function(cb){ return cb.value; });
 
   if (!name || !city) {
     alert('Заполните имя и город');
     return;
   }
 
-  Shabashka.updateProfile({ name, age, city, bio, skills, dayRate });
+  Shabashka.updateProfile({ name, age, city, bio, skills, dayRate, categories });
   renderHero();
   closeEdit();
 }
@@ -928,5 +966,6 @@ setTimeout(function() {
 
 <script src="/feedback.js"></script>
 <script src="/ai-agent.js"></script>
+<script src="/cookie-banner.js"></script>
 </body>
 </html>
