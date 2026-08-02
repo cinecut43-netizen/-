@@ -1012,10 +1012,35 @@ function getResponsesPage() {
 }
 
 function getPaymentsPage() {
-  const balance = Shabashka.getEmployerBalance();
-  const tx = Shabashka.getEmployerTx();
   const reserved = ORDERS.filter(o => o.status === 'in_progress').reduce((s, o) => s + o.pay * o.people, 0);
   const spent = ORDERS.filter(o => o.status === 'done').reduce((s, o) => s + o.pay * o.people, 0);
+
+  // Баланс и история платежей — реальные, из БД, подгружаются асинхронно
+  Shabashka.refreshUserFromDb().then(function() {
+    var num = document.getElementById('employerBalanceNum');
+    if (num) num.textContent = Shabashka.getEmployerBalance().toLocaleString('ru') + ' ₽';
+  });
+  Shabashka.ensureDbUserId().then(function(userId) {
+    if (!userId) return;
+    fetch('/api/payments-list?user_id=' + userId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var list = document.getElementById('employerTxList');
+        if (!list || !data.ok) return;
+        var payments = data.payments.filter(function(p){ return p.status !== 'pending'; });
+        list.innerHTML = payments.length ? payments.map(function(p) {
+          var isOk = p.status === 'succeeded';
+          return '<div class="order-row">' +
+            '<div class="order-icon">' + (isOk ? '💳' : '❌') + '</div>' +
+            '<div class="order-info"><div class="order-title">' + (p.description || 'Пополнение баланса') + '</div>' +
+            '<div class="order-meta">' + (isOk ? 'Оплачено' : 'Отменено') + '</div></div>' +
+            '<div class="order-date">' + new Date(p.created_at).toLocaleDateString('ru') + '</div>' +
+            '<div class="order-pay" style="color:' + (isOk ? 'var(--green)' : 'var(--red)') + '">' +
+            (isOk ? '+' : '') + p.amount.toLocaleString('ru') + ' ₽</div></div>';
+        }).join('') : '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Пока нет операций</div>';
+      })
+      .catch(function(){});
+  });
 
   return `
   <div class="section-header">
@@ -1023,20 +1048,12 @@ function getPaymentsPage() {
     <button class="post-btn" style="font-size:13px;padding:7px 14px" onclick="openTopUpModal()">+ Пополнить баланс</button>
   </div>
   <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
-    <div class="stat-card"><div class="stat-card-label">Баланс</div><div class="stat-card-num" style="color:var(--green)" id="employerBalanceNum">${balance.toLocaleString('ru')} ₽</div></div>
+    <div class="stat-card"><div class="stat-card-label">Баланс</div><div class="stat-card-num" style="color:var(--green)" id="employerBalanceNum">${Shabashka.getEmployerBalance().toLocaleString('ru')} ₽</div></div>
     <div class="stat-card"><div class="stat-card-label">Резерв (эскроу)</div><div class="stat-card-num" style="color:var(--amber)">${reserved.toLocaleString('ru')} ₽</div></div>
     <div class="stat-card"><div class="stat-card-label">Всего потрачено</div><div class="stat-card-num">${spent.toLocaleString('ru')} ₽</div></div>
   </div>
   <div class="orders-card" id="employerTxList">
-    ${tx.map(r => `
-      <div class="order-row">
-        <div class="order-icon">${r.type==='credit' ? '💳' : '📤'}</div>
-        <div class="order-info"><div class="order-title">${r.title}</div><div class="order-meta">${r.type==='credit' ? 'Пополнение' : 'Списание'} · ${r.status}</div></div>
-        <div class="order-date">${r.date}</div>
-        <div class="order-pay" style="color:${r.type==='credit'?'var(--green)':'var(--red)'}">
-          ${r.type==='credit' ? '+' : '−'}${r.amount.toLocaleString('ru')} ₽
-        </div>
-      </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Пока нет операций</div>'}
+    <div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Загрузка…</div>
   </div>`;
 }
 
@@ -1052,27 +1069,28 @@ function selectTopUpAmount(amount, btn) {
 
 function submitTopUp() {
   const amount = parseInt(document.getElementById('topUpAmount').value) || 0;
-  const methodEl = document.querySelector('input[name="topUpMethod"]:checked');
-  const method = methodEl ? methodEl.value : 'карта';
+  const errEl = document.getElementById('topUpError');
+  const btn = document.querySelector('#topUpModal .btn-main.btn-save, #topUpModal button[onclick="submitTopUp()"]');
 
   if (amount < 100) {
-    document.getElementById('topUpError').textContent = 'Минимальная сумма пополнения — 100 ₽';
-    document.getElementById('topUpError').classList.add('show');
+    errEl.textContent = 'Минимальная сумма пополнения — 100 ₽';
+    errEl.classList.add('show');
     return;
   }
+  errEl.classList.remove('show');
+  if (btn) { btn.disabled = true; btn.textContent = 'Переходим к оплате…'; }
 
-  const result = Shabashka.topUpEmployerBalance(amount, method);
-  if (!result.ok) {
-    document.getElementById('topUpError').textContent = result.error;
-    document.getElementById('topUpError').classList.add('show');
-    return;
-  }
-
-  closeModal('topUpModal');
-  document.getElementById('topUpAmount').value = '';
-  document.getElementById('topUpError').classList.remove('show');
-  alert('Баланс пополнен на ' + amount.toLocaleString('ru') + ' ₽');
-  renderPage();
+  Shabashka.createTopUpPayment(amount, '/employer').then(function(result) {
+    if (!result.ok) {
+      errEl.textContent = result.error;
+      errEl.classList.add('show');
+      if (btn) { btn.disabled = false; btn.textContent = 'Пополнить'; }
+      return;
+    }
+    // Реальный переход на страницу оплаты ЮKassa — деньги зачислятся
+    // только после того, как человек реально оплатит картой.
+    window.location.href = result.confirmationUrl;
+  });
 }
 
 function orderRow(o) {
@@ -1713,6 +1731,27 @@ function submitDisputeForm() {
 }
 
 Shabashka.refreshUserFromDb().then(function(){ if (currentPage === 'analytics') renderPage(); });
+
+// Возврат после оплаты через ЮKassa — открываем вкладку "Платежи" и
+// ждём, пока вебхук (или запасная проверка) реально зачислит баланс.
+(function handlePaymentReturn() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('payment') !== 'return') return;
+
+  history.replaceState(null, '', '/employer'); // убираем ?payment=return из адреса
+
+  var paymentsBtn = document.querySelectorAll('.sidenav-item')[4]; // Платежи
+  setPage('payments', paymentsBtn);
+
+  var attempts = 0;
+  var poll = setInterval(function() {
+    attempts++;
+    Shabashka.refreshUserFromDb().then(function() {
+      if (currentPage === 'payments') renderPage();
+    });
+    if (attempts >= 8) clearInterval(poll); // ~16 секунд достаточно даже с запасом
+  }, 2000);
+})();
 renderPage();
 </script>
 

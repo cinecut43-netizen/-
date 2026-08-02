@@ -34,6 +34,7 @@
     skills: [],
     dayRate: null, // желаемая ставка ₽/день, null = не указана
     phone: '',
+    balance: 0, // ₽, реальный баланс из БД (пополняется через ЮKassa)
     photo: null, // base64 data-URL, если пользователь загрузил фото
     registeredAt: new Date().toISOString().slice(0,10), // ISO-дата для расчёта «на платформе с...»
     role: localStorage.getItem('shabashka_role') || 'worker',
@@ -221,6 +222,19 @@
 
   function setRole(role) {
     localStorage.setItem('shabashka_role', role);
+
+    // Раньше роль менялась только "визуально" в localStorage — в БД у
+    // пользователя навсегда оставалась роль с момента регистрации. Из-за
+    // этого, например, поиск исполнителей мог не находить человека,
+    // который на самом деле сейчас работает исполнителем.
+    ensureDbUserId().then(function (id) {
+      if (!id) return;
+      fetch('/api/db-users?action=update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, role: role }),
+      }).catch(function () { console.log('БД недоступна, роль обновлена только локально'); });
+    });
   }
 
   // Является ли текущий посетитель «вошедшим» — пока это эмуляция без
@@ -289,6 +303,7 @@
           DEFAULT_USER.reviewsCount = Number(data.user.reviews_count) || 0;
           DEFAULT_USER.completedOrders = Number(data.user.jobs_done) || 0;
           DEFAULT_USER.verified.passport = !!data.user.verified;
+          DEFAULT_USER.balance = Number(data.user.balance) || 0;
           return DEFAULT_USER;
         }
         return null;
@@ -306,6 +321,33 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: jobId, status: status, worker_id: workerId || null }),
     }).catch(function () { console.log('БД недоступна, статус сохранён только локально'); });
+  }
+
+  // Создаёт настоящий платёж через ЮKassa на пополнение баланса и
+  // возвращает ссылку, куда нужно перенаправить пользователя для оплаты
+  // картой. Деньги реально зачисляются только после подтверждения оплаты
+  // (вебхук /api/payments-webhook или запасная проверка на возврате).
+  function createTopUpPayment(amount, returnPath) {
+    return ensureDbUserId().then(function (userId) {
+      if (!userId) return { ok: false, error: 'Не удалось определить аккаунт' };
+      return fetch('/api/payments-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, amount: amount, returnPath: returnPath || '/wallet' }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) return { ok: false, error: data.error || 'Не удалось создать платёж' };
+          return { ok: true, confirmationUrl: data.confirmationUrl, paymentId: data.paymentId };
+        })
+        .catch(function () { return { ok: false, error: 'Сервер недоступен, попробуйте позже' }; });
+    });
+  }
+
+  function checkPaymentStatus(paymentId) {
+    return fetch('/api/payments-status?paymentId=' + encodeURIComponent(paymentId))
+      .then(function (r) { return r.json(); })
+      .catch(function () { return { ok: false }; });
   }
 
   function logout() {
@@ -847,7 +889,10 @@
   }
 
   function getEmployerBalance() {
-    return readNumber(EMPLOYER_BALANCE_KEY, DEFAULT_EMPLOYER_BALANCE);
+    // Раньше баланс "пополнялся" мгновенно и понарошку — просто число
+    // в localStorage. Теперь настоящий баланс лежит в БД и зачисляется
+    // только после реальной оплаты через ЮKassa (см. refreshUserFromDb).
+    return DEFAULT_USER.balance || 0;
   }
 
   function getEmployerTx() {
@@ -1134,6 +1179,8 @@
     ensureDbUserId: ensureDbUserId,
     refreshUserFromDb: refreshUserFromDb,
     syncJobStatusToDb: syncJobStatusToDb,
+    createTopUpPayment: createTopUpPayment,
+    checkPaymentStatus: checkPaymentStatus,
     logout: logout,
     // PRO подписка
     PRO_PLANS: PRO_PLANS,

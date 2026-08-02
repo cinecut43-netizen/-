@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(20) UNIQUE NOT NULL,
   name VARCHAR(100),
   role VARCHAR(20) DEFAULT 'worker', -- worker | employer
+  balance INTEGER DEFAULT 0, -- ₽, пополняется через реальные платежи (ЮKassa)
   company VARCHAR(200),
   avatar_url TEXT,
   city VARCHAR(100),
@@ -29,6 +30,19 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS skills TEXT[] DEFAULT '{}';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS day_rate INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INTEGER DEFAULT 0;
+
+-- Реальные платежи через ЮKassa (пополнение баланса работодателя)
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  yookassa_payment_id VARCHAR(100) UNIQUE NOT NULL,
+  amount INTEGER NOT NULL, -- ₽
+  status VARCHAR(20) DEFAULT 'pending', -- pending | succeeded | canceled
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  confirmed_at TIMESTAMP
+);
 
 -- Заказы
 CREATE TABLE IF NOT EXISTS jobs (
