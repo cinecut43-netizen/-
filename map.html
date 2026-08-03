@@ -169,14 +169,15 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 /* МОБИЛЬНАЯ ВЕРСИЯ */
 @media (max-width: 600px) {
   body { padding-bottom: 70px; }
-  #shabashka-nav .sb-role-toggle { display: none !important; }
+  #shabashka-nav .sb-role-toggle { padding: 2px !important; }
+  #shabashka-nav .sb-role-btn { padding: 5px 8px !important; font-size: 10.5px !important; }
   nav { padding: 0 12px; height: 50px; }
   #map { height: calc(100dvh - 50px - 60px); top: 50px; }
   .map-detail { width: calc(100vw - 24px); left: 12px; right: 12px; border-radius: 16px; }
   .mode-toggle { display: none !important; }
 }
 
-@media (max-width: 600px) { .site-footer { display: none !important; } .sb-role-toggle { display: none !important; } .sb-links { display: none !important; } .sb-burger { display: none !important; } .back-btn { display: none !important; } }
+@media (max-width: 600px) { .site-footer { display: none !important; } .sb-role-toggle { padding: 2px !important; } .sb-role-btn { padding: 5px 8px !important; font-size: 10.5px !important; } .sb-links { display: none !important; } .sb-burger { display: none !important; } .back-btn { display: none !important; } }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
@@ -242,11 +243,50 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 <script>
 Shabashka.renderNav('map', { compact: true });
 
-const JOBS = Shabashka.JOBS.map(j => ({
+let JOBS = Shabashka.JOBS.map(j => ({
   ...j,
   loc: j.location,
   req: j.requirements,
 }));
+
+// Догружаем заказы из БД — те же данные, что видны на главной,
+// иначе на карте показывались бы только локальные тестовые заказы.
+(function loadJobsFromDB() {
+  fetch('/api/db-jobs')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (!data.ok || !data.jobs || !data.jobs.length) return;
+      var dbJobs = data.jobs.filter(function(j){ return j.lat && j.lng; }).map(function(j) {
+        return {
+          id: j.id,
+          title: j.title,
+          company: j.employer_name || j.company || 'Работодатель',
+          emoji: j.emoji || '📦',
+          pay: parseInt(j.pay),
+          payLabel: j.pay_label || 'за день',
+          location: j.location || 'Москва',
+          loc: j.location || 'Москва',
+          date: j.date || 'Сегодня',
+          urgent: j.urgent || false,
+          allowBargain: j.allow_bargain || false,
+          cat: j.category || 'other',
+          desc: j.description || '',
+          req: '—',
+          requirements: '—',
+          status: j.status || 'new',
+          responses: parseInt(j.responses_count) || 0,
+          lat: parseFloat(j.lat),
+          lng: parseFloat(j.lng),
+          colors: ['#E8510A','#185FA5','#1A7A4A'],
+        };
+      });
+      JOBS = dbJobs.concat(JOBS.filter(function(lj) {
+        return !dbJobs.find(function(dj){ return dj.id === lj.id; });
+      }));
+      if (map) renderMarkers();
+    })
+    .catch(function(){ console.log('БД недоступна, используем локальные данные'); });
+})();
 
 const CATS = [
   { id:'all', label:'Все' },
@@ -440,5 +480,6 @@ initMap();
     <div class="footer-copy">© 2025 Шабашка · 18+</div>
   </div>
 </footer>
+<script src="/cookie-banner.js"></script>
 </body>
 </html>

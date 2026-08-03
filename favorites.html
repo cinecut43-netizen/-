@@ -66,7 +66,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 @media (max-width: 600px) {
   body { padding-bottom: 70px; }
-  #shabashka-nav .sb-role-toggle { display: none !important; }
+  #shabashka-nav .sb-role-toggle { padding: 2px !important; }
+  #shabashka-nav .sb-role-btn { padding: 5px 8px !important; font-size: 10.5px !important; }
   .page-header { padding: 10px 14px; }
   .main { padding: 10px 12px; }
   .saved-job { flex-wrap: wrap; }
@@ -74,7 +75,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   .tab-switch { margin: 0 12px 10px; }
 }
 
-@media (max-width: 600px) { .site-footer { display: none !important; } .sb-role-toggle { display: none !important; } .sb-links { display: none !important; } .sb-burger { display: none !important; } .back-btn { display: none !important; } }
+@media (max-width: 600px) { .site-footer { display: none !important; } .sb-role-toggle { padding: 2px !important; } .sb-role-btn { padding: 5px 8px !important; font-size: 10.5px !important; } .sb-links { display: none !important; } .sb-burger { display: none !important; } .back-btn { display: none !important; } }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
@@ -280,5 +281,6 @@ render();
     <div class="footer-copy">© 2025 Шабашка · 18+</div>
   </div>
 </footer>
+<script src="/cookie-banner.js"></script>
 </body>
 </html>

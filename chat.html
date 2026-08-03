@@ -162,7 +162,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 .mobile-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:8px 12px;color:#6B6B67;font-family:inherit; }
 .mobile-nav-btn.active { color:#E8510A; }
 
-@media (max-width: 600px) { .site-footer { display: none !important; } .sb-role-toggle { display: none !important; } .sb-links { display: none !important; } .sb-burger { display: none !important; } .back-btn { display: none !important; } }
+@media (max-width: 600px) { .site-footer { display: none !important; } .sb-role-toggle { padding: 2px !important; } .sb-role-btn { padding: 5px 8px !important; font-size: 10.5px !important; } .sb-links { display: none !important; } .sb-burger { display: none !important; } .back-btn { display: none !important; } }
 </style>
 <script src="/data.js"></script>
 <script src="/nav.js"></script>
@@ -365,7 +365,7 @@ function searchChats(query) {
   }
   list.innerHTML = filtered.map(function(c) {
     var isActive = c.id === currentConvo;
-    return '<div class="convo-item' + (isActive ? ' active' : '') + '" onclick="switchConvo(' + c.id + ')">' +
+    return '<div class="convo-item' + (isActive ? ' active' : '') + '" onclick="switchConvo(\'' + c.id + '\')">' +
       '<div class="convo-avatar" style="background:' + c.color + '">' + c.name[0] + '</div>' +
       '<div class="convo-info">' +
         '<div class="convo-name">' + highlightMatch(c.name, q) + '</div>' +
@@ -392,7 +392,7 @@ function highlightMatch(text, query) {
 
 function renderSidebar() {
   document.getElementById('convoList').innerHTML = CONVOS.map(c => `
-    <div class="convo-item ${c.id === currentConvo ? 'active' : ''}" onclick="switchConvo(${c.id})">
+    <div class="convo-item ${c.id === currentConvo ? 'active' : ''}" onclick="switchConvo('${c.id}')">
       <div class="convo-avatar" style="background:${c.color}">${c.name[0]}</div>
       <div class="convo-info">
         <div class="convo-name">${c.name}</div>
@@ -461,7 +461,7 @@ function switchConvo(id) {
   var jobBanner = document.getElementById('jobBanner');
   var emptyChat = document.getElementById('emptyChat');
   var messagesEl = document.getElementById('messages');
-  if (jobBanner) jobBanner.style.display = 'flex';
+  if (jobBanner) jobBanner.style.display = c.isDirect ? 'none' : 'flex';
   if (emptyChat) emptyChat.style.display = 'none';
   if (messagesEl) messagesEl.style.display = 'flex';
   c.unread = 0;
@@ -473,7 +473,10 @@ function switchConvo(id) {
 
   // Реальные сообщения из БД
   if (myId) {
-    fetch('/api/db-messages?job_id=' + id + '&user_id=' + myId)
+    var fetchUrl = c.isDirect
+      ? '/api/db-messages?peer_id=' + c.peerId + '&user_id=' + myId
+      : '/api/db-messages?job_id=' + c.jobId + '&user_id=' + myId;
+    fetch(fetchUrl)
       .then(function(r){ return r.json(); })
       .then(function(data) {
         if (currentConvo !== id) return; // уже переключились на другой чат
@@ -492,7 +495,7 @@ function switchConvo(id) {
         fetch('/api/db-messages', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ job_id: id, user_id: myId }),
+          body: JSON.stringify(c.isDirect ? { peer_id: c.peerId, user_id: myId } : { job_id: c.jobId, user_id: myId }),
         }).catch(function(){});
       })
       .catch(function(){ console.log('БД недоступна, показываем локальную историю'); });
@@ -573,14 +576,14 @@ function sendMsg() {
   renderSidebar();
   renderQuickReplies();
 
-  // Сохраняем в базу данных — job_id это и есть id диалога (у нас 1 чат = 1 заказ),
-  // receiver_id берём из собеседника в этом диалоге.
+  // Сохраняем в базу данных: job_id — только для чатов по заказу,
+  // для прямых сообщений (без заказа) job_id не указываем.
   if (myId) {
     fetch('/api/db-messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        job_id: currentConvo,
+        job_id: c && !c.isDirect ? c.jobId : null,
         sender_id: myId,
         receiver_id: c ? c.otherId || null : null,
         text: text,
@@ -635,9 +638,12 @@ async function askAI() {
 
   showTyping();
 
+  const contextLine = c.isDirect
+    ? 'Это личная переписка, не привязанная к конкретному заказу.'
+    : `Заказ: "${c.job}", оплата: ${c.pay}, дата: ${c.date}.`;
   const systemPrompt = `Ты AI-ассистент платформы "Шабашка" — маркетплейса разовых подработок. 
 Помогаешь исполнителям и заказчикам общаться эффективно. 
-Заказ: "${c.job}", оплата: ${c.pay}, дата: ${c.date}.
+${contextLine}
 Переписка:\n${history}
 Отвечай кратко, по-русски, практично. Не более 2-3 предложений.`;
 
@@ -700,17 +706,20 @@ function syncUnreadCount() {
       .then(function(data) {
         if (data.ok && data.conversations) {
           CONVOS = data.conversations.map(function(c) {
+            var isDirect = !c.job_id;
             return {
-              id: c.job_id,
-              jobId: c.job_id,
+              id: isDirect ? 'direct-' + c.other_id : 'job-' + c.job_id,
+              jobId: c.job_id || null,
+              peerId: isDirect ? c.other_id : null,
+              isDirect: isDirect,
               name: c.other_name || 'Собеседник',
-              job: c.job_title,
-              icon: c.emoji || '📦',
+              job: isDirect ? 'Личные сообщения' : c.job_title,
+              icon: isDirect ? '💬' : (c.emoji || '📦'),
               pay: '',
               date: '',
               color: colorFromId(c.other_id),
               otherId: c.other_id,
-              unread: (!c.is_read && c.other_id !== myId) ? 0 : 0, // грубая оценка, см. ниже
+              unread: 0,
               time: formatMsgTime(c.created_at),
               preview: c.text,
             };
@@ -728,7 +737,7 @@ function syncUnreadCount() {
 function handleQueryParams() {
   const jobId = Shabashka.jobIdFromQuery();
   if (jobId) {
-    const existing = CONVOS.find(c => c.jobId === Number(jobId));
+    const existing = CONVOS.find(c => c.jobId === Number(jobId) && !c.isDirect);
     if (existing) {
       currentConvo = existing.id;
       switchConvo(currentConvo);
@@ -737,7 +746,9 @@ function handleQueryParams() {
     const job = Shabashka.getJob(jobId);
     if (job) {
       const newConvo = {
-        id: job.id, // id диалога = id заказа в БД — без этого сообщения "терялись"
+        id: 'job-' + job.id, // id диалога = id заказа в БД — без этого сообщения "терялись"
+        jobId: job.id,
+        isDirect: false,
         name: job.company,
         job: job.title,
         icon: job.emoji,
@@ -747,7 +758,6 @@ function handleQueryParams() {
         unread: 0,
         time: 'сейчас',
         preview: 'Чат начат',
-        jobId: job.id,
         otherId: null,
       };
       CONVOS.unshift(newConvo);
@@ -771,14 +781,45 @@ function handleQueryParams() {
   }
 
   if (!currentConvo) {
-    const workerParam = new URLSearchParams(window.location.search).get('worker');
-    if (workerParam && !CONVOS.length) {
-      // Прямого сообщения без привязки к заказу пока не поддерживаем —
-      // переписка в этой версии всегда идёт в контексте конкретного заказа.
-      document.getElementById('emptyChat').innerHTML =
-        '<div style="font-size:48px;margin-bottom:16px">💬</div>' +
-        '<div style="font-size:17px;font-weight:700;color:#14151A;margin-bottom:8px">Пока нет общего заказа</div>' +
-        '<div style="font-size:14px;line-height:1.6">Чат открывается по конкретному заказу.<br>Дождитесь отклика от исполнителя на ваш заказ,<br>чтобы начать переписку.</div>';
+    const workerParam = new URLSearchParams(window.location.search).get('worker')
+      || new URLSearchParams(window.location.search).get('with');
+    if (workerParam) {
+      const peerId = Number(workerParam);
+      const existing = CONVOS.find(c => c.isDirect && c.otherId === peerId);
+      if (existing) {
+        currentConvo = existing.id;
+        switchConvo(currentConvo);
+        return;
+      }
+
+      const newConvo = {
+        id: 'direct-' + peerId,
+        jobId: null,
+        peerId: peerId,
+        isDirect: true,
+        name: 'Загрузка…',
+        job: 'Личные сообщения',
+        icon: '💬',
+        pay: '', date: '',
+        color: colorFromId(peerId),
+        unread: 0,
+        time: 'сейчас',
+        preview: 'Чат начат',
+        otherId: peerId,
+      };
+      CONVOS.unshift(newConvo);
+      MESSAGES_DB[newConvo.id] = [];
+      currentConvo = newConvo.id;
+      renderSidebar();
+
+      // Подтягиваем имя собеседника из БД, чтобы шапка чата не висела "Загрузка…"
+      fetch('/api/db-users?id=' + peerId)
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          if (data.ok && data.user) newConvo.name = data.user.name || 'Собеседник';
+        })
+        .catch(function(){})
+        .finally(function() { switchConvo(currentConvo); });
       return;
     }
   }
@@ -796,7 +837,7 @@ function initMobileChatList() {
   if (!listEl) return;
   listEl.innerHTML = CONVOS.map(function(c) {
     var isActive = c.id === currentConvo;
-    return '<div onclick="switchConvo(' + c.id + ')" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;min-width:48px">' +
+    return '<div onclick="switchConvo(\'' + c.id + '\')" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;min-width:48px">' +
       '<div style="width:44px;height:44px;border-radius:50%;background:' + (c.color||'#E8510A') + ';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;border:' + (isActive?'2.5px solid #E8510A':'2.5px solid transparent') + ';position:relative;box-sizing:border-box">' +
       c.name[0] +
       (c.unread > 0 ? '<span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;background:#E8510A;border-radius:50%;border:2px solid #fff;font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 2px">' + c.unread + '</span>' : '') +

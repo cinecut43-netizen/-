@@ -132,7 +132,8 @@
         }
         .sb-links { display: none; }
         .sb-burger { display: none; }
-        .sb-role-toggle { display: none; }
+        .sb-role-toggle { padding: 2px; }
+        .sb-role-btn { padding: 5px 8px; font-size: 10.5px; }
         .sb-right { gap: 6px; }
         .sb-login-btn { font-size: 11px; padding: 5px 10px; white-space: nowrap; }
         .sb-avatar { width: 28px; height: 28px; font-size: 11px; }
@@ -181,8 +182,8 @@
         '<div class="sb-links">' + linksHtml + '</div>' +
         '<div class="sb-right">' +
           '<div class="sb-role-toggle">' +
-            '<button class="sb-role-btn' + (user.role === 'worker' ? ' sb-active' : '') + '" data-role="worker">Я исполнитель</button>' +
-            '<button class="sb-role-btn' + (user.role === 'employer' ? ' sb-active' : '') + '" data-role="employer">Я работодатель</button>' +
+            '<button class="sb-role-btn' + (user.role === 'worker' ? ' sb-active' : '') + '" data-role="worker">Исполнитель</button>' +
+            '<button class="sb-role-btn' + (user.role === 'employer' ? ' sb-active' : '') + '" data-role="employer">Работодатель</button>' +
           '</div>' +
           accountHtml +
           '<button class="sb-burger" aria-label="Меню">' + ic('menu') + '</button>' +

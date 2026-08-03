@@ -544,6 +544,36 @@ function attachHandlers() {
   }
 }
 
+// Проверяем, есть ли уже аккаунт с этим телефоном — если да, это не
+// регистрация, а вход: пропускаем шаг с именем/ролью и просто заходим
+// с уже сохранёнными данными, вместо того чтобы просить ввести их заново
+// (раньше так и получалось "задвоение" — тот же человек проходил анкету
+// второй раз, и она просто перезаписывала прежние данные).
+async function proceedAfterVerification() {
+  try {
+    const res = await fetch('/api/db-users?phone=' + encodeURIComponent(state.phone));
+    const data = await res.json();
+    if (data.ok && data.user) {
+      // Уже есть аккаунт — это вход, а не регистрация
+      localStorage.setItem('shabashka_user_id', String(data.user.id));
+      localStorage.setItem('shabashka_phone', state.phone);
+      Shabashka.completeRegistration({
+        id: data.user.id,
+        role: data.user.role,
+        name: data.user.name,
+        company: data.user.company,
+      });
+      localStorage.setItem('shabashka_access', '1');
+      localStorage.setItem('shabashka_onboarding_done', '1');
+      window.location.href = data.user.role === 'employer' ? '/employer' : '/';
+      return;
+    }
+  } catch (e) { /* не удалось проверить — продолжаем как обычную регистрацию */ }
+
+  state.step = 3;
+  render();
+}
+
 async function checkCode(codeInputs) {
   const code = codeInputs.map(i => i.value).join('');
   const errorEl = document.getElementById('codeError');
@@ -558,8 +588,7 @@ async function checkCode(codeInputs) {
       return;
     }
     if (code === String(state.demoCode) || code.length === 4) {
-      state.step = 3;
-      render();
+      proceedAfterVerification();
       return;
     }
     errorEl.textContent = 'Неверный код подтверждения';
@@ -584,8 +613,7 @@ async function checkCode(codeInputs) {
       codeInputs[0].focus();
       return;
     }
-    state.step = 3;
-    render();
+    proceedAfterVerification();
   } catch(e) {
     errorEl.textContent = 'Не удалось проверить код. Попробуйте ещё раз.';
     errorEl.classList.add('show');
