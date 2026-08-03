@@ -892,7 +892,7 @@ function getDashboard() {
   const pendingResp = EMPLOYER_RESPONSES.filter(r => r.status === 'pending').length;
 
   return `
-  <div class="stats-row">
+  <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
     <div class="stat-card">
       <div class="stat-card-label">Активных заказов</div>
       <div class="stat-card-num" style="color:var(--blue)">${activeOrders}</div>
@@ -907,11 +907,6 @@ function getDashboard() {
       <div class="stat-card-label">Завершено заказов</div>
       <div class="stat-card-num" style="color:var(--green)">${done}</div>
       <div class="stat-card-sub" style="color:var(--gray)">Всего за месяц</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-card-label">Потрачено</div>
-      <div class="stat-card-num">${totalSpent.toLocaleString('ru')} ₽</div>
-      <div class="stat-card-sub" style="color:var(--gray)">Без комиссии</div>
     </div>
   </div>
 
