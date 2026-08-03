@@ -588,8 +588,23 @@ function sendMsg() {
         receiver_id: c ? c.otherId || null : null,
         text: text,
       })
-    }).catch(function(){ console.log('БД недоступна, сообщение сохранено только локально'); });
+    }).catch(function(){
+      console.log('БД недоступна, сообщение сохранено только локально');
+      showSendWarning('Сообщение не дошло до собеседника — нет связи с сервером.');
+    });
+  } else {
+    // Без определённого аккаунта сообщение уходит только в память браузера
+    // и никогда не долетит до собеседника — молчать об этом нельзя.
+    showSendWarning('Не удалось определить ваш аккаунт — сообщение не отправлено собеседнику. Попробуйте войти заново.');
   }
+}
+
+function showSendWarning(text) {
+  var t = document.createElement('div');
+  t.textContent = '⚠️ ' + text;
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#B91C1C;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:10000;white-space:nowrap;max-width:90%;text-overflow:ellipsis;overflow:hidden';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 4000);
 }
 
 function showTyping() {
@@ -699,7 +714,19 @@ function syncUnreadCount() {
       initMobileChatList();
     }
 
-    if (!myId) { afterConvosLoaded(); return; }
+    if (!myId) {
+      var emptyEl = document.getElementById('emptyChat');
+      if (emptyEl) {
+        emptyEl.style.display = 'flex';
+        emptyEl.innerHTML =
+          '<div style="font-size:48px;margin-bottom:16px">⚠️</div>' +
+          '<div style="font-size:17px;font-weight:700;color:#14151A;margin-bottom:8px">Не удалось загрузить сообщения</div>' +
+          '<div style="font-size:14px;line-height:1.6">Не получилось определить ваш аккаунт в базе.<br>' +
+          'Попробуйте <a href="/register" style="color:#E8510A">войти заново</a> — это быстро, без повторной анкеты, если аккаунт уже есть.</div>';
+      }
+      afterConvosLoaded();
+      return;
+    }
 
     fetch('/api/db-messages?user_id=' + myId)
       .then(function(r){ return r.json(); })
