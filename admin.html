@@ -3,106 +3,88 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Админка — Шабашка</title>
+<title>Шабашка — Admin Dashboard</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#14151A;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
-.box{background:#1E1E1C;border-radius:20px;padding:36px 32px;width:360px;text-align:center}
-.logo{font-size:24px;font-weight:800;margin-bottom:4px}
-.logo span{color:#E8510A}
-.sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:24px}
-input{width:100%;padding:13px 16px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:16px;font-family:inherit;outline:none;text-align:center;margin-bottom:12px}
-button{width:100%;padding:14px;background:#E8510A;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px}
-.err{color:#FF6B6B;font-size:13px;margin-bottom:12px;display:none}
-.links{margin-top:8px;display:flex;flex-direction:column;gap:8px}
-.links a{display:block;padding:12px;background:rgba(255,255,255,.05);border-radius:10px;color:rgba(255,255,255,.7);text-decoration:none;font-size:13px}
-.links a:hover{background:rgba(255,255,255,.1)}
-.role-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:16px}
-.logout{margin-top:12px;padding:10px;background:rgba(255,255,255,.05);border:none;border-radius:10px;color:rgba(255,255,255,.5);font-size:12px;cursor:pointer;width:100%;font-family:inherit}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #E8510A; --orange-light: #FFF0E8; --orange-dark: #B33D06;
+  --dark: #14151A; --gray: #6B6B67; --gray-light: #F4F3EF; --border: #E5E4E0;
+  --white: #FFFFFF; --green: #1A7A4A; --green-bg: #E8F5EE; --blue: #185FA5;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); }
+
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.stat-card-label { font-size: 12.5px; color: var(--gray); margin-bottom: 8px; }
+.stat-card-num { font-size: 26px; font-weight: 800; }
+
+.quick-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.quick-link { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-decoration: none; color: var(--dark); transition: border-color .15s, background .15s; }
+.quick-link:hover { border-color: var(--orange); background: var(--orange-light); }
+.quick-link-icon { font-size: 22px; width: 40px; height: 40px; border-radius: 10px; background: var(--gray-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.quick-link-title { font-size: 14px; font-weight: 700; }
+.quick-link-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+.section-title { font-size: 15px; font-weight: 700; margin: 24px 0 12px; }
+@media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .quick-links { grid-template-columns: 1fr; } }
 </style>
+<script src="/data.js"></script>
+<script src="/admin-data.js"></script>
+<script src="/admin-nav.js"></script>
 </head>
 <body>
-<div class="box">
-  <div class="logo">Шаба<span>шка</span></div>
-  <div class="sub" id="sub">Панель администратора</div>
-  <input type="password" id="pass" placeholder="Введите пароль" onkeydown="if(event.key==='Enter')check()">
-  <div class="err" id="err">Неверный пароль</div>
-  <button onclick="check()">Войти</button>
-  <div id="menu" style="display:none">
-    <div class="role-badge" id="roleBadge"></div>
-    <div class="links" id="links"></div>
-    <button class="logout" onclick="logout()">Выйти</button>
-  </div>
-</div>
 <script>
-var ROLES = {
-  'MzqJqHbxt7dVVcgr6Q8N': { name: 'Super Admin', color: '#E8510A', links: [
-    ['📊 Статистика', '/admin-stats'],
-    ['💬 Отзывы и вопросы', '/admin-feedback'],
-    ['👥 Пользователи', '/admin-users'],
-    ['📋 Заказы', '/admin-orders'],
-    ['⭐ Исполнители', '/admin-workers'],
-    ['🏆 Отзывы', '/admin-reviews'],
-    ['⚠️ Жалобы', '/admin-complaints'],
-    ['💰 Финансы', '/admin-finance'],
-    ['⚙️ Настройки', '/admin-settings'],
-    ['🔒 Безопасность', '/admin-security'],
-    ['📝 Контент', '/admin-content'],
-  ]},
-  'sKKnigc9BHgLc2GH': { name: 'Moderator', color: '#185FA5', links: [
-    ['💬 Отзывы и вопросы', '/admin-feedback'],
-    ['👥 Пользователи', '/admin-users'],
-    ['📋 Заказы', '/admin-orders'],
-    ['⭐ Исполнители', '/admin-workers'],
-    ['🏆 Отзывы', '/admin-reviews'],
-    ['⚠️ Жалобы', '/admin-complaints'],
-  ]},
-  'XuBz75Pb7eEznNVG': { name: 'Support', color: '#1A7A4A', links: [
-    ['💬 Отзывы и вопросы', '/admin-feedback'],
-    ['📋 Заказы', '/admin-orders'],
-    ['⚠️ Жалобы', '/admin-complaints'],
-  ]},
-};
+ShabashkaAdminNav.renderAdminShell('dashboard', 'Dashboard').then(function (rendered) {
+if (rendered) {
+  const A = ShabashkaAdmin;
 
-function check() {
-  var val = document.getElementById('pass').value;
-  var role = ROLES[val];
-  if (role) {
-    sessionStorage.setItem('shabashka_admin_auth', '1');
-    sessionStorage.setItem('shabashka_admin_role', role.name);
-    showMenu(role);
-  } else {
-    document.getElementById('err').style.display = 'block';
-    document.getElementById('pass').value = '';
-    setTimeout(function(){ document.getElementById('err').style.display = 'none'; }, 2000);
-  }
-}
+  document.getElementById('admContentRoot').innerHTML = '<div style="padding:60px;text-align:center;color:var(--gray)">Загрузка…</div>';
 
-function showMenu(role) {
-  document.getElementById('pass').style.display = 'none';
-  document.getElementById('err').style.display = 'none';
-  document.querySelector('button').style.display = 'none';
-  document.getElementById('sub').textContent = 'Добро пожаловать!';
-  document.getElementById('roleBadge').textContent = role.name;
-  document.getElementById('roleBadge').style.background = role.color;
-  document.getElementById('links').innerHTML = role.links.map(function(l){
-    return '<a href="' + l[1] + '">' + l[0] + '</a>';
-  }).join('');
-  document.getElementById('menu').style.display = 'block';
-}
+  var token = A.getAdminToken();
+  var role = A.getAdminRole();
+  fetch('/api/admin-stats?adminToken=' + encodeURIComponent(token) + '&adminRole=' + encodeURIComponent(role))
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var totals = (data.ok && data.totals) ? data.totals : { jobs: 0, responses: 0, users: 0, done: 0, revenue: 0 };
 
-function logout() {
-  sessionStorage.removeItem('shabashka_admin_auth');
-  sessionStorage.removeItem('shabashka_admin_role');
-  location.reload();
-}
+      var links = [
+        { href: '/admin-users', icon: '👥', title: 'Пользователи', sub: 'Все зарегистрированные', sectionId: 'users' },
+        { href: '/admin-orders', icon: '📋', title: 'Заказы', sub: 'Все заказы платформы', sectionId: 'orders' },
+        { href: '/admin-workers', icon: '⭐', title: 'Исполнители', sub: 'Верификация, блокировки', sectionId: 'workers' },
+        { href: '/admin-complaints', icon: '⚠️', title: 'Жалобы и споры', sub: 'Рассмотрение конфликтов', sectionId: 'complaints' },
+        { href: '/admin-reviews', icon: '🏆', title: 'Отзывы', sub: 'Модерация отзывов', sectionId: 'reviews' },
+        { href: '/admin-finance', icon: '💰', title: 'Финансы', sub: 'Комиссии, выручка', sectionId: 'finance' },
+        { href: '/admin-feedback', icon: '💬', title: 'Обращения', sub: 'Вопросы пользователей', sectionId: null },
+        { href: '/admin-content', icon: '📝', title: 'Контент', sub: 'Категории, FAQ', sectionId: 'content' },
+        { href: '/admin-settings', icon: '⚙️', title: 'Настройки', sub: 'Комиссия, тарифы', sectionId: 'settings' },
+        { href: '/admin-security', icon: '🔒', title: 'Безопасность', sub: 'Подозрительные аккаунты', sectionId: 'security' },
+      ].filter(function(l) { return l.sectionId === null || A.canAccessSection(l.sectionId); });
 
-// Проверяем сессию
-var savedRole = sessionStorage.getItem('shabashka_admin_role');
-if (sessionStorage.getItem('shabashka_admin_auth') === '1' && savedRole) {
-  var role = Object.values(ROLES).find(function(r){ return r.name === savedRole; });
-  if (role) showMenu(role);
+      document.getElementById('admContentRoot').innerHTML = `
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-card-label">Пользователей всего</div><div class="stat-card-num" style="color:var(--blue)">${totals.users}</div></div>
+          <div class="stat-card"><div class="stat-card-label">Заказов всего</div><div class="stat-card-num" style="color:var(--orange)">${totals.jobs}</div></div>
+          <div class="stat-card"><div class="stat-card-label">Завершено заказов</div><div class="stat-card-num" style="color:var(--green)">${totals.done}</div></div>
+          <div class="stat-card"><div class="stat-card-label">Доход платформы</div><div class="stat-card-num">${totals.revenue.toLocaleString('ru')} ₽</div></div>
+        </div>
+
+        <div class="section-title">Разделы</div>
+        <div class="quick-links">
+          ${links.map(function(l) {
+            return '<a class="quick-link" href="' + l.href + '">' +
+              '<div class="quick-link-icon">' + l.icon + '</div>' +
+              '<div><div class="quick-link-title">' + l.title + '</div><div class="quick-link-sub">' + l.sub + '</div></div>' +
+              '</a>';
+          }).join('')}
+        </div>
+      `;
+    })
+    .catch(function() {
+      document.getElementById('admContentRoot').innerHTML = '<div style="padding:60px;text-align:center;color:var(--red)">Не удалось загрузить статистику</div>';
+    });
 }
+});
 </script>
 </body>
 </html>
