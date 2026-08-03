@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
     if (method === 'GET') {
       const { role = 'worker', limit = 50 } = req.query;
       const result = await pool.query(
-        `SELECT * FROM users WHERE role=$1 ORDER BY rating DESC, jobs_done DESC LIMIT $2`,
+        `SELECT * FROM users WHERE role=$1 AND status='active' ORDER BY rating DESC, jobs_done DESC LIMIT $2`,
         [role, limit]
       );
       return res.json({ ok: true, users: result.rows });

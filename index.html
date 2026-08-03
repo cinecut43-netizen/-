@@ -33,6 +33,7 @@
 <meta name="twitter:image" content="https://shabashka-jade.vercel.app/og-image.png">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-x: hidden; max-width: 100%; }
 
   :root {
     --orange: #E8510A;
@@ -667,10 +668,10 @@ if ('serviceWorker' in navigator) {
         <div style="font-size:12px;color:#6B6B67;margin-bottom:6px">Оплата (₽ за день)</div>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="number" id="mobilePayMin" placeholder="от" oninput="syncPayFilter()"
-            style="flex:1;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A">
-          <span style="color:#9A9A96;font-size:14px">—</span>
+            style="flex:1;min-width:0;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A">
+          <span style="color:#9A9A96;font-size:14px;flex-shrink:0">—</span>
           <input type="number" id="mobilePayMax" placeholder="до" oninput="syncPayFilter()"
-            style="flex:1;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A">
+            style="flex:1;min-width:0;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A">
         </div>
       </div>
       <div style="display:flex;gap:6px">

@@ -335,7 +335,7 @@ function applyFilters() {
 }
 
 function render(workers) {
-  document.getElementById('resultsCount').textContent = workers.length + ' ' + plural(workers.length, 'исполнитель', 'исполнителя', 'исполнителей');
+  document.getElementById('resultsCount').textContent = plural(workers.length, 'исполнитель', 'исполнителя', 'исполнителей');
   if (!workers.length) {
     var filtersActive = currentCat !== 'all' || verifiedOnly || !!document.getElementById('searchInp').value.trim();
     if (filtersActive) {
