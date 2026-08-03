@@ -15,6 +15,46 @@
       .catch(function (err) {
         console.warn('[PWA] Service Worker не зарегистрирован:', err);
       });
+
+    // ===== БАННЕР "ДОСТУПНО ОБНОВЛЕНИЕ" =====
+    // sw.js уже сам активируется сразу после установки (skipWaiting), но это
+    // не обновляет уже открытую вкладку — код там продолжает работать старый,
+    // пока страницу не перезагрузят. Ловим момент смены активного SW и
+    // предлагаем обновиться одной кнопкой, вместо того чтобы люди сами
+    // догадывались закрыть и открыть вкладку заново.
+    var hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController) {
+        // Самая первая установка SW на этой вкладке — не обновление, а просто
+        // первый заход, показывать баннер незачем.
+        hadController = true;
+        return;
+      }
+      showUpdateBanner();
+    });
+  }
+
+  function showUpdateBanner() {
+    if (document.getElementById('update-banner')) return;
+
+    var banner = document.createElement('div');
+    banner.id = 'update-banner';
+    banner.innerHTML =
+      '<div style="flex:1;font-size:13.5px;font-weight:600;color:#14151A">🔄 Доступна новая версия сайта</div>' +
+      '<button id="update-reload-btn" style="flex-shrink:0;padding:8px 16px;background:#E8510A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Обновить</button>';
+
+    Object.assign(banner.style, {
+      position: 'fixed', top: '0', left: '0', right: '0',
+      background: '#fff', borderBottom: '1px solid #E5E4E0',
+      padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px',
+      zIndex: '10000', boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+    });
+
+    document.body.appendChild(banner);
+
+    document.getElementById('update-reload-btn').addEventListener('click', function () {
+      window.location.reload();
+    });
   }
 
   // ===== PUSH-УВЕДОМЛЕНИЯ =====
