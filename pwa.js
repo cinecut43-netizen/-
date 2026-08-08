@@ -11,6 +11,21 @@
     navigator.serviceWorker.register('/sw.js', { scope: '/' })
       .then(function (reg) {
         console.log('[PWA] Service Worker зарегистрирован:', reg.scope);
+
+        // Раньше проверка новой версии полагалась целиком на браузер — а он
+        // делает это редко (раз в сутки максимум) и по своим правилам.
+        // Для установленного на телефон PWA (иконка на главном экране) это
+        // особенно плохо: там нет адресной строки и кнопки "обновить" — если
+        // не проверять явно, человек может неделями сидеть на старой версии,
+        // просто открывая иконку с рабочего стола.
+        //
+        // Проверяем сразу и каждый раз, когда возвращаются в приложение.
+        reg.update().catch(function(){});
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') {
+            reg.update().catch(function(){});
+          }
+        });
       })
       .catch(function (err) {
         console.warn('[PWA] Service Worker не зарегистрирован:', err);
@@ -46,7 +61,7 @@
     Object.assign(banner.style, {
       position: 'fixed', top: '0', left: '0', right: '0',
       background: '#fff', borderBottom: '1px solid #E5E4E0',
-      padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px',
+      padding: 'calc(12px + env(safe-area-inset-top, 0px)) 16px 12px', display: 'flex', alignItems: 'center', gap: '12px',
       zIndex: '10000', boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
     });
 
