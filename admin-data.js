@@ -217,10 +217,10 @@
       .map(function(k){ return k + '=' + encodeURIComponent(params[k]); }).join('&');
     return adminFetch('/api/admin-users' + (qs ? '?' + qs : ''))
       .then(function (data) {
-        if (!data.ok) return [];
+        if (!data.ok) { console.error('Admin API error:', data.error || data); return []; }
         return data.users.map(normalizeUser);
       })
-      .catch(function () { return []; });
+      .catch(function (err) { console.error('Admin API error:', err); return []; });
   }
 
   function normalizeUser(u) {
@@ -291,8 +291,11 @@
     var qs = Object.keys(params).filter(function(k){ return params[k]; })
       .map(function(k){ return k + '=' + encodeURIComponent(params[k]); }).join('&');
     return adminFetch('/api/admin-orders' + (qs ? '?' + qs : ''))
-      .then(function (data) { return data.ok ? data.jobs.map(normalizeOrder) : []; })
-      .catch(function () { return []; });
+      .then(function (data) {
+        if (!data.ok) { console.error('Admin API error:', data.error || data); return []; }
+        return data.jobs.map(normalizeOrder);
+      })
+      .catch(function (err) { console.error('Admin API error:', err); return []; });
   }
 
   function forceCloseJob(id) {
@@ -318,14 +321,20 @@
   // в localStorage браузера админа.
   function getDisputes() {
     return adminFetch('/api/admin-complaints?kind=disputes')
-      .then(function (data) { return data.ok ? data.disputes : []; })
-      .catch(function () { return []; });
+      .then(function (data) {
+        if (!data.ok) { console.error('Admin API error:', data.error || data); return []; }
+        return data.disputes;
+      })
+      .catch(function (err) { console.error('Admin API error:', err); return []; });
   }
 
   function getComplaints() {
     return adminFetch('/api/admin-complaints?kind=complaints')
-      .then(function (data) { return data.ok ? data.complaints : []; })
-      .catch(function () { return []; });
+      .then(function (data) {
+        if (!data.ok) { console.error('Admin API error:', data.error || data); return []; }
+        return data.complaints;
+      })
+      .catch(function (err) { console.error('Admin API error:', err); return []; });
   }
 
   function resolveComplaint(id) {
