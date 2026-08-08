@@ -7,14 +7,47 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(20) UNIQUE NOT NULL,
   name VARCHAR(100),
   role VARCHAR(20) DEFAULT 'worker', -- worker | employer
+  balance INTEGER DEFAULT 0, -- ₽, пополняется через реальные платежи (ЮKassa)
+  consent_at TIMESTAMP, -- когда пользователь дал согласие на обработку ПДн (152-ФЗ)
+  consent_text TEXT, -- какой именно текст согласия он видел в момент регистрации
   company VARCHAR(200),
   avatar_url TEXT,
-  rating DECIMAL(3,2) DEFAULT 5.0,
+  city VARCHAR(100),
+  bio TEXT,
+  skills TEXT[] DEFAULT '{}',
+  categories TEXT[] DEFAULT '{}', -- move|build|clean|event|other — для фильтра поиска работодателя
+  day_rate INTEGER,
+  rating DECIMAL(3,2) DEFAULT 0,
   reviews_count INTEGER DEFAULT 0,
   jobs_done INTEGER DEFAULT 0,
   verified BOOLEAN DEFAULT false,
+  status VARCHAR(20) DEFAULT 'active', -- active | blocked | deleted
   passport_url TEXT,
   created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- На случай если таблица уже существовала до этого обновления —
+-- добавляем недостающие колонки, не трогая то, что уже есть.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS skills TEXT[] DEFAULT '{}';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS categories TEXT[] DEFAULT '{}';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS day_rate INTEGER;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_at TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_text TEXT;
+
+-- Реальные платежи через ЮKassa (пополнение баланса работодателя)
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  yookassa_payment_id VARCHAR(100) UNIQUE NOT NULL,
+  amount INTEGER NOT NULL, -- ₽
+  status VARCHAR(20) DEFAULT 'pending', -- pending | succeeded | canceled
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  confirmed_at TIMESTAMP
 );
 
 -- Заказы
@@ -63,6 +96,17 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Push-подписки браузера (Web Push API) — по одному пользователю может
+-- быть несколько подписок (разные устройства/браузеры).
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  endpoint TEXT UNIQUE NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Отзывы
 CREATE TABLE IF NOT EXISTS reviews (
   id SERIAL PRIMARY KEY,
@@ -75,14 +119,50 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Споры (открывает заказчик или исполнитель, если что-то пошло не так —
+-- деньги замораживаются в эскроу пока администратор не примет решение)
+CREATE TABLE IF NOT EXISTS disputes (
+  id SERIAL PRIMARY KEY,
+  job_id INTEGER REFERENCES jobs(id),
+  opened_by INTEGER REFERENCES users(id),
+  reason_id VARCHAR(50),
+  reason_label VARCHAR(200),
+  comment TEXT,
+  amount INTEGER,
+  status VARCHAR(20) DEFAULT 'open', -- open | refunded | rejected
+  resolution TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  resolved_at TIMESTAMP
+);
+
+-- Жалобы на пользователей (общее нарушение поведения, не привязанное
+-- к конкретному денежному спору)
+CREATE TABLE IF NOT EXISTS complaints (
+  id SERIAL PRIMARY KEY,
+  reporter_id INTEGER REFERENCES users(id),
+  target_id INTEGER REFERENCES users(id),
+  job_id INTEGER REFERENCES jobs(id),
+  reason TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'open', -- open | resolved
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Избранное
 CREATE TABLE IF NOT EXISTS favorites (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id),
   job_id INTEGER REFERENCES jobs(id),
+  worker_id INTEGER REFERENCES users(id),
   created_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(user_id, job_id)
+  UNIQUE(user_id, job_id),
+  UNIQUE(user_id, worker_id)
 );
+ALTER TABLE favorites ADD COLUMN IF NOT EXISTS worker_id INTEGER REFERENCES users(id);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorites_user_id_worker_id_key') THEN
+    ALTER TABLE favorites ADD CONSTRAINT favorites_user_id_worker_id_key UNIQUE(user_id, worker_id);
+  END IF;
+END $$;
 
 -- Отзывы и обращения пользователей
 CREATE TABLE IF NOT EXISTS feedbacks (
