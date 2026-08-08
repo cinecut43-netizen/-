@@ -199,6 +199,7 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 
 let state = {
   step: 1,          // 1 = телефон, 2 = код, 3 = роль+анкета, 4 = успех
+  mode: 'register',  // 'register' | 'login' — выбирается на первом шаге
   phone: '',
   role: null,        // 'worker' | 'employer'
   name: '',
@@ -227,11 +228,25 @@ function stepsHtml(current) {
 }
 
 /* ---------- ШАГ 1: телефон ---------- */
+function switchAuthMode(mode) {
+  state.mode = mode;
+  render();
+}
+
 function renderPhoneStep() {
+  const isLogin = state.mode === 'login';
   return `
     ${stepsHtml(1)}
-    <div class="step-title">Вход и регистрация</div>
-    <div class="step-sub">Введите номер телефона — вам поступит входящий звонок. Последние 4 цифры номера звонящего — это ваш код для входа. Отвечать на звонок не нужно.</div>
+
+    <div style="display:flex;background:#F4F3EF;border-radius:12px;padding:4px;margin-bottom:20px">
+      <button type="button" onclick="switchAuthMode('register')" style="flex:1;padding:10px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:${!isLogin ? '#fff' : 'transparent'};color:${!isLogin ? '#14151A' : '#6B6B67'};box-shadow:${!isLogin ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'}">Регистрация</button>
+      <button type="button" onclick="switchAuthMode('login')" style="flex:1;padding:10px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:${isLogin ? '#fff' : 'transparent'};color:${isLogin ? '#14151A' : '#6B6B67'};box-shadow:${isLogin ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'}">Войти</button>
+    </div>
+
+    <div class="step-title">${isLogin ? 'Вход в аккаунт' : 'Регистрация'}</div>
+    <div class="step-sub">${isLogin
+      ? 'Введите номер телефона, на который уже регистрировались — вам поступит входящий звонок. Последние 4 цифры номера звонящего — это ваш код для входа.'
+      : 'Введите номер телефона — вам поступит входящий звонок. Последние 4 цифры номера звонящего — это ваш код. Отвечать на звонок не нужно.'}</div>
 
     <div class="form-group">
       <label class="form-label">Номер телефона</label>
@@ -240,8 +255,10 @@ function renderPhoneStep() {
         <input class="form-input" type="tel" id="phoneInput" placeholder="900 000-00-00" maxlength="12" inputmode="numeric">
       </div>
       <div class="form-error" id="phoneError">Введите номер в формате +7 900 000-00-00</div>
+      <div class="form-error" id="accountNotFoundError">Аккаунт с этим номером не найден. <a href="#" onclick="switchAuthMode('register');return false" style="color:#E8510A">Зарегистрироваться?</a></div>
     </div>
 
+    ${isLogin ? '' : `
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
         <input type="checkbox" id="consentTerms" style="width:18px;height:18px;margin-top:1px;accent-color:#E8510A;flex-shrink:0;cursor:pointer">
@@ -267,7 +284,7 @@ function renderPhoneStep() {
           Согласен(-на) получать уведомления по звонку и Push <span style="color:#9A9A96">(необязательно)</span>
         </span>
       </label>
-    </div>
+    </div>`}
     <div class="form-error" id="consentError" style="margin-bottom:12px">Необходимо принять все обязательные условия</div>
 
     <button class="btn-primary" id="sendCodeBtn">Получить код</button>
@@ -368,15 +385,17 @@ function attachHandlers() {
         input.style.borderColor = 'var(--red)';
         return;
       }
-      const terms = document.getElementById('consentTerms');
-      const privacy = document.getElementById('consentPrivacy');
-      const age = document.getElementById('consentAge');
-      const consentErr = document.getElementById('consentError');
-      if (!terms || !terms.checked || !privacy.checked || !age.checked) {
-        if (consentErr) consentErr.classList.add('show');
-        return;
+      if (state.mode === 'register') {
+        const terms = document.getElementById('consentTerms');
+        const privacy = document.getElementById('consentPrivacy');
+        const age = document.getElementById('consentAge');
+        const consentErr = document.getElementById('consentError');
+        if (!terms || !terms.checked || !privacy || !privacy.checked || !age || !age.checked) {
+          if (consentErr) consentErr.classList.add('show');
+          return;
+        }
+        if (consentErr) consentErr.classList.remove('show');
       }
-      if (consentErr) consentErr.classList.remove('show');
       sendBtn.disabled = true;
       sendBtn.textContent = 'Отправляем…';
       try {
@@ -554,7 +573,7 @@ async function proceedAfterVerification() {
     const res = await fetch('/api/db-users?phone=' + encodeURIComponent(state.phone));
     const data = await res.json();
     if (data.ok && data.user) {
-      // Уже есть аккаунт — это вход, а не регистрация
+      // Уже есть аккаунт — это вход, независимо от того, какую вкладку выбрали
       localStorage.setItem('shabashka_user_id', String(data.user.id));
       localStorage.setItem('shabashka_phone', state.phone);
       Shabashka.completeRegistration({
@@ -569,6 +588,16 @@ async function proceedAfterVerification() {
       return;
     }
   } catch (e) { /* не удалось проверить — продолжаем как обычную регистрацию */ }
+
+  if (state.mode === 'login') {
+    // Выбрали "Войти", но аккаунта с этим номером нет — не создаём его молча,
+    // явно предлагаем зарегистрироваться вместо того.
+    state.step = 1;
+    render();
+    const err = document.getElementById('accountNotFoundError');
+    if (err) err.classList.add('show');
+    return;
+  }
 
   state.step = 3;
   render();
