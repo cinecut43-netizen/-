@@ -44,6 +44,11 @@ console.log('ROOT =', ROOT);
 
 app.use(express.json({ limit: '10mb' }));
 
+const cookieParser = require('cookie-parser');
+const { sessionMiddleware } = require('./db/session');
+app.use(cookieParser());
+app.use(sessionMiddleware); // после этого у любого запроса есть req.authUserId (или null)
+
 app.use(function (req, res, next) {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-Content-Type-Options', 'nosniff');

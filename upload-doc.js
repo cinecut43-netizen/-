@@ -38,7 +38,8 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Метод не поддерживается' });
   }
 
-  const { photo, type, userId } = req.body || {};
+  const { photo, type } = req.body || {};
+  const userId = req.authUserId || null;
 
   if (!photo || typeof photo !== 'string') {
     return res.status(400).json({ error: 'Фото не передано' });

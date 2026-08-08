@@ -275,26 +275,42 @@
   // Без этого id все запросы к БД (заказы, отклики) будут падать в общую
   // "чужую" запись employer_id/worker_id=1.
   function ensureDbUserId() {
-    const user = getUser();
-    if (user.id) return Promise.resolve(user.id);
-
-    const phone = localStorage.getItem('shabashka_phone');
-    if (!phone || !user.name) return Promise.resolve(null);
-
-    return fetch('/api/db-users?action=register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: phone, name: user.name, role: user.role, company: user.company || null }),
-    })
+    // Раньше здесь просто верили локально сохранённому id и на этом
+    // останавливались — но по-настоящему "залогинен" человек только если
+    // у него есть действительная серверная сессия (cookie), а не просто
+    // какое-то число в localStorage. Сначала всегда спрашиваем сервер.
+    return fetch('/api/db-users?action=me', { credentials: 'include' })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.ok && data.user && data.user.id) {
           localStorage.setItem('shabashka_user_id', String(data.user.id));
           return data.user.id;
         }
-        return null;
+        throw new Error('no session');
       })
-      .catch(function () { return null; });
+      .catch(function () {
+        // Нет действительной сессии — пробуем восстановить по сохранённому
+        // телефону (перевходит автоматически, тем самым заново ставит cookie).
+        const user = getUser();
+        const phone = localStorage.getItem('shabashka_phone');
+        if (!phone || !user.name) return null;
+
+        return fetch('/api/db-users?action=register', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: phone, name: user.name, role: user.role, company: user.company || null }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.ok && data.user && data.user.id) {
+              localStorage.setItem('shabashka_user_id', String(data.user.id));
+              return data.user.id;
+            }
+            return null;
+          })
+          .catch(function () { return null; });
+      });
   }
 
   // Подтягивает актуальные rating/reviews_count/jobs_done из БД — их

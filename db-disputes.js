@@ -5,7 +5,9 @@ const { pool } = require('../db');
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'POST') {
-      const { job_id, opened_by, reason_id, reason_label, comment, amount } = req.body || {};
+      if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
+      const { job_id, reason_id, reason_label, comment, amount } = req.body || {};
+      const opened_by = req.authUserId;
       if (!job_id || !reason_id || !comment) {
         return res.status(400).json({ error: 'Укажите заказ, причину и комментарий' });
       }
@@ -15,7 +17,7 @@ module.exports = async function handler(req, res) {
       const result = await pool.query(
         `INSERT INTO disputes (job_id, opened_by, reason_id, reason_label, comment, amount)
          VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-        [job_id, opened_by || null, reason_id, reason_label || '', comment, amount || 0]
+        [job_id, opened_by, reason_id, reason_label || '', comment, amount || 0]
       );
       await pool.query(`UPDATE jobs SET status='disputed', updated_at=NOW() WHERE id=$1`, [job_id]);
 

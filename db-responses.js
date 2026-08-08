@@ -5,26 +5,26 @@ module.exports = async function handler(req, res) {
   const method = req.method;
 
   try {
-    // POST — создать отклик
+    // POST — создать отклик (от лица залогиненного пользователя)
     if (method === 'POST') {
-      const { job_id, worker_id, worker_name, proposed_pay, message } = req.body;
+      if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
+      const { job_id, worker_name, proposed_pay, message } = req.body;
+      const worker_id = req.authUserId;
       if (!job_id) return res.status(400).json({ error: 'Укажите job_id' });
 
       // Проверяем не откликался ли уже
-      if (worker_id) {
-        const existing = await pool.query(
-          'SELECT id FROM responses WHERE job_id=$1 AND worker_id=$2',
-          [job_id, worker_id]
-        );
-        if (existing.rows.length) {
-          return res.json({ ok: false, error: 'Вы уже откликались на этот заказ' });
-        }
+      const existing = await pool.query(
+        'SELECT id FROM responses WHERE job_id=$1 AND worker_id=$2',
+        [job_id, worker_id]
+      );
+      if (existing.rows.length) {
+        return res.json({ ok: false, error: 'Вы уже откликались на этот заказ' });
       }
 
       const result = await pool.query(
         `INSERT INTO responses (job_id, worker_id, proposed_pay, message)
          VALUES ($1, $2, $3, $4) RETURNING *`,
-        [job_id, worker_id || null, proposed_pay || null, message || '']
+        [job_id, worker_id, proposed_pay || null, message || '']
       );
 
       // Обновляем статус заказа
@@ -50,6 +50,21 @@ module.exports = async function handler(req, res) {
     }
 
     // GET — отклики на заказ
+    // GET — все отклики на заказы конкретного работодателя (для дашборда)
+    if (method === 'GET' && req.query.employer_id) {
+      const result = await pool.query(
+        `SELECT r.*, j.title as job_title, u.name as worker_name, u.rating, u.jobs_done
+         FROM responses r
+         JOIN jobs j ON r.job_id = j.id
+         LEFT JOIN users u ON r.worker_id = u.id
+         WHERE j.employer_id = $1
+         ORDER BY r.created_at DESC
+         LIMIT 50`,
+        [req.query.employer_id]
+      );
+      return res.json({ ok: true, responses: result.rows });
+    }
+
     if (method === 'GET' && req.query.job_id) {
       const result = await pool.query(
         `SELECT r.*, u.name as worker_name, u.rating, u.jobs_done, u.verified
@@ -77,9 +92,22 @@ module.exports = async function handler(req, res) {
       return res.json({ ok: true, responses: result.rows });
     }
 
-    // PATCH — принять/отклонить отклик
+    // PATCH — принять/отклонить отклик (только владелец заказа)
     if (method === 'PATCH') {
-      const { id, status, job_id, worker_id } = req.body;
+      if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
+      const { id, status } = req.body;
+
+      const respCheck = await pool.query(
+        `SELECT r.job_id, r.worker_id, j.employer_id FROM responses r JOIN jobs j ON r.job_id = j.id WHERE r.id=$1`,
+        [id]
+      );
+      if (!respCheck.rows.length) return res.status(404).json({ error: 'Отклик не найден' });
+      if (respCheck.rows[0].employer_id !== req.authUserId) {
+        return res.status(403).json({ error: 'Это не ваш заказ' });
+      }
+      const job_id = respCheck.rows[0].job_id;
+      const worker_id = respCheck.rows[0].worker_id;
+
       await pool.query('UPDATE responses SET status=$1 WHERE id=$2', [status, id]);
 
       if (status === 'accepted' && job_id && worker_id) {

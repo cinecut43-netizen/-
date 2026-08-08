@@ -6,8 +6,10 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Метод не поддерживается' });
 
   try {
-    const { reporter_id, target_id, job_id, reason } = req.body || {};
-    if (!reporter_id || !target_id || !reason || !reason.trim()) {
+    if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
+    const { target_id, job_id, reason } = req.body || {};
+    const reporter_id = req.authUserId;
+    if (!target_id || !reason || !reason.trim()) {
       return res.status(400).json({ error: 'Укажите, на кого жалуетесь, и причину' });
     }
     if (Number(reporter_id) === Number(target_id)) {

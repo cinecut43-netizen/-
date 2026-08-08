@@ -12,9 +12,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { user_id, amount } = req.body || {};
+    if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
+    const user_id = req.authUserId;
+    const { amount } = req.body || {};
     const amountNum = Math.round(Number(amount));
-    if (!user_id) return res.status(400).json({ error: 'Не удалось определить пользователя' });
     if (!amountNum || amountNum < 10) return res.status(400).json({ error: 'Минимальная сумма пополнения — 10 ₽' });
     if (amountNum > 500000) return res.status(400).json({ error: 'Слишком большая сумма за один раз' });
 
