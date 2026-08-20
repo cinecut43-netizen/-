@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
   try {
     // GET /api/db-jobs — список заказов
     if (method === 'GET' && !action) {
-      const { cat, status, limit = 50, offset = 0 } = req.query;
+      const { cat, status, employer_id, limit = 50, offset = 0 } = req.query;
       let sql = `
         SELECT j.*, u.name as employer_name, u.rating as employer_rating,
                COUNT(r.id) as responses_count
@@ -22,7 +22,16 @@ module.exports = async function handler(req, res) {
         params.push(cat);
         sql += ` AND j.category = $${params.length}`;
       }
-      if (status) {
+      if (employer_id) {
+        // Кабинет работодателя — показываем ВСЕ его заказы, любого статуса,
+        // а не только новые/с откликами (иначе завершённые/в работе пропадали бы).
+        params.push(employer_id);
+        sql += ` AND j.employer_id = $${params.length}`;
+        if (status) {
+          params.push(status);
+          sql += ` AND j.status = $${params.length}`;
+        }
+      } else if (status) {
         params.push(status);
         sql += ` AND j.status = $${params.length}`;
       } else {
@@ -47,12 +56,14 @@ module.exports = async function handler(req, res) {
       return res.json({ ok: true, job: result.rows[0] });
     }
 
-    // POST /api/db-jobs — создать заказ
+    // POST /api/db-jobs — создать заказ (от лица залогиненного пользователя)
     if (method === 'POST' && !action) {
-      const { employer_id, title, description, category, emoji, pay, pay_label,
+      if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
+      const { title, description, category, emoji, pay, pay_label,
               people, location, address, lat, lng, date, urgent, allow_bargain } = req.body;
+      const employer_id = req.authUserId;
 
-      if (!title || !pay || !employer_id) {
+      if (!title || !pay) {
         return res.status(400).json({ error: 'Заполните обязательные поля' });
       }
 
@@ -66,22 +77,48 @@ module.exports = async function handler(req, res) {
          lat, lng, date, urgent || false, allow_bargain || false]
       );
 
-      return res.json({ ok: true, job: result.rows[0] });
+      const job = result.rows[0];
+      try {
+        const { sendPushToRole } = require('../db/push');
+        sendPushToRole('worker', {
+          title: urgent ? '🔥 Срочный заказ рядом!' : '💼 Новый заказ — Шабашка',
+          body: title + '\n' + Number(pay).toLocaleString('ru') + ' ₽ · ' + (location || ''),
+          url: '/?job=' + job.id,
+          tag: 'new-job-' + job.id,
+        });
+      } catch (e) { console.error('push send skip:', e.message); }
+
+      return res.json({ ok: true, job: job });
     }
 
-    // PATCH /api/db-jobs?action=status — обновить статус
+    // PATCH /api/db-jobs?action=status — обновить статус (только участники заказа)
     if (method === 'PATCH' && action === 'status') {
+      if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
       const { id, status, worker_id } = req.body;
+
+      const jobCheck = await pool.query('SELECT employer_id, selected_worker_id FROM jobs WHERE id=$1', [id]);
+      if (!jobCheck.rows.length) return res.status(404).json({ error: 'Заказ не найден' });
+      const job = jobCheck.rows[0];
+      const isEmployer = job.employer_id === req.authUserId;
+      const isWorker = job.selected_worker_id === req.authUserId;
+      if (!isEmployer && !isWorker) return res.status(403).json({ error: 'Вы не участник этого заказа' });
+
       await pool.query(
-        `UPDATE jobs SET status=$1, selected_worker_id=$2, updated_at=NOW() WHERE id=$3`,
+        `UPDATE jobs SET status=$1, selected_worker_id=COALESCE($2, selected_worker_id), updated_at=NOW() WHERE id=$3`,
         [status, worker_id || null, id]
       );
       return res.json({ ok: true });
     }
 
-    // DELETE /api/db-jobs?id=1 — удалить заказ
+    // DELETE /api/db-jobs?id=1 — удалить заказ (только владелец)
     if (method === 'DELETE') {
+      if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
       const { id } = req.query;
+      const jobCheck = await pool.query('SELECT employer_id FROM jobs WHERE id=$1', [id]);
+      if (!jobCheck.rows.length) return res.status(404).json({ error: 'Заказ не найден' });
+      if (jobCheck.rows[0].employer_id !== req.authUserId) {
+        return res.status(403).json({ error: 'Это не ваш заказ' });
+      }
       await pool.query('DELETE FROM jobs WHERE id=$1', [id]);
       return res.json({ ok: true });
     }
