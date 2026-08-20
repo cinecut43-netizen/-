@@ -389,6 +389,10 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
     </div>
   </div>
 
+  <div class="card">
+    <button id="logoutBtn" onclick="doLogout()" style="width:100%;padding:13px;background:none;border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;color:#B91C1C;cursor:pointer;font-family:inherit">Выйти из аккаунта</button>
+  </div>
+
 </div>
 
 <div class="modal-overlay" id="editModal">
@@ -859,6 +863,15 @@ function submitPassport() {
     errEl.style.display = 'block';
     if (btn) { btn.disabled = false; btn.textContent = 'Отправить на проверку'; }
   });
+  });
+}
+
+function doLogout() {
+  if (!confirm('Выйти из аккаунта на этом устройстве?')) return;
+  var btn = document.getElementById('logoutBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Выходим…'; }
+  Shabashka.logout().then(function () {
+    window.location.href = '/register';
   });
 }
 

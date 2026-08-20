@@ -375,7 +375,21 @@
   }
 
   function logout() {
-    localStorage.removeItem('shabashka_logged_in');
+    // Чистим сессию на сервере (иначе cookie осталась бы действительной,
+    // и сервер продолжал бы считать вас прежним аккаунтом) — и только
+    // после этого чистим локальные данные, чтобы не потерять запрос,
+    // если что-то пойдёт не так.
+    return fetch('/api/db-users?action=logout', { method: 'POST' })
+      .catch(function () { /* даже если сеть недоступна — всё равно чистим локально */ })
+      .then(function () {
+        [
+          'shabashka_logged_in', 'shabashka_user_id', 'shabashka_phone',
+          'shabashka_role', 'shabashka_name', 'shabashka_city', 'shabashka_age',
+          'shabashka_photo', 'shabashka_company', 'shabashka_bio', 'shabashka_skills',
+          'shabashka_categories', 'shabashka_day_rate', 'shabashka_verified',
+          'shabashka_registered_at', 'shabashka_access', 'shabashka_onboarding_done',
+        ].forEach(function (key) { localStorage.removeItem(key); });
+      });
   }
 
   /* ---------- ЗАКАЗЫ (общий список на весь сайт) ----------
