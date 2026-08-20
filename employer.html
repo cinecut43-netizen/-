@@ -305,7 +305,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 <div class="layout">
   <aside class="sidenav">
     <button class="sidenav-item active" onclick="setPage('dashboard', this)"><span class="sidenav-icon">📊</span> Дашборд</button>
-    <button class="sidenav-item" onclick="setPage('orders', this)"><span class="sidenav-icon">📋</span> Мои заказы <span class="sidenav-badge" id="ordersBadge" style="display:none">0</span></button>
+    <button class="sidenav-item" onclick="setPage('orders', this)"><span class="sidenav-icon">📋</span> Мои заказы</button>
     <button class="sidenav-item" onclick="setPage('responses', this)"><span class="sidenav-icon">👥</span> Отклики <span class="sidenav-badge" id="responsesBadge" style="display:none">0</span></button>
     <button class="sidenav-item" onclick="window.location.href='/workers'"><span class="sidenav-icon">🔍</span> Найти исполнителя</button>
     <div class="sidenav-section">Настройки</div>
@@ -622,13 +622,8 @@ function activityColorFromId(id) {
 }
 
 function updateBadges() {
-  var ordersBadge = document.getElementById('ordersBadge');
   var responsesBadge = document.getElementById('responsesBadge');
   var pendingCount = EMPLOYER_RESPONSES.filter(function(r){ return r.status === 'pending'; }).length;
-  if (ordersBadge) {
-    if (ORDERS.length) { ordersBadge.textContent = ORDERS.length; ordersBadge.style.display = ''; }
-    else { ordersBadge.style.display = 'none'; }
-  }
   if (responsesBadge) {
     if (pendingCount) { responsesBadge.textContent = pendingCount; responsesBadge.style.display = ''; }
     else { responsesBadge.style.display = 'none'; }
