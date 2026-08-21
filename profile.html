@@ -572,20 +572,36 @@ function renderHistory() {
 }
 
 function renderReviews() {
-  // Реальные отзывы, оставленные через employer.html после завершения заказа,
-  // показываем первыми — они актуальнее статичных демо-данных.
-  const realReviews = Shabashka.getAllReviews().map(r => ({
-    name: 'Заказчик',
-    color: '#E8510A',
-    job: r.jobTitle,
-    stars: r.rating,
-    date: r.date,
-    text: r.text,
-    photo: r.photo,
-  }));
+  document.getElementById('reviewsList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Загрузка…</div>';
 
-  const allReviews = realReviews.concat(REVIEWS);
+  Shabashka.ensureDbUserId().then(function (myId) {
+    if (!myId) {
+      document.getElementById('reviewsList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Пока нет отзывов</div>';
+      return;
+    }
+    fetch('/api/db-reviews?target_id=' + myId)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var palette = ['#E8510A','#185FA5','#1A7A4A','#7C3AED','#DB2777','#0891B2'];
+        var reviews = (data.ok ? data.reviews : []).map(function (r) {
+          return {
+            name: r.reviewer_name || 'Заказчик',
+            color: palette[(r.reviewer_id || 0) % palette.length],
+            job: r.job_title || '',
+            stars: r.rating,
+            date: new Date(r.created_at).toLocaleDateString('ru'),
+            text: r.text || '',
+          };
+        });
+        renderReviewsList(reviews);
+      })
+      .catch(function () {
+        document.getElementById('reviewsList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Не удалось загрузить отзывы</div>';
+      });
+  });
+}
 
+function renderReviewsList(allReviews) {
   document.getElementById('reviewsList').innerHTML = allReviews.map(r => `
     <div class="review-item">
       <div class="review-header">
@@ -596,7 +612,6 @@ function renderReviews() {
         </div>
         <div class="review-stars">${'⭐'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
       </div>
-      ${r.photo ? `<img class="review-photo" src="${r.photo}" alt="Результат работы">` : ''}
       <div class="review-text">${r.text}</div>
       <div class="review-date">${r.date}</div>
     </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Пока нет отзывов</div>';
