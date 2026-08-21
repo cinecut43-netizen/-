@@ -18,7 +18,7 @@
   const PH_MAP = {
     'search': 'ph-magnifying-glass', 'map': 'ph-map-pin',
     'message-circle': 'ph-chat-circle-dots', 'credit-card': 'ph-credit-card',
-    'wallet': 'ph-wallet', 'user': 'ph-user-circle',
+    'wallet': 'ph-wallet', 'user': 'ph-user-circle', 'heart': 'ph-heart',
     'layout-dashboard': 'ph-chart-bar', 'menu': 'ph-list',
   };
 
@@ -32,6 +32,7 @@
     { page: 'index', href: '/', icon: 'search', label: 'Найти работу' },
     { page: 'map', href: '/map', icon: 'map', label: 'Карта' },
     { page: 'chat', href: '/chat', icon: 'message-circle', label: 'Сообщения' },
+    { page: 'favorites', href: '/favorites', icon: 'heart', label: 'Избранное' },
     { page: 'profile', href: '/profile', icon: 'user', label: 'Профиль' },
   ];
 
