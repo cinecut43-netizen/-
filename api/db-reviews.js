@@ -6,8 +6,10 @@ module.exports = async function handler(req, res) {
 
   try {
     if (method === 'POST') {
-      const { job_id, reviewer_id, target_id, rating, text, type } = req.body;
-      if (!rating || !reviewer_id) return res.status(400).json({ error: 'Укажите рейтинг' });
+      if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
+      const { job_id, target_id, rating, text, type } = req.body;
+      const reviewer_id = req.authUserId;
+      if (!rating) return res.status(400).json({ error: 'Укажите рейтинг' });
 
       const existing = await pool.query(
         'SELECT id FROM reviews WHERE job_id=$1 AND reviewer_id=$2',
@@ -35,8 +37,9 @@ module.exports = async function handler(req, res) {
 
     if (method === 'GET') {
       const { target_id, job_id } = req.query;
-      let sql = `SELECT r.*, u.name as reviewer_name FROM reviews r 
-                 LEFT JOIN users u ON r.reviewer_id = u.id WHERE 1=1`;
+      let sql = `SELECT r.*, u.name as reviewer_name, j.title as job_title FROM reviews r 
+                 LEFT JOIN users u ON r.reviewer_id = u.id
+                 LEFT JOIN jobs j ON r.job_id = j.id WHERE 1=1`;
       const params = [];
       if (target_id) { params.push(target_id); sql += ` AND r.target_id=$${params.length}`; }
       if (job_id)    { params.push(job_id);    sql += ` AND r.job_id=$${params.length}`; }
