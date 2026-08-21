@@ -1127,9 +1127,6 @@ function openWorkerProfile(respId) {
   const r = currentJobResponses.find(function(x){ return x.id === respId; });
   if (!r) return;
 
-  const reviews = ['Отличный работник, всё сделал быстро и аккуратно. Рекомендую!',
-    'Пришёл вовремя, работу выполнил качественно.', 'Очень ответственный, буду обращаться снова.'];
-
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end';
   overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
@@ -1149,19 +1146,15 @@ function openWorkerProfile(respId) {
       </div>
     </div>
 
-    <!-- Статистика -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
+    <!-- Статистика — реальная, подгружается -->
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:20px" id="workerStatsGrid">
       <div style="background:#F4F3EF;border-radius:12px;padding:12px;text-align:center">
-        <div style="font-size:20px;font-weight:800;color:#14151A">47</div>
+        <div style="font-size:20px;font-weight:800;color:#14151A" id="workerStatOrders">…</div>
         <div style="font-size:11px;color:#6B6B67;margin-top:2px">заказов</div>
       </div>
       <div style="background:#F4F3EF;border-radius:12px;padding:12px;text-align:center">
-        <div style="font-size:20px;font-weight:800;color:#E8510A">4.9</div>
+        <div style="font-size:20px;font-weight:800;color:#E8510A" id="workerStatRating">…</div>
         <div style="font-size:11px;color:#6B6B67;margin-top:2px">рейтинг</div>
-      </div>
-      <div style="background:#F4F3EF;border-radius:12px;padding:12px;text-align:center">
-        <div style="font-size:20px;font-weight:800;color:#1A7A4A">98%</div>
-        <div style="font-size:11px;color:#6B6B67;margin-top:2px">выполнено</div>
       </div>
     </div>
 
@@ -1172,15 +1165,9 @@ function openWorkerProfile(respId) {
       ${r.proposedPay ? `<div style="margin-top:8px;font-size:13px;font-weight:700;color:#E8510A">Предлагает цену: ${r.proposedPay.toLocaleString('ru')} ₽</div>` : ''}
     </div>
 
-    <!-- Отзывы -->
+    <!-- Отзывы — реальные, подгружаются -->
     <div style="font-size:14px;font-weight:700;color:#14151A;margin-bottom:12px">⭐ Последние отзывы</div>
-    ${reviews.map(function(rev, i) {
-      return `<div style="padding:12px;border:1px solid #E2E1DB;border-radius:12px;margin-bottom:8px">
-        <div style="display:flex;gap:4px;margin-bottom:6px">${'⭐'.repeat(5)}</div>
-        <div style="font-size:13px;color:#14151A;line-height:1.5">${rev}</div>
-        <div style="font-size:11px;color:#9A9A96;margin-top:6px">${['Иван П.', 'Мария С.', 'ООО СтройКо'][i]} · ${['3 дня назад', 'неделю назад', '2 недели назад'][i]}</div>
-      </div>`;
-    }).join('')}
+    <div id="workerReviewsList" style="color:#9A9A96;font-size:13px;padding:12px 0">Загрузка…</div>
 
     <!-- Кнопки -->
     <div style="display:flex;gap:10px;margin-top:16px;padding-bottom:env(safe-area-inset-bottom,0px)">
@@ -1190,6 +1177,43 @@ function openWorkerProfile(respId) {
   </div>`;
 
   document.body.appendChild(overlay);
+
+  // Настоящая статистика и отзывы исполнителя — раньше здесь были зашитые
+  // "47 заказов / 4.9 / 98%" и три придуманных отзыва одни на всех.
+  if (r.workerId) {
+    fetch('/api/db-users?id=' + r.workerId)
+      .then(function(res){ return res.json(); })
+      .then(function(data) {
+        if (!data.ok || !data.user) return;
+        var u = data.user;
+        var ordersEl = document.getElementById('workerStatOrders');
+        var ratingEl = document.getElementById('workerStatRating');
+        if (ordersEl) ordersEl.textContent = u.jobs_done || 0;
+        if (ratingEl) ratingEl.textContent = u.reviews_count > 0 ? Number(u.rating).toFixed(1) : '—';
+      })
+      .catch(function(){});
+
+    fetch('/api/db-reviews?target_id=' + r.workerId)
+      .then(function(res){ return res.json(); })
+      .then(function(data) {
+        var listEl = document.getElementById('workerReviewsList');
+        if (!listEl) return;
+        var reviews = data.ok ? data.reviews : [];
+        listEl.innerHTML = reviews.length ? reviews.map(function(rev) {
+          return `<div style="padding:12px;border:1px solid #E2E1DB;border-radius:12px;margin-bottom:8px">
+            <div style="display:flex;gap:4px;margin-bottom:6px">${'⭐'.repeat(rev.rating)}${'☆'.repeat(5-rev.rating)}</div>
+            <div style="font-size:13px;color:#14151A;line-height:1.5">${rev.text || ''}</div>
+            <div style="font-size:11px;color:#9A9A96;margin-top:6px">${rev.reviewer_name || 'Заказчик'} · ${new Date(rev.created_at).toLocaleDateString('ru')}</div>
+          </div>`;
+        }).join('') : '<div style="color:#9A9A96;font-size:13px;padding:12px 0">Пока нет отзывов</div>';
+      })
+      .catch(function(){
+        var listEl = document.getElementById('workerReviewsList');
+        if (listEl) listEl.innerHTML = '<div style="color:#9A9A96;font-size:13px;padding:12px 0">Не удалось загрузить отзывы</div>';
+      });
+  } else {
+    document.getElementById('workerReviewsList').innerHTML = '<div style="color:#9A9A96;font-size:13px;padding:12px 0">Пока нет отзывов</div>';
+  }
 }
 
 function repeatOrder(id) {
