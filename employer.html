@@ -550,6 +550,8 @@ let ORDERS = loadOrders();
             desc: j.description,
             cat: j.category,
             selectedWorkerId: j.selected_worker_id,
+            selectedWorkerName: j.selected_worker_name,
+            selectedWorkerVerified: j.selected_worker_verified,
           };
         });
         var dbIds = dbOrders.map(function(o){ return o.id; });
@@ -1092,15 +1094,27 @@ function orderRow(o) {
   const repeatBtn = (o.status === 'done' || o.status === 'cancelled')
     ? '<button class="btn-sm btn-sm-green" style="font-size:11px;padding:5px 10px" onclick="event.stopPropagation();repeatOrder(' + o.id + ')">🔄 Повторить</button>'
     : '';
+  // Раньше узнать, кто взял заказ, и написать ему можно было только открыв
+  // детали заказа. Показываем имя исполнителя и кнопку сообщения прямо
+  // в списке, как только исполнитель выбран.
+  const workerLine = o.selectedWorkerId
+    ? '<div class="order-meta" style="color:var(--dark);font-weight:600">👷 ' + (o.selectedWorkerName || 'Исполнитель') +
+      (o.selectedWorkerVerified ? ' <span style="color:var(--green);font-weight:400">✓ проверен</span>' : '') + '</div>'
+    : '';
+  const messageBtn = o.selectedWorkerId
+    ? '<button class="btn-sm" style="background:var(--orange-bg,#FFF0E8);color:var(--orange);font-size:11px;padding:5px 10px" onclick="event.stopPropagation();window.location.href=\'/chat?worker=' + o.selectedWorkerId + '\'">💬 Написать</button>'
+    : '';
   return '<div class="order-row" onclick="openDetail(' + o.id + ')">' +
     '<div class="order-icon">' + o.icon + '</div>' +
     '<div class="order-info">' +
       '<div class="order-title">' + o.title + '</div>' +
       '<div class="order-meta">👥 ' + o.people + ' чел · 📍 ' + o.addr + ' · ' + o.responses + ' откликов</div>' +
+      workerLine +
     '</div>' +
     '<div class="order-date">' + o.date + '</div>' +
     '<div class="order-pay">' + (o.pay * o.people).toLocaleString('ru') + ' ₽</div>' +
     '<span class="status-pill ' + s.cls + '">' + s.label + '</span>' +
+    messageBtn +
     repeatBtn +
   '</div>';
 }
