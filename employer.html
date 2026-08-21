@@ -549,6 +549,7 @@ let ORDERS = loadOrders();
             addr: j.location,
             desc: j.description,
             cat: j.category,
+            selectedWorkerId: j.selected_worker_id,
           };
         });
         var dbIds = dbOrders.map(function(o){ return o.id; });
@@ -1399,8 +1400,17 @@ function renderDetailActions(o) {
     ? `<button onclick="closeModal('detailModal');openDisputeModal(${o.id})" style="padding:10px 16px;background:none;border:1px solid var(--border);color:var(--gray);border-radius:9px;font-size:13px;cursor:pointer">⚠ Спор</button>`
     : '';
 
-  return `<div style="display:flex;gap:8px;margin-top:16px">
+  // После принятия отклик пропадает из списка "ожидающих", а вместе с ним
+  // раньше пропадала и единственная кнопка "Написать" — исполнителю
+  // становилось некому писать. Показываем кнопку, пока у заказа есть
+  // выбранный исполнитель, независимо от статуса отклика.
+  const messageBtn = o.selectedWorkerId
+    ? `<button onclick="window.location.href='/chat?worker=${o.selectedWorkerId}'" style="padding:10px 16px;background:var(--orange-bg,#FFF0E8);color:var(--orange);border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer">💬 Написать исполнителю</button>`
+    : '';
+
+  return `<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
     ${progressBtn || `<button onclick="closeModal('detailModal')" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:9px;font-size:14px;cursor:pointer">Редактировать</button>`}
+    ${messageBtn}
     ${disputeBtn}
     <button onclick="cancelOrder(${o.id})" style="padding:10px 16px;background:var(--red-bg);color:var(--red);border:none;border-radius:9px;font-size:14px;cursor:pointer">Закрыть заказ</button>
   </div>`;
