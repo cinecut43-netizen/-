@@ -1221,14 +1221,14 @@ function applyAndChat(jobId) {
     }
   }
 
+  // Раньше здесь сначала проверялся локальный список заказов
+  // (Shabashka.submitResponse), и если заказ пришёл только из БД (создан
+  // на другом аккаунте) — функция обрывалась с "Заказ не найден" ещё ДО
+  // того, как доходила до настоящего сохранения в базу ниже. Локальная
+  // проверка теперь необязательна — используется как побочный эффект,
+  // а не как условие для остановки.
   const result = Shabashka.submitResponse(jobId, proposedPay, '');
-  if (!result.ok) {
-    alert(result.error);
-    return;
-  }
 
-  JOBS = Shabashka.getOpenJobs();
-  filtered = filtered.map(j => JOBS.find(x => x.id === j.id) || j);
   closeModal('detailModal');
   renderJobs();
 
@@ -1239,7 +1239,7 @@ function applyAndChat(jobId) {
   document.body.appendChild(t);
   setTimeout(function(){ t.remove(); }, 3000);
 
-  // Сохраняем отклик в базу данных
+  // Сохраняем отклик в базу данных — это теперь основной, настоящий путь
   const user = Shabashka.getUser();
   Shabashka.ensureDbUserId().then(function (workerId) {
     fetch('/api/db-responses', {
@@ -1253,8 +1253,11 @@ function applyAndChat(jobId) {
         message: '',
       })
     }).then(function(r){ return r.json(); })
-      .then(function(d){ if(d.ok) console.log('✅ Отклик сохранён в БД'); })
-      .catch(function(){ console.log('БД недоступна, отклик сохранён локально'); });
+      .then(function(d){
+        if (d.ok) { console.log('✅ Отклик сохранён в БД'); }
+        else { console.warn('Не удалось сохранить отклик в БД:', d.error); }
+      })
+      .catch(function(){ console.log('БД недоступна, отклик сохранён только локально'); });
   });
 
   // Уведомление в Telegram
