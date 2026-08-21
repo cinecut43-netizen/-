@@ -508,6 +508,96 @@ function formatMsgTime(iso) {
   return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 
+// ===== АВТООБНОВЛЕНИЕ =====
+// Раньше сообщения подгружались только один раз при открытии чата —
+// чтобы увидеть ответ собеседника, нужно было вручную обновлять страницу.
+// Теперь, пока чат открыт, периодически проверяем на новые сообщения
+// (без полноценного WebSocket — простой, но рабочий опрос сервера).
+function pollActiveConvo() {
+  if (!myId || !currentConvo) return;
+  const c = CONVOS.find(x => x.id === currentConvo);
+  if (!c) return;
+
+  const fetchUrl = c.isDirect
+    ? '/api/db-messages?peer_id=' + c.peerId
+    : '/api/db-messages?job_id=' + c.jobId;
+
+  fetch(fetchUrl)
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (currentConvo !== c.id) return; // успели переключиться на другой чат
+      if (!data.ok || !data.messages) return;
+
+      const prevCount = (MESSAGES_DB[c.id] || []).filter(function(m){ return m.type === 'me' || m.type === 'them'; }).length;
+      const fresh = data.messages.map(function(m) {
+        return {
+          type: m.sender_id === myId ? 'me' : 'them',
+          text: m.text,
+          time: formatMsgTime(m.created_at),
+          read: m.is_read ? 'read' : 'sent',
+        };
+      });
+
+      if (fresh.length === prevCount) return; // ничего нового — не дёргаем рендер зря
+      MESSAGES_DB[c.id] = fresh;
+      renderMessages();
+
+      // Новое сообщение от собеседника — сразу отмечаем прочитанным, раз чат открыт
+      if (fresh.length > prevCount && fresh[fresh.length-1].type === 'them') {
+        fetch('/api/db-messages', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(c.isDirect ? { peer_id: c.peerId } : { job_id: c.jobId }),
+        }).catch(function(){});
+      }
+    })
+    .catch(function(){});
+}
+
+// Список диалогов тоже обновляем периодически — чтобы новый диалог/непрочитанное
+// появлялись сами, даже если открыт другой чат или список диалогов вообще.
+function pollConvoList() {
+  if (!myId) return;
+  fetch('/api/db-messages')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (!data.ok || !data.conversations) return;
+      var existingDirect = CONVOS.filter(function(c){ return c.id.indexOf('direct-')===0 || c.id.indexOf('job-')===0; });
+      data.conversations.forEach(function(c) {
+        var isDirect = !c.job_id;
+        var id = isDirect ? 'direct-' + c.other_id : 'job-' + c.job_id;
+        var existing = CONVOS.find(function(x){ return x.id === id; });
+        if (existing) {
+          // Обновляем превью/время только если это не открытый сейчас чат
+          // (там уже показана полная история, превью бы её только исказило)
+          if (id !== currentConvo) {
+            existing.preview = c.text;
+            existing.time = formatMsgTime(c.created_at);
+          }
+        } else {
+          CONVOS.push({
+            id: id, jobId: c.job_id || null, peerId: isDirect ? c.other_id : null,
+            isDirect: isDirect, name: c.other_name || 'Собеседник',
+            job: isDirect ? 'Личные сообщения' : c.job_title,
+            icon: isDirect ? '💬' : (c.emoji || '📦'),
+            pay: '', date: '', color: colorFromId(c.other_id), otherId: c.other_id,
+            unread: id === currentConvo ? 0 : 1,
+            time: formatMsgTime(c.created_at), preview: c.text,
+          });
+        }
+      });
+      renderSidebar();
+      syncUnreadCount();
+    })
+    .catch(function(){});
+}
+
+setInterval(function() {
+  pollActiveConvo();
+  pollConvoList();
+}, 4000);
+
+
 function renderMessages() {
   const msgs = MESSAGES_DB[currentConvo] || [];
   const c = CONVOS.find(x => x.id === currentConvo);
