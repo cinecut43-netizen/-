@@ -588,10 +588,22 @@ function sendMsg() {
         receiver_id: c ? c.otherId || null : null,
         text: text,
       })
-    }).catch(function(){
-      console.log('БД недоступна, сообщение сохранено только локально');
-      showSendWarning('Сообщение не дошло до собеседника — нет связи с сервером.');
-    });
+    })
+      .then(function(res) {
+        // Раньше здесь тело ответа вообще не читалось — сообщение считалось
+        // "отправленным" даже если сервер ответил ошибкой (401/500 и т.д.).
+        return res.json().then(function(data) { return { status: res.status, data: data }; });
+      })
+      .then(function(result) {
+        if (!result.data || !result.data.ok) {
+          console.warn('Сервер отклонил сообщение:', result.status, result.data);
+          showSendWarning((result.data && result.data.error) || 'Сообщение не дошло до собеседника.');
+        }
+      })
+      .catch(function(){
+        console.log('БД недоступна, сообщение сохранено только локально');
+        showSendWarning('Сообщение не дошло до собеседника — нет связи с сервером.');
+      });
   } else {
     // Без определённого аккаунта сообщение уходит только в память браузера
     // и никогда не долетит до собеседника — молчать об этом нельзя.
