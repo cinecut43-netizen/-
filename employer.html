@@ -1233,33 +1233,90 @@ function openWorkerProfile(respId) {
   }
 }
 
-function repeatOrder(id) {
+async function repeatOrder(id) {
   var o = ORDERS.find(function(x){ return x.id === id; });
   if (!o) return;
 
-  // Создаём новый заказ с теми же параметрами
-  var result = Shabashka.addJob({
+  const user = Shabashka.getUser();
+  const addr = o.addr || '';
+
+  // Раньше здесь координаты вообще не пересчитывались — бралось то,
+  // что стоит в addJob() по умолчанию (жёстко зашитая Москва), из-за
+  // чего "Повторить" заказ из другого города ставил метку не туда.
+  // Теперь геокодируем адрес заново, точно так же, как при обычной
+  // публикации нового заказа.
+  let lat = null, lng = null;
+  if (addr) {
+    try {
+      const query = encodeURIComponent(addr + ', Россия');
+      const res = await fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ru', {
+        headers: { 'User-Agent': 'Shabashka/1.0' }
+      });
+      const data = await res.json();
+      if (data && data.length > 0) {
+        lat = parseFloat(data[0].lat);
+        lng = parseFloat(data[0].lon);
+      }
+    } catch(e) { /* создаём без координат, если геокодирование недоступно */ }
+  }
+
+  const dbUserId = await Shabashka.ensureDbUserId();
+  let dbJobId = null;
+
+  if (dbUserId) {
+    try {
+      const dbRes = await fetch('/api/db-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employer_id: dbUserId,
+          title: o.title,
+          description: o.desc || '',
+          category: o.cat || 'other',
+          emoji: o.icon || '📦',
+          pay: o.pay,
+          pay_label: 'за день',
+          people: o.people,
+          location: addr || 'Адрес не указан',
+          address: addr,
+          lat: lat,
+          lng: lng,
+          date: 'Сегодня',
+          urgent: false,
+          allow_bargain: false,
+        })
+      });
+      const dbData = await dbRes.json();
+      if (dbData.ok && dbData.job) dbJobId = dbData.job.id;
+    } catch(e) { console.log('БД недоступна, заказ сохранён только локально'); }
+  }
+
+  Shabashka.addJob(Object.assign({
     cat:        o.cat || 'other',
     emoji:      o.icon || '📦',
     title:      o.title,
-    company:    Shabashka.getUser().company,
+    company:    user.company,
     pay:        o.pay,
     people:     o.people,
     payLabel:   'за день',
     date:       'Сегодня',
     urgent:     false,
     allowBargain: false,
-    location:   o.addr || 'Адрес не указан',
+    location:   addr || 'Адрес не указан',
+    lat:        lat,
+    lng:        lng,
     desc:       o.desc || '',
     requirements: o.requirements || '—',
-  });
+  }, dbJobId ? { id: dbJobId } : {}));
 
   ORDERS = loadOrders();
   renderPage();
 
   // Toast
   var t = document.createElement('div');
-  t.textContent = '✅ Заказ «' + o.title + '» создан заново!';
+  t.textContent = dbJobId
+    ? '✅ Заказ «' + o.title + '» создан заново!'
+    : '✅ Заказ «' + o.title + '» создан заново (локально — не удалось записать в общую базу)';
   t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A7A4A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis';
   document.body.appendChild(t);
   setTimeout(function(){ t.remove(); }, 3000);

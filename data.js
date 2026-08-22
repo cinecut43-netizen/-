@@ -463,8 +463,8 @@
       status: 'new',
       employer: true,
       responses: 0,
-      lat: 55.751,
-      lng: 37.618,
+      lat: null,
+      lng: null,
       dist: '—',
       colors: ['#E8510A', '#185FA5', '#1A7A4A'],
     }, jobData);
