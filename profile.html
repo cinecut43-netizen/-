@@ -594,6 +594,16 @@ function renderReviews() {
           };
         });
         renderReviewsList(reviews);
+
+        // Раньше полоски распределения по звёздам (BARS) были отдельным,
+        // никогда не обновляемым массивом — всегда показывали 0, даже
+        // если отзывы реально были. Пересчитываем из тех же данных.
+        BARS.forEach(function(b) { b.count = 0; });
+        reviews.forEach(function(r) {
+          var bar = BARS.find(function(b) { return b.stars === r.stars; });
+          if (bar) bar.count++;
+        });
+        renderBars();
       })
       .catch(function () {
         document.getElementById('reviewsList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray);font-size:13px">Не удалось загрузить отзывы</div>';
