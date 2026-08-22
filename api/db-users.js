@@ -85,16 +85,32 @@ module.exports = async function handler(req, res) {
     // подписанной cookie сессии, тело запроса больше не может его подменить.
     if (method === 'PATCH') {
       if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
-      const { name, company, avatar_url, city, bio, skills, day_rate, role, categories } = req.body;
-      await pool.query(
-        `UPDATE users SET name=COALESCE($1,name), company=COALESCE($2,company), avatar_url=COALESCE($3,avatar_url),
-                city=COALESCE($4,city), bio=COALESCE($5,bio),
-                skills=COALESCE($6,skills), day_rate=COALESCE($7,day_rate),
-                role=COALESCE($8,role), categories=COALESCE($9,categories)
-         WHERE id=$10`,
-        [name || null, company || null, avatar_url || null, city || null, bio || null,
-         skills || null, day_rate || null, role || null, categories || null, req.authUserId]
-      );
+      const body = req.body || {};
+
+      // Раньше пустая строка (например, чтобы очистить название компании
+      // и остаться частным лицом) превращалась в null и COALESCE молча
+      // сохранял старое значение — очистить поле было невозможно. Теперь
+      // различаем "поле не прислали вообще" (не трогаем) от "прислали
+      // пустую строку" (реально очищаем).
+      const fieldMap = {
+        name: body.name, company: body.company, avatar_url: body.avatar_url,
+        city: body.city, bio: body.bio, day_rate: body.day_rate, role: body.role,
+      };
+      const sets = [];
+      const params = [];
+      Object.keys(fieldMap).forEach(function (key) {
+        if (fieldMap[key] !== undefined) {
+          params.push(fieldMap[key] === '' ? null : fieldMap[key]);
+          sets.push(key + '=$' + params.length);
+        }
+      });
+      if (body.skills !== undefined) { params.push(body.skills); sets.push('skills=$' + params.length); }
+      if (body.categories !== undefined) { params.push(body.categories); sets.push('categories=$' + params.length); }
+
+      if (sets.length) {
+        params.push(req.authUserId);
+        await pool.query(`UPDATE users SET ${sets.join(', ')} WHERE id=$${params.length}`, params);
+      }
       return res.json({ ok: true });
     }
 
