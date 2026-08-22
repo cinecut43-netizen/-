@@ -1571,7 +1571,11 @@ function renderDetailActions(o) {
 
 function advanceOrder(id, nextStatus) {
   Shabashka.updateJobStatus(id, nextStatus);
-  Shabashka.syncJobStatusToDb(id, nextStatus);
+  Shabashka.syncJobStatusToDb(id, nextStatus).then(function(result) {
+    if (!result.ok) {
+      alert('Не удалось сохранить новый статус на сервере: ' + result.error + '\nПопробуйте ещё раз — сейчас изменение видно только у вас в браузере.');
+    }
+  });
   ORDERS = loadOrders();
   closeModal('detailModal');
   renderPage();
@@ -1665,7 +1669,11 @@ function submitWorkerRating(jobId, workerName) {
 
 function cancelOrder(id) {
   Shabashka.updateJobStatus(id, 'cancelled');
-  Shabashka.syncJobStatusToDb(id, 'cancelled');
+  Shabashka.syncJobStatusToDb(id, 'cancelled').then(function(result) {
+    if (!result.ok) {
+      alert('Не удалось отменить заказ на сервере: ' + result.error + '\nПопробуйте ещё раз — сейчас он может быть всё ещё виден другим.');
+    }
+  });
   ORDERS = loadOrders();
   closeModal('detailModal');
   alert('Заказ снят с публикации');

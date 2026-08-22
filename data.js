@@ -341,11 +341,23 @@
   // без этого статус расходился между устройствами так же, как раньше
   // расходились id заказов.
   function syncJobStatusToDb(jobId, status, workerId) {
-    fetch('/api/db-jobs?action=status', {
+    return fetch('/api/db-jobs?action=status', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: jobId, status: status, worker_id: workerId || null }),
-    }).catch(function () { console.log('БД недоступна, статус сохранён только локально'); });
+    })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok || !result.data || !result.data.ok) {
+          console.warn('Смена статуса заказа отклонена сервером:', result.data);
+          return { ok: false, error: (result.data && result.data.error) || 'Сервер отклонил изменение' };
+        }
+        return { ok: true };
+      })
+      .catch(function () {
+        console.log('БД недоступна, статус сохранён только локально');
+        return { ok: false, error: 'Нет связи с сервером' };
+      });
   }
 
   // Создаёт настоящий платёж через ЮKassa на пополнение баланса и
