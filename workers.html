@@ -352,7 +352,7 @@ function workerCard(w) {
   var stars = '⭐ ' + w.rating.toFixed(1);
   var verBadge = w.verified ? '<span class="verified-badge"><i class="ph-bold ph-seal-check"></i>Проверен</span>' : '';
   var skills = w.skills.slice(0, 3).map(function(s){ return '<span class="skill-tag">' + s + '</span>'; }).join('');
-  var favIcon = Shabashka.isFavWorker(w.id) ? 'ph-heart-fill" style="color:#E8510A' : 'ph-heart" style="color:#9A9A96';
+  var favIcon = Shabashka.isFavWorker(w.id) ? 'ph-heart-fill" style="color:#E8124A' : 'ph-heart" style="color:#9A9A96';
   return '<div class="worker-card" onclick="openProfile(' + w.id + ')">' +
     '<div class="worker-top">' +
     '<div class="worker-avatar" style="background:' + w.color + '">' + w.name[0] + '</div>' +
@@ -415,7 +415,7 @@ function favWorker(id, btn) {
   var added = Shabashka.toggleFavWorker(id);
   var i = btn.querySelector('i');
   i.className = 'ph-bold ' + (added ? 'ph-heart-fill' : 'ph-heart');
-  i.style.color = added ? '#E8510A' : '#9A9A96';
+  i.style.color = added ? '#E8124A' : '#9A9A96';
 
   Shabashka.ensureDbUserId().then(function (userId) {
     if (!userId) return;
