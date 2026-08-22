@@ -1422,6 +1422,13 @@ function openDetail(id) {
     .then(function(r){ return r.json(); })
     .then(function(data) {
       if (data.ok && data.responses) {
+        // Раньше число "N откликов" в самом списке заказов не обновлялось
+        // после того, как здесь подгружались настоящие данные из базы —
+        // оставалось тем, что было при самой первой загрузке страницы.
+        if (o.responses !== data.responses.length) {
+          o.responses = data.responses.length;
+          renderPage(); // перерисовывает список за модалкой с актуальным числом
+        }
         renderBody(data.responses.map(function(r) {
           return {
             source: 'db',
