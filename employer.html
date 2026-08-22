@@ -309,7 +309,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
     <button class="sidenav-item" onclick="setPage('responses', this)"><span class="sidenav-icon">👥</span> Отклики <span class="sidenav-badge" id="responsesBadge" style="display:none">0</span></button>
     <button class="sidenav-item" onclick="window.location.href='/workers'"><span class="sidenav-icon">🔍</span> Найти исполнителя</button>
     <div class="sidenav-section">Настройки</div>
-    <button class="sidenav-item" onclick="setPage('company', this)"><span class="sidenav-icon">🏢</span> Компания</button>
+    <button class="sidenav-item" onclick="setPage('company', this)"><span class="sidenav-icon">👤</span> О себе</button>
     <button class="sidenav-item" onclick="setPage('billing', this)"><span class="sidenav-icon">⚙️</span> Реквизиты</button>
   </aside>
 
@@ -820,7 +820,7 @@ function getAnalyticsPage() {
 
 function getCompanyPage() {
   const user = Shabashka.getUser();
-  const companyName = user.company || 'Ваша компания';
+  const displayName = user.company || user.name || 'Работодатель';
 
   // Отзывы о работодателе — реальные, из БД (раньше здесь читался только
   // локальный список этого браузера, отзывы с других устройств не были видны).
@@ -860,17 +860,17 @@ function getCompanyPage() {
 
   return `
   <div class="section-header">
-    <span class="section-title">Компания</span>
+    <span class="section-title">О себе</span>
     <button class="post-btn" style="font-size:13px;padding:7px 14px" onclick="openEditCompanyModal()">✏️ Редактировать</button>
   </div>
   <div class="two-col" style="gap:16px;margin-bottom:16px">
-    <!-- ИНФОРМАЦИЯ О КОМПАНИИ -->
+    <!-- ИНФОРМАЦИЯ О ЗАКАЗЧИКЕ -->
     <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px">
-      <div style="font-size:14px;font-weight:700;margin-bottom:16px">Информация о компании</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px">Информация о заказчике</div>
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-        <div style="width:56px;height:56px;border-radius:12px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏢</div>
+        <div style="width:56px;height:56px;border-radius:12px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${user.company ? '🏢' : '👤'}</div>
         <div>
-          <div style="font-size:17px;font-weight:800">${companyName}</div>
+          <div style="font-size:17px;font-weight:800">${displayName}</div>
           <div style="font-size:13px;color:var(--gray)">Работодатель${user.city ? ' · ' + user.city : ''}</div>
         </div>
       </div>
@@ -913,18 +913,18 @@ function getCompanyPage() {
   <!-- РЕДАКТИРОВАНИЕ КОМПАНИИ -->
   <div class="modal-overlay" id="editCompanyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
     <div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:90%;max-height:85vh;overflow-y:auto">
-      <div style="font-size:16px;font-weight:700;margin-bottom:16px">Редактировать компанию</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px">Редактировать информацию о себе</div>
       <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">Название компании</label>
-        <input class="form-input" id="editCompanyName" placeholder="ООО «Ромашка»">
+        <label class="form-label">Название компании <span style="color:var(--gray);font-weight:400">(необязательно)</span></label>
+        <input class="form-input" id="editCompanyName" placeholder="Оставьте пустым, если вы частное лицо">
       </div>
       <div class="form-group" style="margin-bottom:12px">
         <label class="form-label">Город</label>
         <input class="form-input" id="editCompanyCity" placeholder="Москва">
       </div>
       <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">О компании</label>
-        <textarea class="form-textarea" id="editCompanyBio" placeholder="Чем занимается ваша компания, какие заказы обычно размещаете"></textarea>
+        <label class="form-label">О себе</label>
+        <textarea class="form-textarea" id="editCompanyBio" placeholder="Расскажите, какие заказы обычно размещаете"></textarea>
       </div>
       <div id="editCompanyError" style="color:#B91C1C;font-size:13px;margin-bottom:12px;display:none"></div>
       <div style="display:flex;gap:10px">
@@ -945,16 +945,12 @@ function openEditCompanyModal() {
 }
 
 function saveCompanyInfo() {
+  // Название компании больше не обязательно — многие заказчики на этой
+  // платформе просто частные лица (переезд, разовая уборка и т.п.), без
+  // всякой компании за спиной.
   const name = document.getElementById('editCompanyName').value.trim();
   const city = document.getElementById('editCompanyCity').value.trim();
   const bio = document.getElementById('editCompanyBio').value.trim();
-  const errEl = document.getElementById('editCompanyError');
-
-  if (!name) {
-    errEl.textContent = 'Укажите название компании';
-    errEl.style.display = 'block';
-    return;
-  }
 
   Shabashka.updateProfile({ company: name, city: city, bio: bio });
   document.getElementById('editCompanyModal').style.display = 'none';
@@ -2039,7 +2035,7 @@ renderPage();
     <i class="ph-bold ph-magnifying-glass" style="font-size:22px"></i>Исполнители
   </button>
   <button class="employer-nav-btn" id="enav-company" onclick="setPage('company', null); syncEmployerNav('company')">
-    <i class="ph-bold ph-buildings" style="font-size:22px"></i>Компания
+    <i class="ph-bold ph-user-circle" style="font-size:22px"></i>О себе
   </button>
 </div>
 
