@@ -902,6 +902,7 @@ let JOBS = Shabashka.JOBS;
             responses: parseInt(j.responses_count) || 0,
             colors: ['#E8510A','#185FA5','#1A7A4A'],
             requirements: '—',
+            employerId: j.employer_id,
           };
         });
         // Добавляем заказы из БД к локальным
@@ -1258,6 +1259,25 @@ function applyAndChat(jobId) {
         else { console.warn('Не удалось сохранить отклик в БД:', d.error); }
       })
       .catch(function(){ console.log('БД недоступна, отклик сохранён только локально'); });
+
+    // Раньше заказчик узнавал об отклике только зайдя во вкладку «Отклики» —
+    // сразу пишем ему настоящее сообщение в чат, чтобы было сразу видно,
+    // кому отвечать, даже не открывая список откликов.
+    const jobForMsg = JOBS.find(function(j){ return j.id === jobId; });
+    const employerId = jobForMsg ? jobForMsg.employerId : null;
+    if (employerId && workerId) {
+      const jobTitle = jobForMsg ? jobForMsg.title : 'заказ';
+      const priceLine = proposedPay ? ' Предлагаю цену: ' + proposedPay.toLocaleString('ru') + ' ₽.' : '';
+      fetch('/api/db-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: jobId,
+          receiver_id: employerId,
+          text: '👋 Я откликнулся(-ась) на заказ «' + jobTitle + '».' + priceLine,
+        })
+      }).catch(function(){ console.log('Не удалось отправить авто-сообщение в чат'); });
+    }
   });
 
   // Уведомление в Telegram
