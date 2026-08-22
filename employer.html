@@ -821,27 +821,48 @@ function getAnalyticsPage() {
 function getCompanyPage() {
   const user = Shabashka.getUser();
   const companyName = user.company || 'Ваша компания';
-  const rating = Shabashka.getCompanyRating(companyName);
-  const reviews = rating ? rating.reviews : [];
 
-  const starsHtml = rating
-    ? '⭐'.repeat(Math.round(rating.rating)) + '☆'.repeat(5 - Math.round(rating.rating))
-    : '☆☆☆☆☆';
-
-  const reviewsList = reviews.length ? reviews.map(function(r) {
-    return `<div style="padding:14px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div style="font-size:13.5px;font-weight:600">${r.reviewerName}</div>
-        <div style="font-size:12px;color:var(--gray)">${r.date}</div>
-      </div>
-      <div style="font-size:14px;margin-bottom:4px">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
-      <div style="font-size:13px;color:var(--dark);line-height:1.5">${r.text}</div>
-    </div>`;
-  }).join('') : `<div style="text-align:center;padding:32px;color:var(--gray);font-size:13px">
-    Отзывов пока нет — они появятся после того как исполнители оценят ваши заказы
-  </div>`;
+  // Отзывы о работодателе — реальные, из БД (раньше здесь читался только
+  // локальный список этого браузера, отзывы с других устройств не были видны).
+  Shabashka.ensureDbUserId().then(function (myId) {
+    if (!myId) return;
+    fetch('/api/db-reviews?target_id=' + myId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var listEl = document.getElementById('companyReviewsList');
+        var starsEl = document.getElementById('companyStars');
+        var numEl = document.getElementById('companyRatingNum');
+        var countEl = document.getElementById('companyRatingCount');
+        var inlineEl = document.getElementById('companyRatingInline');
+        if (!listEl || !data.ok) return;
+        var reviews = data.reviews.filter(function(r){ return r.type === 'employer' || !r.type; });
+        if (reviews.length) {
+          var avg = reviews.reduce(function(s,r){ return s + r.rating; }, 0) / reviews.length;
+          var rounded = Math.round(avg * 10) / 10;
+          if (numEl) numEl.textContent = rounded;
+          if (starsEl) starsEl.innerHTML = '⭐'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg));
+          if (countEl) countEl.textContent = reviews.length + ' отзыв' + (reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов') + ' от исполнителей';
+          if (inlineEl) inlineEl.textContent = '⭐ ' + rounded;
+          listEl.innerHTML = reviews.map(function(r) {
+            return `<div style="padding:14px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:13.5px;font-weight:600">${r.reviewer_name || 'Исполнитель'}</div>
+                <div style="font-size:12px;color:var(--gray)">${new Date(r.created_at).toLocaleDateString('ru')}</div>
+              </div>
+              <div style="font-size:14px;margin-bottom:4px">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+              <div style="font-size:13px;color:var(--dark);line-height:1.5">${r.text || ''}</div>
+            </div>`;
+          }).join('');
+        }
+      })
+      .catch(function(){});
+  });
 
   return `
+  <div class="section-header">
+    <span class="section-title">Компания</span>
+    <button class="post-btn" style="font-size:13px;padding:7px 14px" onclick="openEditCompanyModal()">✏️ Редактировать</button>
+  </div>
   <div class="two-col" style="gap:16px;margin-bottom:16px">
     <!-- ИНФОРМАЦИЯ О КОМПАНИИ -->
     <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px">
@@ -850,9 +871,10 @@ function getCompanyPage() {
         <div style="width:56px;height:56px;border-radius:12px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏢</div>
         <div>
           <div style="font-size:17px;font-weight:800">${companyName}</div>
-          <div style="font-size:13px;color:var(--gray)">Работодатель · Москва</div>
+          <div style="font-size:13px;color:var(--gray)">Работодатель${user.city ? ' · ' + user.city : ''}</div>
         </div>
       </div>
+      ${user.bio ? `<div style="font-size:13px;color:var(--dark);line-height:1.5;margin-bottom:16px;padding:12px;background:var(--gray-light);border-radius:9px">${user.bio}</div>` : ''}
       <div style="display:flex;flex-direction:column;gap:10px">
         <div style="display:flex;justify-content:space-between;font-size:13px;padding:10px 0;border-bottom:1px solid var(--border)">
           <span style="color:var(--gray)">Заказов размещено</span>
@@ -864,7 +886,7 @@ function getCompanyPage() {
         </div>
         <div style="display:flex;justify-content:space-between;font-size:13px;padding:10px 0">
           <span style="color:var(--gray)">Рейтинг от исполнителей</span>
-          <span style="font-weight:600;color:var(--orange)">${rating ? '⭐ ' + rating.rating : 'Нет оценок'}</span>
+          <span style="font-weight:600;color:var(--orange)" id="companyRatingInline">Нет оценок</span>
         </div>
       </div>
     </div>
@@ -873,21 +895,70 @@ function getCompanyPage() {
     <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px">
       <div style="font-size:14px;font-weight:700;margin-bottom:16px">Ваш рейтинг работодателя</div>
       <div style="text-align:center;padding:20px 0">
-        <div style="font-size:52px;font-weight:900;letter-spacing:-1px">${rating ? rating.rating : '—'}</div>
-        <div style="font-size:22px;margin:8px 0">${starsHtml}</div>
-        <div style="font-size:13px;color:var(--gray)">${rating ? rating.count + ' отзыв' + (rating.count === 1 ? '' : rating.count < 5 ? 'а' : 'ов') + ' от исполнителей' : 'Отзывов пока нет'}</div>
+        <div style="font-size:52px;font-weight:900;letter-spacing:-1px" id="companyRatingNum">—</div>
+        <div style="font-size:22px;margin:8px 0" id="companyStars">☆☆☆☆☆</div>
+        <div style="font-size:13px;color:var(--gray)" id="companyRatingCount">Отзывов пока нет</div>
       </div>
-      ${rating ? `<div style="font-size:12px;color:var(--gray);text-align:center;padding:10px;background:var(--gray-light);border-radius:9px">
-        Высокий рейтинг работодателя привлекает лучших исполнителей
-      </div>` : ''}
     </div>
   </div>
 
   <!-- ОТЗЫВЫ ОТ ИСПОЛНИТЕЛЕЙ -->
   <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px">
     <div style="font-size:14px;font-weight:700;margin-bottom:12px">Отзывы от исполнителей</div>
-    ${reviewsList}
+    <div id="companyReviewsList"><div style="text-align:center;padding:32px;color:var(--gray);font-size:13px">
+      Отзывов пока нет — они появятся после того как исполнители оценят ваши заказы
+    </div></div>
+  </div>
+
+  <!-- РЕДАКТИРОВАНИЕ КОМПАНИИ -->
+  <div class="modal-overlay" id="editCompanyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:90%;max-height:85vh;overflow-y:auto">
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px">Редактировать компанию</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Название компании</label>
+        <input class="form-input" id="editCompanyName" placeholder="ООО «Ромашка»">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Город</label>
+        <input class="form-input" id="editCompanyCity" placeholder="Москва">
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">О компании</label>
+        <textarea class="form-textarea" id="editCompanyBio" placeholder="Чем занимается ваша компания, какие заказы обычно размещаете"></textarea>
+      </div>
+      <div id="editCompanyError" style="color:#B91C1C;font-size:13px;margin-bottom:12px;display:none"></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeModal('editCompanyModal')" style="flex:1;padding:11px;background:var(--gray-light);border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit">Отмена</button>
+        <button onclick="saveCompanyInfo()" style="flex:1;padding:11px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Сохранить</button>
+      </div>
+    </div>
   </div>`;
+}
+
+function openEditCompanyModal() {
+  const user = Shabashka.getUser();
+  document.getElementById('editCompanyName').value = user.company || '';
+  document.getElementById('editCompanyCity').value = user.city || '';
+  document.getElementById('editCompanyBio').value = user.bio || '';
+  document.getElementById('editCompanyError').style.display = 'none';
+  document.getElementById('editCompanyModal').style.display = 'flex';
+}
+
+function saveCompanyInfo() {
+  const name = document.getElementById('editCompanyName').value.trim();
+  const city = document.getElementById('editCompanyCity').value.trim();
+  const bio = document.getElementById('editCompanyBio').value.trim();
+  const errEl = document.getElementById('editCompanyError');
+
+  if (!name) {
+    errEl.textContent = 'Укажите название компании';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  Shabashka.updateProfile({ company: name, city: city, bio: bio });
+  document.getElementById('editCompanyModal').style.display = 'none';
+  renderPage();
 }
 
 function getDashboard() {

@@ -186,6 +186,7 @@
   function updateProfile(fields) {
     if (fields.name) localStorage.setItem('shabashka_name', fields.name);
     if (fields.city) localStorage.setItem('shabashka_city', fields.city);
+    if (fields.company !== undefined) localStorage.setItem('shabashka_company', fields.company);
     if (fields.age !== undefined && fields.age !== null && fields.age !== '') {
       localStorage.setItem('shabashka_age', String(fields.age));
     }
@@ -200,7 +201,7 @@
     // Синхронизируем с БД в фоне — чтобы новый город/навыки/ставка были
     // видны другим пользователям в поиске (workers.html), а не только
     // на этом устройстве.
-    if (fields.city || fields.bio !== undefined || fields.skills !== undefined || fields.dayRate !== undefined || fields.categories !== undefined) {
+    if (fields.city || fields.company !== undefined || fields.bio !== undefined || fields.skills !== undefined || fields.dayRate !== undefined || fields.categories !== undefined) {
       ensureDbUserId().then(function (id) {
         if (!id) return;
         fetch('/api/db-users?action=update', {
@@ -209,7 +210,7 @@
           body: JSON.stringify({
             id: id,
             name: fields.name || getUser().name,
-            company: getUser().company,
+            company: fields.company !== undefined ? fields.company : getUser().company,
             city: fields.city || null,
             bio: fields.bio !== undefined ? fields.bio : null,
             skills: fields.skills !== undefined ? fields.skills : null,
