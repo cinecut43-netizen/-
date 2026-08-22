@@ -93,8 +93,12 @@ CREATE TABLE IF NOT EXISTS messages (
   receiver_id INTEGER REFERENCES users(id),
   text TEXT NOT NULL,
   is_read BOOLEAN DEFAULT false,
+  edited_at TIMESTAMP,
+  deleted BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW()
 );
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT false;
 
 -- Push-подписки браузера (Web Push API) — по одному пользователю может
 -- быть несколько подписок (разные устройства/браузеры).
@@ -196,8 +200,8 @@ CREATE INDEX IF NOT EXISTS idx_responses_worker ON responses(worker_id);
 CREATE INDEX IF NOT EXISTS idx_messages_job ON messages(job_id);
 CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
 
--- Тестовые данные (удали перед продакшном)
-INSERT INTO users (phone, name, role, company, rating, jobs_done, verified) VALUES
-  ('+79001234567', 'Тест Работодатель', 'employer', 'Семья Петровых', 4.8, 5, true),
-  ('+79009876543', 'Дмитрий Козлов', 'worker', null, 4.9, 12, true)
-ON CONFLICT (phone) DO NOTHING;
+-- Разово чиним старый хвост: в самой первой версии схемы новый
+-- пользователь получал рейтинг 5.0 по умолчанию ещё ДО того, как
+-- появились реальные отзывы. Смена DEFAULT в схеме не трогает уже
+-- существующие строки — здесь чиним то, что уже успело записаться.
+UPDATE users SET rating = 0 WHERE reviews_count = 0 AND rating != 0;

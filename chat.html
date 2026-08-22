@@ -288,7 +288,7 @@ if ('serviceWorker' in navigator) {
       <button class="ai-btn" title="Спросить AI-ассистента" onclick="askAI()">🤖</button>
       <textarea class="chat-input" id="chatInput" placeholder="Написать сообщение..." rows="1"
         oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-      <button class="send-btn" onclick="sendMsg()">
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()">
         <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
       </button>
     </div>
@@ -483,8 +483,11 @@ function switchConvo(id) {
         if (data.ok && data.messages) {
           MESSAGES_DB[id] = data.messages.map(function(m) {
             return {
+              id: m.id,
               type: m.sender_id === myId ? 'me' : 'them',
-              text: m.text,
+              text: m.deleted ? 'Сообщение удалено' : m.text,
+              deleted: m.deleted,
+              editedAt: m.edited_at,
               time: formatMsgTime(m.created_at),
               read: m.is_read ? 'read' : 'sent',
             };
@@ -528,17 +531,27 @@ function pollActiveConvo() {
       if (currentConvo !== c.id) return; // успели переключиться на другой чат
       if (!data.ok || !data.messages) return;
 
-      const prevCount = (MESSAGES_DB[c.id] || []).filter(function(m){ return m.type === 'me' || m.type === 'them'; }).length;
+      const prevMsgs = (MESSAGES_DB[c.id] || []).filter(function(m){ return m.type === 'me' || m.type === 'them'; });
       const fresh = data.messages.map(function(m) {
         return {
+          id: m.id,
           type: m.sender_id === myId ? 'me' : 'them',
-          text: m.text,
+          text: m.deleted ? 'Сообщение удалено' : m.text,
+          deleted: m.deleted,
+          editedAt: m.edited_at,
           time: formatMsgTime(m.created_at),
           read: m.is_read ? 'read' : 'sent',
         };
       });
+      // Сравниваем не только количество (новые сообщения), но и содержимое
+      // (отредактированные/удалённые) — иначе правки собеседника не появлялись
+      // бы сами, пока не придёт действительно новое сообщение.
+      const changed = fresh.length !== prevMsgs.length || fresh.some(function(m, i) {
+        return !prevMsgs[i] || prevMsgs[i].text !== m.text || prevMsgs[i].deleted !== m.deleted;
+      });
+      if (!changed) return;
+      const prevCount = prevMsgs.length;
 
-      if (fresh.length === prevCount) return; // ничего нового — не дёргаем рендер зря
       MESSAGES_DB[c.id] = fresh;
       renderMessages();
 
@@ -618,12 +631,24 @@ function renderMessages() {
       if (m.read === 'delivered') return '<span class="msg-read delivered">✓✓</span>';
       return '<span class="msg-read sent">✓</span>';
     })() : '';
+    const editedMark = (m.editedAt && !m.deleted) ? '<span style="font-size:10.5px;color:#9A9A96;margin-left:4px">(изменено)</span>' : '';
+    const bubbleText = m.deleted ? `<span style="font-style:italic;color:#9A9A96">Сообщение удалено</span>` : m.text;
+    // Своё сообщение (не удалённое) — можно отредактировать или удалить
+    const ownMenu = (isMe && !m.deleted && m.id) ? `
+      <div class="msg-menu" style="position:relative">
+        <button onclick="toggleMsgMenu(${m.id})" style="background:none;border:none;cursor:pointer;color:#9A9A96;font-size:14px;padding:2px 4px">⋮</button>
+        <div id="msgMenu-${m.id}" style="display:none;position:absolute;right:0;top:20px;background:#fff;border:1px solid #E2E1DB;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:50;overflow:hidden;min-width:120px">
+          <button onclick="startEditMsg(${m.id})" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#14151A;font-family:inherit">✏️ Изменить</button>
+          <button onclick="deleteMsg(${m.id})" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#B91C1C;font-family:inherit">🗑 Удалить</button>
+        </div>
+      </div>` : '';
     return `
       <div class="msg-group">
         <div class="${isMe ? 'sender-name me-name' : 'sender-name'}">${isMe ? 'Вы' : c.name}</div>
-        <div class="msg-row ${isMe ? 'me' : ''}">
+        <div class="msg-row ${isMe ? 'me' : ''}" data-msg-id="${m.id || ''}">
           ${!isMe ? `<div class="msg-avatar" style="background:${c.color}">${c.name[0]}</div>` : ''}
-          <div class="bubble ${isMe ? 'me' : 'them'}">${m.text}</div>
+          ${ownMenu}
+          <div class="bubble ${isMe ? 'me' : 'them'}" id="bubble-${m.id || ''}">${bubbleText}${editedMark}</div>
           <div style="display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};gap:2px">
             <span class="msg-time">${m.time}</span>
             ${readStatus}
@@ -633,6 +658,70 @@ function renderMessages() {
       </div>`;
   }).join('');
   el.scrollTop = el.scrollHeight;
+}
+
+function toggleMsgMenu(id) {
+  document.querySelectorAll('[id^="msgMenu-"]').forEach(function(el) {
+    if (el.id !== 'msgMenu-' + id) el.style.display = 'none';
+  });
+  var menu = document.getElementById('msgMenu-' + id);
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.msg-menu')) {
+    document.querySelectorAll('[id^="msgMenu-"]').forEach(function(el){ el.style.display = 'none'; });
+  }
+});
+
+function startEditMsg(id) {
+  toggleMsgMenu(id);
+  const bubble = document.getElementById('bubble-' + id);
+  if (!bubble) return;
+  const currentText = bubble.textContent.replace(/\(изменено\)\s*$/, '').trim();
+  const input = document.getElementById('chatInput');
+  input.value = currentText;
+  input.focus();
+  input.dataset.editingId = id;
+  input.style.background = '#FFF8E6';
+  var sendBtn = document.getElementById('sendBtn');
+  if (sendBtn) sendBtn.innerHTML = '<span style="font-size:18px;line-height:1">✓</span>';
+  showEditBanner();
+}
+
+function cancelEditMsg() {
+  const input = document.getElementById('chatInput');
+  input.value = '';
+  input.style.background = '';
+  delete input.dataset.editingId;
+  var sendBtn = document.getElementById('sendBtn');
+  if (sendBtn) sendBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>';
+  var banner = document.getElementById('editBanner');
+  if (banner) banner.remove();
+}
+
+function showEditBanner() {
+  if (document.getElementById('editBanner')) return;
+  var inputWrap = document.getElementById('chatInput').closest('div');
+  var banner = document.createElement('div');
+  banner.id = 'editBanner';
+  banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#FFF8E6;font-size:12px;color:#B07800';
+  banner.innerHTML = '<span>✏️ Редактирование сообщения</span><button onclick="cancelEditMsg()" style="background:none;border:none;color:#B07800;cursor:pointer;font-size:12px;text-decoration:underline;font-family:inherit">Отменить</button>';
+  if (inputWrap && inputWrap.parentNode) inputWrap.parentNode.insertBefore(banner, inputWrap);
+}
+
+function deleteMsg(id) {
+  toggleMsgMenu(id);
+  if (!confirm('Удалить сообщение? Это действие нельзя отменить.')) return;
+  fetch('/api/db-messages?id=' + id, { method: 'DELETE' })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (!data.ok) { showSendWarning(data.error || 'Не удалось удалить сообщение'); return; }
+      const msgs = MESSAGES_DB[currentConvo] || [];
+      const m = msgs.find(function(x){ return x.id === id; });
+      if (m) { m.deleted = true; m.text = 'Сообщение удалено'; }
+      renderMessages();
+    })
+    .catch(function(){ showSendWarning('Не удалось удалить — нет связи с сервером'); });
 }
 
 function renderQuickReplies() {
@@ -653,6 +742,29 @@ function sendMsg() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if (!text) return;
+
+  // Режим редактирования существующего сообщения — не создаём новое,
+  // отправляем PATCH на уже существующий id.
+  const editingId = input.dataset.editingId;
+  if (editingId) {
+    fetch('/api/db-messages', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: Number(editingId), text: text }),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data.ok) { showSendWarning(data.error || 'Не удалось изменить сообщение'); return; }
+        const msgs = MESSAGES_DB[currentConvo] || [];
+        const m = msgs.find(function(x){ return x.id === Number(editingId); });
+        if (m) { m.text = text; m.editedAt = data.message.edited_at; }
+        renderMessages();
+      })
+      .catch(function(){ showSendWarning('Не удалось изменить — нет связи с сервером'); });
+    cancelEditMsg();
+    return;
+  }
+
   const now = new Date();
   const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
   MESSAGES_DB[currentConvo] = MESSAGES_DB[currentConvo] || [];
