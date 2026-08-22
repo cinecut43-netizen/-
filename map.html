@@ -298,7 +298,45 @@ const CATS = [
 ];
 
 let map, myMarker, markers = [], currentCat = 'all', currentSearch = '';
-const MY_LAT = 55.751, MY_LNG = 37.618;
+let MY_LAT = 55.751, MY_LNG = 37.618; // Москва — запасной центр, пока не определили город пользователя
+
+// Раньше карта всегда открывалась на Москве, независимо от того, какой
+// город указан у человека в профиле. Теперь сначала пытаемся определить
+// координаты его города — и сразу открываем карту там, а не заставляем
+// искать свой город руками каждый раз.
+function resolveCityCenter() {
+  const user = Shabashka.getUser();
+  const city = user && user.city ? user.city.trim() : '';
+  if (!city) return Promise.resolve(false);
+
+  // Кэшируем результат в localStorage — город у человека не меняется
+  // каждую минуту, незачем геокодировать его заново при каждом заходе.
+  const cacheKey = 'shabashka_city_coords_' + city.toLowerCase();
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const c = JSON.parse(cached);
+      MY_LAT = c.lat; MY_LNG = c.lng;
+      return Promise.resolve(true);
+    } catch (e) { /* битый кэш — геокодируем заново */ }
+  }
+
+  const query = encodeURIComponent(city + ', Россия');
+  return fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ru', {
+    headers: { 'User-Agent': 'Shabashka/1.0' }
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data && data.length > 0) {
+        MY_LAT = parseFloat(data[0].lat);
+        MY_LNG = parseFloat(data[0].lon);
+        localStorage.setItem(cacheKey, JSON.stringify({ lat: MY_LAT, lng: MY_LNG }));
+        return true;
+      }
+      return false;
+    })
+    .catch(function () { return false; });
+}
 
 function initMap() {
   map = L.map('map', { zoomControl: false, attributionControl: false }).setView([MY_LAT, MY_LNG], 13);
@@ -396,7 +434,7 @@ function setMode(mode, btn) {
 
 function openDetail(id) {
   const j = JOBS.find(x => x.id === id);
-  const comm = Math.round(j.pay * 0.1);
+  const comm = 0; // Комиссия сейчас не взимается (стартовый период платформы)
   document.getElementById('detailContent').innerHTML = `
     <div class="detail-emoji">${j.emoji}</div>
     <div class="detail-title">${j.title}</div>
@@ -407,10 +445,9 @@ function openDetail(id) {
       <span class="dtag dtag-gray">📍 ${j.loc} · ${j.dist} от вас</span>
     </div>
     <div class="detail-pay-row">
-      <div class="pay-item"><div class="pay-num">${j.pay.toLocaleString('ru')} ₽</div><div class="pay-label">оплата</div></div>
-      <div class="pay-item"><div class="pay-num" style="color:var(--green)">${(j.pay-comm).toLocaleString('ru')} ₽</div><div class="pay-label">вы получите</div></div>
-      <div class="pay-item"><div class="pay-num" style="color:var(--orange)">${comm} ₽</div><div class="pay-label">комиссия 10%</div></div>
+      <div class="pay-item"><div class="pay-num">${j.pay.toLocaleString('ru')} ₽</div><div class="pay-label">вы получите полностью</div></div>
     </div>
+    <div style="background:var(--green-bg,#E8F5EE);color:var(--green,#1A7A4A);border-radius:10px;padding:8px 12px;font-size:12.5px;margin-bottom:12px">✅ Без комиссии — платформа сейчас бесплатна</div>
     <div class="detail-section"><div class="detail-label">Задача</div><div class="detail-text">${j.desc}</div></div>
     <div class="detail-section"><div class="detail-label">Требования</div><div class="detail-text">${j.req}</div></div>
     <div class="apply-row">
@@ -461,10 +498,11 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-map && map.on('click', () => document.getElementById('detailSheet').classList.remove('open'));
-
 renderFilters();
-initMap();
+resolveCityCenter().finally(function () {
+  initMap();
+  map.on('click', () => document.getElementById('detailSheet').classList.remove('open'));
+});
 </script>
 <script>(function(){ var n=document.getElementById('mobileNav'); if(!n) return; function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
 <script src="/pwa.js"></script>

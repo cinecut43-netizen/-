@@ -357,9 +357,17 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
         <input type="number" class="form-input" id="newCount" placeholder="1" min="1">
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group" style="position:relative">
       <label class="form-label">Адрес</label>
-      <input class="form-input" id="newAddr" placeholder="Москва, ул. Ленина, 5">
+      <input class="form-input" id="newAddr" placeholder="Москва, ул. Ленина, 5" autocomplete="off"
+        oninput="onAddrInput()" onblur="setTimeout(hideAddrSuggestions, 200)">
+      <div id="addrSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:100;max-height:220px;overflow-y:auto;margin-top:4px"></div>
+    </div>
+    <div class="form-group" style="display:none">
+      <!-- сюда попадут реальные координаты выбранной подсказки, чтобы при
+           отправке не геокодировать заново то, что уже точно найдено -->
+      <input type="hidden" id="newAddrLat">
+      <input type="hidden" id="newAddrLng">
     </div>
     <div class="form-row">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 0">
@@ -1606,6 +1614,10 @@ function openPostModal() {
   document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('newUrgent').checked = false;
   document.getElementById('newAllowBargain').checked = false;
+  document.getElementById('newAddr').value = '';
+  document.getElementById('newAddrLat').value = '';
+  document.getElementById('newAddrLng').value = '';
+  hideAddrSuggestions();
   document.getElementById('postModal').classList.add('open');
 }
 
@@ -1620,6 +1632,72 @@ const CAT_MAP = [
   { cat: 'other', emoji: '⚡' },  // ⚡ Прочее
 ];
 
+// ===== ПОДСКАЗКИ АДРЕСА =====
+// Используем тот же бесплатный геокодер (Nominatim/OpenStreetMap), что и
+// при публикации заказа — не нужен отдельный платный ключ. С задержкой
+// перед запросом, чтобы не слать его на каждую нажатую букву.
+var addrSuggestTimer = null;
+var addrSuggestController = null;
+
+function onAddrInput() {
+  const input = document.getElementById('newAddr');
+  // Текст поменяли руками — прошлая выбранная подсказка больше не актуальна
+  document.getElementById('newAddrLat').value = '';
+  document.getElementById('newAddrLng').value = '';
+
+  clearTimeout(addrSuggestTimer);
+  const query = input.value.trim();
+  if (query.length < 3) { hideAddrSuggestions(); return; }
+
+  addrSuggestTimer = setTimeout(function() {
+    fetchAddrSuggestions(query);
+  }, 400);
+}
+
+function fetchAddrSuggestions(query) {
+  if (addrSuggestController) addrSuggestController.abort();
+  addrSuggestController = new AbortController();
+
+  const url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query + ', Россия') +
+    '&format=json&limit=5&accept-language=ru&countrycodes=ru';
+
+  fetch(url, { headers: { 'User-Agent': 'Shabashka/1.0' }, signal: addrSuggestController.signal })
+    .then(function(r) { return r.json(); })
+    .then(function(results) {
+      renderAddrSuggestions(results || []);
+    })
+    .catch(function(e) {
+      if (e.name !== 'AbortError') hideAddrSuggestions();
+    });
+}
+
+function renderAddrSuggestions(results) {
+  const box = document.getElementById('addrSuggestions');
+  if (!results.length) { hideAddrSuggestions(); return; }
+
+  box.innerHTML = results.map(function(r, i) {
+    const label = r.display_name.replace(', Россия', '');
+    return '<div onclick="pickAddrSuggestion(' + i + ')" style="padding:10px 14px;cursor:pointer;font-size:13.5px;color:var(--dark);border-bottom:1px solid var(--border-light,#F0EFEA)" ' +
+      'onmouseover="this.style.background=\'#F4F3EF\'" onmouseout="this.style.background=\'\'">📍 ' + label + '</div>';
+  }).join('');
+  box.style.display = 'block';
+  window.__addrSuggestions = results;
+}
+
+function pickAddrSuggestion(i) {
+  const r = window.__addrSuggestions[i];
+  if (!r) return;
+  document.getElementById('newAddr').value = r.display_name.replace(', Россия', '');
+  document.getElementById('newAddrLat').value = r.lat;
+  document.getElementById('newAddrLng').value = r.lon;
+  hideAddrSuggestions();
+}
+
+function hideAddrSuggestions() {
+  const box = document.getElementById('addrSuggestions');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+}
+
 async function submitOrder() {
   const title = document.getElementById('newTitle').value.trim();
   const pay = document.getElementById('newPay').value;
@@ -1633,9 +1711,18 @@ async function submitOrder() {
   const submitBtn = document.querySelector('#postModal .modal-submit');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Размещаем…'; }
 
-  // Геокодируем адрес через Nominatim (OpenStreetMap) — бесплатно, без ключа
+  // Если координаты уже пришли из выбранной подсказки — используем их
+  // напрямую, без повторного геокодирования (быстрее и точно совпадёт
+  // с тем, что человек реально выбрал в списке).
   let lat = null, lng = null;
-  if (addr) {
+  const pickedLat = document.getElementById('newAddrLat').value;
+  const pickedLng = document.getElementById('newAddrLng').value;
+  if (pickedLat && pickedLng) {
+    lat = parseFloat(pickedLat);
+    lng = parseFloat(pickedLng);
+  } else if (addr) {
+    // Подсказку не выбирали (напечатали вручную и не кликнули) —
+    // геокодируем как раньше.
     try {
       const query = encodeURIComponent(addr + ', Россия');
       const res = await fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ru', {
