@@ -39,6 +39,7 @@ module.exports = async function handler(req, res) {
   }
 
   const { photo, type } = req.body || {};
+  const userId = req.authUserId || null;
 
   if (!photo || typeof photo !== 'string') {
     return res.status(400).json({ error: 'Фото не передано' });
@@ -70,6 +71,7 @@ module.exports = async function handler(req, res) {
   docs[docId] = {
     photo: photo,
     type: type || 'passport',
+    userId: userId || null,
     uploadedAt: now,
     expiresAt: now + DOC_TTL_MS,
     status: 'pending',

@@ -123,9 +123,25 @@ module.exports = async function handler(req, res) {
       return res.json({ ok: true, message: result.rows[0] });
     }
 
-    // PATCH — отметить как прочитанное (только свои непрочитанные)
+    // PATCH — либо отметить прочитанным (job_id/peer_id без id), либо
+    // отредактировать своё сообщение (id + text).
     if (method === 'PATCH') {
-      const { job_id, peer_id } = req.body;
+      const { id, text, job_id, peer_id } = req.body;
+
+      if (id) {
+        // Редактирование — только своё собственное сообщение
+        const own = await pool.query('SELECT sender_id FROM messages WHERE id=$1', [id]);
+        if (!own.rows.length) return res.status(404).json({ error: 'Сообщение не найдено' });
+        if (own.rows[0].sender_id !== userId) return res.status(403).json({ error: 'Можно редактировать только свои сообщения' });
+        if (!text || !text.trim()) return res.status(400).json({ error: 'Текст не может быть пустым' });
+
+        const result = await pool.query(
+          `UPDATE messages SET text=$1, edited_at=NOW() WHERE id=$2 RETURNING *`,
+          [text.trim(), id]
+        );
+        return res.json({ ok: true, message: result.rows[0] });
+      }
+
       if (job_id) {
         await pool.query(
           `UPDATE messages SET is_read=true WHERE job_id=$1 AND receiver_id=$2 AND is_read=false`,
@@ -137,6 +153,21 @@ module.exports = async function handler(req, res) {
           [peer_id, userId]
         );
       }
+      return res.json({ ok: true });
+    }
+
+    // DELETE — удалить своё сообщение (не стираем физически, чтобы у
+    // собеседника не осталась "дыра" в переписке — заменяем текст на
+    // заглушку, помечаем deleted, дальше фронтенд сам решает как показать).
+    if (method === 'DELETE') {
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ error: 'Укажите id сообщения' });
+
+      const own = await pool.query('SELECT sender_id FROM messages WHERE id=$1', [id]);
+      if (!own.rows.length) return res.status(404).json({ error: 'Сообщение не найдено' });
+      if (own.rows[0].sender_id !== userId) return res.status(403).json({ error: 'Можно удалять только свои сообщения' });
+
+      await pool.query(`UPDATE messages SET deleted=true, text='' WHERE id=$1`, [id]);
       return res.json({ ok: true });
     }
 

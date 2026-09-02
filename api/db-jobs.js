@@ -11,9 +11,11 @@ module.exports = async function handler(req, res) {
       const { cat, status, employer_id, limit = 50, offset = 0 } = req.query;
       let sql = `
         SELECT j.*, u.name as employer_name, u.rating as employer_rating,
+               w.name as selected_worker_name, w.verified as selected_worker_verified,
                COUNT(r.id) as responses_count
         FROM jobs j
         LEFT JOIN users u ON j.employer_id = u.id
+        LEFT JOIN users w ON j.selected_worker_id = w.id
         LEFT JOIN responses r ON r.job_id = j.id
         WHERE 1=1
       `;
@@ -37,7 +39,7 @@ module.exports = async function handler(req, res) {
       } else {
         sql += ` AND j.status IN ('new', 'has_responses')`;
       }
-      sql += ` GROUP BY j.id, u.name, u.rating ORDER BY j.created_at DESC LIMIT $${params.length+1} OFFSET $${params.length+2}`;
+      sql += ` GROUP BY j.id, u.name, u.rating, w.name, w.verified ORDER BY j.created_at DESC LIMIT $${params.length+1} OFFSET $${params.length+2}`;
       params.push(limit, offset);
 
       const result = await pool.query(sql, params);
