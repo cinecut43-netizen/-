@@ -327,6 +327,7 @@ function goChat(jobId) {
 
 function markOnWay(jobId) {
   Shabashka.updateJobStatus(jobId, 'on_the_way');
+  Shabashka.syncJobStatusToDb(jobId, 'on_the_way');
   render();
   var t = document.createElement('div');
   t.textContent = '🚶 Работодатель уведомлён что вы едете';
@@ -428,5 +429,6 @@ render();
 </div>
 <script>(function(){var n=document.getElementById('appBottomNav');function s(){n.style.display=window.innerWidth<=600?'flex':'none';}s();window.addEventListener('resize',s);})();</script>
 
+<script src="/cookie-banner.js"></script>
 </body>
 </html>
