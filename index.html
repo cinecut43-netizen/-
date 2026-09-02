@@ -878,11 +878,14 @@ Shabashka.renderNav('index');
 let JOBS = Shabashka.JOBS;
 
 // Загружаем заказы из базы данных
-(function loadJobsFromDB() {
+function loadJobsFromDB() {
   fetch('/api/db-jobs')
     .then(function(r){ return r.json(); })
     .then(function(data) {
-      if (data.ok && data.jobs && data.jobs.length > 0) {
+      // Раньше здесь была проверка "jobs.length > 0" — если все заказы
+      // закрылись (стало 0), список на экране просто не обновлялся и
+      // продолжал показывать старые, уже неактуальные заказы.
+      if (data.ok && data.jobs) {
         // Конвертируем формат БД в формат сайта
         var dbJobs = data.jobs.map(function(j) {
           return {
@@ -909,13 +912,27 @@ let JOBS = Shabashka.JOBS;
         JOBS = dbJobs.concat(Shabashka.JOBS.filter(function(lj) {
           return !dbJobs.find(function(dj){ return dj.id === lj.id; });
         }));
-        filtered = JOBS;
-        renderJobs();
+        // Раньше здесь был "filtered = JOBS" напрямую — это сбрасывало
+        // активный поиск/фильтр по категории каждый раз, когда срабатывал
+        // фоновый опрос. Теперь пересчитываем через applyFilters(), если
+        // она уже определена (при самом первом вызове до неё ещё рано).
+        if (typeof applyFilters === 'function') applyFilters();
+        else { filtered = JOBS; renderJobs(); }
         console.log('✅ Загружено заказов из БД:', dbJobs.length);
       }
     })
     .catch(function(e){ console.log('БД недоступна, используем локальные данные'); });
-})();
+}
+loadJobsFromDB();
+
+// Раньше список заказов подгружался только один раз при открытии
+// страницы — если статус менялся (заказ закрылся, выбрали исполнителя)
+// у кого-то в другой вкладке, эта страница молча продолжала показывать
+// устаревшую картинку, пока её не обновят руками. Проверяем на свежие
+// данные, пока страница открыта и видна на экране.
+setInterval(function() {
+  if (document.visibilityState === 'visible') loadJobsFromDB();
+}, 15000);
 
 // Скелетон на мобильном пока грузятся данные
 (function() {
