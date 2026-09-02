@@ -713,7 +713,7 @@ function renderVerification() {
 
   const phoneItem = `
     <div class="verify-item ${u.verified.phone ? 'done' : 'pending'}">
-      <span class="verify-icon">${u.verified.phone ? '✅' : '⏳'}</span>
+      <span class="verify-icon">${u.verified.phone ? '<i class="ph-bold ph-check-circle" style="color:var(--green);font-size:18px"></i>' : '<i class="ph-bold ph-clock" style="color:var(--gray);font-size:18px"></i>'}</span>
       <span>Телефон подтверждён</span>
     </div>`;
 
@@ -721,8 +721,8 @@ function renderVerification() {
   if (u.verified.passport || vsStatus === 'approved') {
     passportItem = `
       <div class="verify-item done">
-        <span class="verify-icon">✅</span>
-        <span id="passportStatus">Паспорт не проверен</span>
+        <span class="verify-icon"><i class="ph-bold ph-check-circle" style="color:var(--green);font-size:18px"></i></span>
+        <span id="passportStatus">Паспорт проверен</span>
         <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:600">ПРОВЕРЕН</span>
       </div>`;
   } else if (vsStatus === 'pending') {
