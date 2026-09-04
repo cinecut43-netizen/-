@@ -1,15 +1,11 @@
 // /api/check-new-jobs.js
 //
-// Serverless-функция Vercel. Возвращает список новых срочных заказов,
-// появившихся с момента последней проверки (передаётся как параметр since).
-//
-// В текущей архитектуре (localStorage, без БД) заказы хранятся в браузере,
-// поэтому сервер возвращает демо-данные — в продакшене здесь был бы
-// запрос к базе данных.
-//
-// Клиент (pwa.js) вызывает этот endpoint каждые 30 секунд и если
-// появились новые заказы — показывает локальное уведомление через
-// ServiceWorker.showNotification() без необходимости в серверном push.
+// Возвращает список новых открытых заказов, появившихся с момента последней
+// проверки (since — Unix ms). Клиент (pwa.js) дёргает это каждые 30 секунд
+// и показывает локальное уведомление через ServiceWorker.showNotification()
+// без необходимости в серверном Web Push.
+
+const { pool } = require('../db');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -17,39 +13,38 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Метод не поддерживается' });
   }
 
-  // since — timestamp последней проверки (Unix ms), по умолчанию 1 минута назад
   var since = parseInt(req.query.since) || (Date.now() - 60000);
   var now = Date.now();
 
-  // Демо-данные: имитируем появление новых срочных заказов.
-  // В продакшене здесь: SELECT * FROM jobs WHERE created_at > since AND urgent = true
-  //
-  // Логика демо: каждые ~2 минуты "появляется" новый срочный заказ.
-  // Делаем это детерминированно по времени — не рандомно, чтобы не
-  // спамить уведомлениями при частых проверках.
-  var DEMO_JOBS = [
-    { id: 101, title: 'Срочно нужны грузчики', pay: 3500, cat: 'move', emoji: '📦', location: 'Москва, Сокольники', urgent: true },
-    { id: 102, title: 'Уборка офиса после ремонта', pay: 2800, cat: 'clean', emoji: '🧹', location: 'Москва, Арбат', urgent: true },
-    { id: 103, title: 'Промоутеры на открытие', pay: 3000, cat: 'event', emoji: '🎉', location: 'Москва, ТЦ Европейский', urgent: true },
-    { id: 104, title: 'Подсобный рабочий на стройку', pay: 4200, cat: 'build', emoji: '🔨', location: 'Москва, Раменки', urgent: true },
-  ];
+  try {
+    const result = await pool.query(
+      `SELECT id, title, pay, category as cat, emoji, location, urgent, created_at
+       FROM jobs
+       WHERE status IN ('new', 'has_responses')
+         AND created_at > to_timestamp($1 / 1000.0)
+       ORDER BY created_at DESC
+       LIMIT 10`,
+      [since]
+    );
 
-  // Выбираем "новый" заказ на основе текущей минуты — меняется каждые 2 мин
-  var minuteSlot = Math.floor(now / (2 * 60 * 1000));
-  var jobIndex = minuteSlot % DEMO_JOBS.length;
+    const newJobs = result.rows.map(function (j) {
+      return {
+        id: j.id,
+        title: j.title,
+        pay: parseInt(j.pay),
+        cat: j.cat,
+        emoji: j.emoji || '📦',
+        location: j.location || 'Россия',
+        urgent: j.urgent || false,
+      };
+    });
 
-  // "Время создания" этого слота — начало 2-минутного окна
-  var slotStart = minuteSlot * 2 * 60 * 1000;
-
-  // Возвращаем заказ только если он "создан" после since и в текущем окне
-  var newJobs = [];
-  if (slotStart > since && slotStart <= now) {
-    newJobs.push(Object.assign({}, DEMO_JOBS[jobIndex], { createdAt: slotStart }));
+    res.setHeader('Cache-Control', 'no-cache, no-store');
+    return res.status(200).json({ newJobs: newJobs, checkedAt: now });
+  } catch (err) {
+    console.error('check-new-jobs error:', err);
+    // БД недоступна — лучше молча ничего не уведомлять, чем показать фейк
+    res.setHeader('Cache-Control', 'no-cache, no-store');
+    return res.status(200).json({ newJobs: [], checkedAt: now });
   }
-
-  res.setHeader('Cache-Control', 'no-cache, no-store');
-  return res.status(200).json({
-    newJobs: newJobs,
-    checkedAt: now,
-  });
 };
