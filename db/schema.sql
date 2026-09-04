@@ -93,8 +93,12 @@ CREATE TABLE IF NOT EXISTS messages (
   receiver_id INTEGER REFERENCES users(id),
   text TEXT NOT NULL,
   is_read BOOLEAN DEFAULT false,
+  edited_at TIMESTAMP,
+  deleted BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW()
 );
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT false;
 
 -- Push-подписки браузера (Web Push API) — по одному пользователю может
 -- быть несколько подписок (разные устройства/браузеры).
