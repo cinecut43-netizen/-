@@ -1,7 +1,7 @@
 /* sw.js — Service Worker Шабашки
    Версия кэша: при обновлении сайта меняй CACHE_VERSION,
    чтобы старый кэш сбросился автоматически. */
-const CACHE_VERSION = 'shabashka-v15';
+const CACHE_VERSION = 'shabashka-v16';
 const CACHE_STATIC = CACHE_VERSION; // раньше было отдельной константой и никогда не менялось —
 // из-за этого старый кэш (в т.ч. data.js) не сбрасывался при обновлении сайта
 
@@ -57,6 +57,10 @@ self.addEventListener('fetch', function (e) {
   // Пропускаем не-GET, API-запросы, внешние ресурсы кроме Phosphor
   if (e.request.method !== 'GET') return;
   if (url.pathname.startsWith('/api/')) return;
+  // Расширения браузера (криптокошельки и т.п.) иногда подгружают свои
+  // скрипты через chrome-extension:// — Cache API такие схемы не умеет
+  // сохранять и падает с ошибкой. Это не наши запросы, просто пропускаем.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
   // HTML-страницы: Network First → Cache fallback
   if (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
