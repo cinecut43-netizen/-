@@ -81,16 +81,20 @@ if (rendered) {
     </div>
   `;
 
-  const log = A.getActionLog();
-  document.getElementById('actionLogTbody').innerHTML = log.length
-    ? log.map(l => `<tr><td>${l.role}</td><td>${l.description}</td><td>${new Date(l.timestamp).toLocaleString('ru')}</td></tr>`).join('')
-    : '<tr><td colspan="3"><div class="empty-state">Действий пока не зафиксировано</div></td></tr>';
+  Promise.all([A.getActionLog(), A.getLoginHistory()]).then(function (results) {
+    const log = results[0];
+    const loginHistory = results[1];
 
-  document.getElementById('loginHistoryTbody').innerHTML = A.LOGIN_HISTORY.map(h => `
-    <tr>
-      <td>${h.role}</td><td>${h.device}</td><td>${h.location}</td><td>${h.time}</td>
-      <td><span class="pill ${h.status === 'success' ? 'pill-success' : 'pill-failed'}">${h.status === 'success' ? 'Успешно' : 'Отклонён'}</span></td>
-    </tr>`).join('');
+    document.getElementById('actionLogTbody').innerHTML = log.length
+      ? log.map(l => `<tr><td>${l.role}</td><td>${l.description}</td><td>${new Date(l.timestamp).toLocaleString('ru')}</td></tr>`).join('')
+      : '<tr><td colspan="3"><div class="empty-state">Действий пока не зафиксировано</div></td></tr>';
+
+    document.getElementById('loginHistoryTbody').innerHTML = loginHistory.length ? loginHistory.map(h => `
+      <tr>
+        <td>${h.role}</td><td>${h.device}</td><td>${h.location}</td><td>${h.time}</td>
+        <td><span class="pill ${h.status === 'success' ? 'pill-success' : 'pill-failed'}">${h.status === 'success' ? 'Успешно' : 'Отклонён'}</span></td>
+      </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state">Входов пока не зафиксировано</div></td></tr>';
+  });
 
   const bulkBlockBtn = document.getElementById('bulkBlockBtn');
   const canBulkBlock = A.canDo('security.bulkBlock');

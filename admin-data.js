@@ -145,42 +145,64 @@
      т.д.) должно логироваться через logAction() — это и есть раздел
      «Безопасность → журнал действий администраторов». */
 
-  const ACTION_LOG_KEY = 'shabashka_admin_action_log';
-
+  // Раньше журнал писался только в localStorage браузера того, кто сейчас
+  // залогинен — у каждого свой, ни с кем не общий, пропадал при чистке
+  // браузера. Теперь пишем и читаем через настоящий API, в базе данных,
+  // общий для всех администраторов.
   function logAction(description, meta) {
     const role = getAdminRole();
-    const entry = {
-      id: Date.now() + Math.random().toString(16).slice(2),
-      role: role ? ADMIN_ROLES[role].label : 'Неизвестно',
-      description: description,
-      meta: meta || null,
-      timestamp: new Date().toISOString(),
-    };
-    const log = getActionLog();
-    log.unshift(entry);
-    // Не даём журналу расти бесконечно в localStorage
-    localStorage.setItem(ACTION_LOG_KEY, JSON.stringify(log.slice(0, 200)));
-    return entry;
+    fetch('/api/admin-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminToken: getAdminToken(),
+        adminRole: role,
+        description: description,
+        meta: meta || null,
+      }),
+    }).catch(function (e) { console.error('Не удалось записать действие в журнал:', e); });
+    return { role: role ? ADMIN_ROLES[role].label : 'Неизвестно', description: description, meta: meta || null };
   }
 
   function getActionLog() {
-    try {
-      const raw = localStorage.getItem(ACTION_LOG_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
+    return fetch('/api/admin-log?adminToken=' + encodeURIComponent(getAdminToken()) + '&adminRole=' + encodeURIComponent(getAdminRole()))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) return [];
+        return data.items.map(function (i) {
+          return {
+            role: ADMIN_ROLES[i.role] ? ADMIN_ROLES[i.role].label : i.role,
+            description: i.description,
+            meta: i.meta,
+            timestamp: i.created_at,
+            deviceInfo: i.device_info,
+          };
+        });
+      })
+      .catch(function () { return []; });
   }
 
-  // Демо-история входов — в реальной системе писалась бы при каждой
-  // успешной авторизации администратора (IP, устройство, время).
-  const LOGIN_HISTORY = [
-    { role: 'Super Admin', device: 'Chrome · Windows', location: 'Москва, RU', time: '17 июн, 09:14', status: 'success' },
-    { role: 'Moderator', device: 'Safari · macOS', location: 'Санкт-Петербург, RU', time: '17 июн, 08:02', status: 'success' },
-    { role: 'Support', device: 'Chrome · Android', location: 'Казань, RU', time: '16 июн, 22:47', status: 'success' },
-    { role: 'Неизвестно', device: 'curl/8.1', location: 'Амстердам, NL', time: '16 июн, 03:12', status: 'failed' },
-    { role: 'Moderator', device: 'Firefox · Windows', location: 'Москва, RU', time: '15 июн, 17:30', status: 'success' },
-  ];
+  // Настоящая история входов — это те же записи журнала действий с
+  // description "Вход в систему", просто отдельным запросом.
+  function getLoginHistory() {
+    return fetch('/api/admin-log?type=login&adminToken=' + encodeURIComponent(getAdminToken()) + '&adminRole=' + encodeURIComponent(getAdminRole()))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) return [];
+        return data.items.map(function (i) {
+          var meta = {};
+          try { meta = i.meta || {}; } catch (e) {}
+          return {
+            role: ADMIN_ROLES[i.role] ? ADMIN_ROLES[i.role].label : (i.role || 'Неизвестно'),
+            device: i.device_info || 'неизвестное устройство',
+            location: i.ip || '—',
+            time: new Date(i.created_at).toLocaleString('ru'),
+            status: meta.success ? 'success' : 'failed',
+          };
+        });
+      })
+      .catch(function () { return []; });
+  }
 
   /* ---------- ПОЛЬЗОВАТЕЛИ ПЛАТФОРМЫ ----------
      Синтетический список для демонстрации раздела «Пользователи» —
@@ -512,7 +534,7 @@
 
     logAction: logAction,
     getActionLog: getActionLog,
-    LOGIN_HISTORY: LOGIN_HISTORY,
+    getLoginHistory: getLoginHistory,
 
     getAllUsers: getAllUsers,
     getUserById: getUserById,

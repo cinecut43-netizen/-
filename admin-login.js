@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { pool } = require('../db');
 
 const ROLE_ENV_MAP = {
   super_admin: 'ADMIN_PASSWORD_SUPER_ADMIN',
@@ -14,6 +15,22 @@ const loginAttempts = global.__shabashkaLoginAttempts || (global.__shabashkaLogi
 function signToken(payload, secret) {
   const hmac = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   return Buffer.from(payload).toString('base64') + '.' + hmac;
+}
+
+// Реальная запись о входе (успешном или нет) — раньше "История входов" в
+// админке была полностью выдуманной демо-таблицей. Ошибка записи в базу
+// не должна ломать сам вход, поэтому не бросаем исключение наружу.
+async function logLoginAttempt(req, role, success) {
+  try {
+    const ua = req.headers['user-agent'] || 'неизвестное устройство';
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+    await pool.query(
+      `INSERT INTO admin_actions (role, description, meta, device_info, ip) VALUES ($1,$2,$3,$4,$5)`,
+      [role, 'Вход в систему', JSON.stringify({ success: success }), ua, ip || null]
+    );
+  } catch (e) {
+    console.error('logLoginAttempt error:', e.message);
+  }
 }
 
 module.exports = async function handler(req, res) {
@@ -61,6 +78,7 @@ module.exports = async function handler(req, res) {
       record.count += 1;
       loginAttempts.super_admin = record;
     }
+    logLoginAttempt(req, role, false); // не ждём — не должно тормозить ответ об ошибке
     return res.status(401).json({ error: 'Неверный пароль' });
   }
 
@@ -70,6 +88,7 @@ module.exports = async function handler(req, res) {
 
   const payload = role + ':' + Date.now();
   const token = signToken(payload, tokenSecret);
+  logLoginAttempt(req, role, true);
 
   return res.status(200).json({ ok: true, token: token });
 };
