@@ -19,6 +19,18 @@ module.exports = async function handler(req, res) {
 
     // GET — получить сообщения
     if (method === 'GET') {
+      // Реальное число непрочитанных — раньше на сайте это был локальный
+      // счётчик в localStorage, который у нового пользователя изначально
+      // зашивался равным 3 (демо-заглушка), даже если сообщений вообще
+      // не было. Теперь честный подсчёт по базе.
+      if (req.query.action === 'unread-count') {
+        const result = await pool.query(
+          `SELECT COUNT(*) FROM messages WHERE receiver_id=$1 AND is_read=false AND deleted IS NOT TRUE`,
+          [userId]
+        );
+        return res.json({ ok: true, count: parseInt(result.rows[0].count) });
+      }
+
       const { job_id, peer_id, limit = 50 } = req.query;
 
       if (job_id) {
