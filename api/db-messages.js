@@ -31,6 +31,37 @@ module.exports = async function handler(req, res) {
         return res.json({ ok: true, count: parseInt(result.rows[0].count) });
       }
 
+      // Разбивка непрочитанных по каждому диалогу отдельно — сколько
+      // сообщений и от кого, а не только общее число.
+      if (req.query.action === 'unread-breakdown') {
+        const result = await pool.query(
+          `SELECT
+             m.sender_id,
+             m.job_id,
+             su.name as sender_name,
+             j.title as job_title,
+             COUNT(*) as unread_count
+           FROM messages m
+           LEFT JOIN users su ON m.sender_id = su.id
+           LEFT JOIN jobs j ON m.job_id = j.id
+           WHERE m.receiver_id=$1 AND m.is_read=false AND m.deleted IS NOT TRUE
+           GROUP BY m.sender_id, m.job_id, su.name, j.title
+           ORDER BY MAX(m.created_at) DESC`,
+          [userId]
+        );
+        const items = result.rows.map(function (r) {
+          return {
+            senderId: r.sender_id,
+            senderName: r.sender_name || 'Собеседник',
+            jobId: r.job_id,
+            jobTitle: r.job_title,
+            unreadCount: parseInt(r.unread_count),
+            convoId: r.job_id ? ('job-' + r.job_id) : ('direct-' + r.sender_id),
+          };
+        });
+        return res.json({ ok: true, items: items });
+      }
+
       const { job_id, peer_id, limit = 50 } = req.query;
 
       if (job_id) {
