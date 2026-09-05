@@ -280,15 +280,30 @@
     if (bottom) { bottom.style.display = count > 0 ? 'inline-block' : 'none'; bottom.textContent = count > 9 ? '9+' : count; }
   }
 
-  function showNewMessageToast() {
+  function showNewMessageToast(items) {
     if (document.getElementById('sbNewMsgToast')) return;
     var t = document.createElement('div');
     t.id = 'sbNewMsgToast';
-    t.innerHTML = '💬 Новое сообщение';
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer';
-    t.onclick = function () { window.location.href = '/chat'; };
+
+    // Раньше уведомление было безликим "Новое сообщение" — теперь
+    // показываем от кого именно и сколько, и ведёт сразу в нужный диалог.
+    var link = '/chat';
+    if (items && items.length === 1) {
+      var it = items[0];
+      t.innerHTML = '💬 ' + it.senderName + (it.unreadCount > 1 ? ' (' + it.unreadCount + ')' : '') +
+        (it.jobTitle ? ' — «' + it.jobTitle + '»' : '');
+      link = it.jobId ? ('/chat?job=' + it.jobId) : ('/chat?worker=' + it.senderId);
+    } else if (items && items.length > 1) {
+      var totalFrom = items.length;
+      t.innerHTML = '💬 Новые сообщения от ' + totalFrom + ' собеседников';
+    } else {
+      t.innerHTML = '💬 Новое сообщение';
+    }
+
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer;max-width:90vw;overflow:hidden;text-overflow:ellipsis';
+    t.onclick = function () { window.location.href = link; };
     document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, 4000);
+    setTimeout(function () { t.remove(); }, 4500);
   }
 
   function pollUnreadBadge() {
@@ -298,7 +313,9 @@
       // там и так видно новые сообщения в реальном времени.
       var onChatPage = window.location.pathname.indexOf('/chat') === 0;
       if (lastKnownUnread !== null && count > lastKnownUnread && !onChatPage) {
-        showNewMessageToast();
+        window.Shabashka.fetchUnreadBreakdown().then(function (items) {
+          showNewMessageToast(items);
+        });
       }
       lastKnownUnread = count;
       updateChatBadgesDom(count);

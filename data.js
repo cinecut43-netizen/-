@@ -1148,6 +1148,19 @@
     });
   }
 
+  // Разбивка непрочитанных по диалогам — из какого чата и сколько,
+  // чтобы уведомление могло сказать "2 сообщения от Дамира", а не
+  // просто "пришло новое сообщение" без подробностей.
+  function fetchUnreadBreakdown() {
+    return ensureDbUserId().then(function (id) {
+      if (!id) return [];
+      return fetch('/api/db-messages?action=unread-breakdown')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { return data.ok ? data.items : []; })
+        .catch(function () { return []; });
+    });
+  }
+
   /* ---------- ВЕРИФИКАЦИЯ ПАСПОРТА ----------
      Исполнитель загружает фото документа (разворот с фото + прописка).
      Заявка сохраняется в localStorage и появляется в очереди у администратора.
@@ -1256,6 +1269,7 @@
     // Непрочитанные сообщения
     getUnreadCount: getUnreadCount,
     fetchUnreadCount: fetchUnreadCount,
+    fetchUnreadBreakdown: fetchUnreadBreakdown,
     setUnreadCount: setUnreadCount,
     clearUnread: clearUnread,
     // Верификация паспорта
