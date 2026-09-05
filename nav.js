@@ -165,8 +165,10 @@
 
     const linksHtml = links.map(function (l) {
       const active = l.page === activePage ? ' sb-active' : '';
-      const badge = (l.page === 'chat' && unread > 0)
-        ? '<span class="sb-badge">' + (unread > 9 ? '9+' : unread) + '</span>'
+      // Бейдж всегда в разметке (даже при 0) — id для того, чтобы позже
+      // обновлять его настоящим числом с сервера, без пересборки всей навигации.
+      const badge = l.page === 'chat'
+        ? '<span class="sb-badge" id="sbTopChatBadge" style="display:' + (unread > 0 ? 'inline-flex' : 'none') + '">' + (unread > 9 ? '9+' : unread) + '</span>'
         : '';
       return '<a class="sb-link' + active + '" href="' + l.href + '">' +
         '<span class="sb-link-icon" style="position:relative">' + ic(l.icon) + badge + '</span>' +
@@ -239,8 +241,8 @@
         var isActive = item.page === activePage;
         var color = isActive ? '#E8510A' : '#9A9A96';
         var badgeHtml = '';
-        if (item.badge && unread > 0) {
-          badgeHtml = '<span style="position:absolute;top:-2px;right:-4px;background:#E8510A;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:10px;min-width:15px;text-align:center;line-height:1.4">' + (unread > 9 ? '9+' : unread) + '</span>';
+        if (item.badge) {
+          badgeHtml = '<span id="sbBottomChatBadge" style="display:' + (unread > 0 ? 'inline-block' : 'none') + ';position:absolute;top:-2px;right:-4px;background:#E8510A;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:10px;min-width:15px;text-align:center;line-height:1.4">' + (unread > 9 ? '9+' : unread) + '</span>';
         }
         return '<a href="' + item.href + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:' + color + ';flex:1;padding:8px 4px;min-height:52px;justify-content:center">' +
           '<span style="position:relative;display:inline-flex">' +
@@ -260,4 +262,51 @@
   }
 
   Shabashka.renderNav = renderNav;
+
+  // ===== ЖИВОЕ ОБНОВЛЕНИЕ БЕЙДЖА ЧАТА =====
+  // Раньше число непрочитанных обновлялось только когда сам заходишь в
+  // чат — на любой другой странице бейдж мог показывать устаревшее
+  // (или вообще выдуманное, у новых пользователей — фейковое "3")
+  // число. Теперь при каждой загрузке страницы и раз в 20 секунд сайт
+  // спрашивает у сервера реальное количество и обновляет бейдж везде,
+  // плюс показывает всплывающее уведомление, если пришло новое
+  // сообщение, а человек сейчас не в самом чате.
+  var lastKnownUnread = null;
+
+  function updateChatBadgesDom(count) {
+    var top = document.getElementById('sbTopChatBadge');
+    if (top) { top.style.display = count > 0 ? 'inline-flex' : 'none'; top.textContent = count > 9 ? '9+' : count; }
+    var bottom = document.getElementById('sbBottomChatBadge');
+    if (bottom) { bottom.style.display = count > 0 ? 'inline-block' : 'none'; bottom.textContent = count > 9 ? '9+' : count; }
+  }
+
+  function showNewMessageToast() {
+    if (document.getElementById('sbNewMsgToast')) return;
+    var t = document.createElement('div');
+    t.id = 'sbNewMsgToast';
+    t.innerHTML = '💬 Новое сообщение';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer';
+    t.onclick = function () { window.location.href = '/chat'; };
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 4000);
+  }
+
+  function pollUnreadBadge() {
+    if (!window.Shabashka || !window.Shabashka.fetchUnreadCount) return;
+    window.Shabashka.fetchUnreadCount().then(function (count) {
+      // Не дёргаем всплывающее уведомление на самой странице чата —
+      // там и так видно новые сообщения в реальном времени.
+      var onChatPage = window.location.pathname.indexOf('/chat') === 0;
+      if (lastKnownUnread !== null && count > lastKnownUnread && !onChatPage) {
+        showNewMessageToast();
+      }
+      lastKnownUnread = count;
+      updateChatBadgesDom(count);
+    });
+  }
+
+  if (typeof window !== 'undefined') {
+    pollUnreadBadge();
+    setInterval(pollUnreadBadge, 20000);
+  }
 })();

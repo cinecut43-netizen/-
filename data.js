@@ -1129,9 +1129,23 @@
     localStorage.removeItem(UNREAD_KEY);
   }
 
-  // Инициализируем счётчик при первом посещении (3 непрочитанных из демо-чатов)
-  if (localStorage.getItem(UNREAD_KEY) === null) {
-    localStorage.setItem(UNREAD_KEY, '3');
+  // Раньше здесь новому пользователю сразу выставлялось "3 непрочитанных"
+  // (демо-заглушка) — даже если у него ещё вообще не было ни одного
+  // сообщения. Локальное число остаётся только как быстрый кэш для
+  // мгновенной отрисовки бейджа при загрузке страницы (пока не пришёл
+  // ответ с сервера) — реальное значение всегда берётся из базы.
+  function fetchUnreadCount() {
+    return ensureDbUserId().then(function (id) {
+      if (!id) return 0;
+      return fetch('/api/db-messages?action=unread-count')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          const count = data.ok ? data.count : 0;
+          setUnreadCount(count);
+          return count;
+        })
+        .catch(function () { return getUnreadCount(); });
+    });
   }
 
   /* ---------- ВЕРИФИКАЦИЯ ПАСПОРТА ----------
@@ -1241,6 +1255,7 @@
     deactivatePro: deactivatePro,
     // Непрочитанные сообщения
     getUnreadCount: getUnreadCount,
+    fetchUnreadCount: fetchUnreadCount,
     setUnreadCount: setUnreadCount,
     clearUnread: clearUnread,
     // Верификация паспорта
