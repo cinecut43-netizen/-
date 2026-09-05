@@ -191,6 +191,21 @@ CREATE TABLE IF NOT EXISTS sms_codes (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Журнал действий администраторов — раньше писался только в localStorage
+-- браузера того, кто был залогинен, теперь общий для всех, в базе.
+-- Сюда же пишутся входы в админку (заменяет прежнюю выдуманную "историю
+-- входов").
+CREATE TABLE IF NOT EXISTS admin_actions (
+  id SERIAL PRIMARY KEY,
+  role VARCHAR(30) NOT NULL,
+  description TEXT NOT NULL,
+  meta JSONB,
+  device_info TEXT,
+  ip TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_admin_actions_created ON admin_actions(created_at DESC);
+
 -- Индексы для быстрого поиска
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_category ON jobs(category);
