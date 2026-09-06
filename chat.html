@@ -601,6 +601,7 @@ function pollConvoList() {
       });
       renderSidebar();
       syncUnreadCount();
+      refreshUnreadBadges();
     })
     .catch(function(){});
 }
@@ -913,6 +914,24 @@ function syncUnreadCount() {
   Shabashka.setUnreadCount(total);
 }
 
+// Раньше "unread" у каждого диалога был просто флагом 0/1 ("есть что-то
+// новое или нет"), а не настоящим числом непрочитанных сообщений —
+// кружок в списке диалогов либо не показывался, либо показывал "1"
+// независимо от того, сколько сообщений реально накопилось. Теперь
+// берём точное число из базы.
+function refreshUnreadBadges() {
+  if (!myId || !Shabashka.fetchUnreadBreakdown) return;
+  Shabashka.fetchUnreadBreakdown().then(function (items) {
+    CONVOS.forEach(function (c) {
+      if (c.id === currentConvo) { c.unread = 0; return; } // открытый чат — считается прочитанным
+      var match = items.find(function (it) { return it.convoId === c.id; });
+      c.unread = match ? match.unreadCount : 0;
+    });
+    renderSidebar();
+    syncUnreadCount();
+  });
+}
+
 // init перенесён в async-блок ниже (загружает реальные диалоги из БД
 // перед первым рендером)
 (function init() {
@@ -926,6 +945,7 @@ function syncUnreadCount() {
       renderSidebar();
       renderQuickReplies();
       initMobileChatList();
+      refreshUnreadBadges();
     }
 
     if (!myId) {
