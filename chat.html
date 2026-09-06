@@ -106,6 +106,8 @@ nav { background: var(--white); border-bottom: 1px solid var(--border); padding:
 
 /* SYSTEM MESSAGE */
 .sys-msg { text-align: center; font-size: 12px; color: var(--gray); padding: 4px 12px; background: var(--gray-light); border-radius: 20px; align-self: center; }
+.day-separator { display: flex; justify-content: center; margin: 14px 0 6px; }
+.day-separator span { font-size: 12px; font-weight: 600; color: var(--gray); background: var(--gray-light); padding: 4px 14px; border-radius: 20px; }
 
 /* QUICK REPLIES */
 .quick-replies { padding: 8px 20px; display: flex; gap: 8px; overflow-x: auto; flex-shrink: 0; }
@@ -489,6 +491,7 @@ function switchConvo(id) {
               deleted: m.deleted,
               editedAt: m.edited_at,
               time: formatMsgTime(m.created_at),
+              date: m.created_at,
               read: m.is_read ? 'read' : 'sent',
             };
           });
@@ -540,6 +543,7 @@ function pollActiveConvo() {
           deleted: m.deleted,
           editedAt: m.edited_at,
           time: formatMsgTime(m.created_at),
+          date: m.created_at,
           read: m.is_read ? 'read' : 'sent',
         };
       });
@@ -612,13 +616,38 @@ setInterval(function() {
 }, 4000);
 
 
+function dayLabel(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  var now = new Date();
+  var startOfDay = function(x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+  var diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  if (diffDays === 0) return 'Сегодня';
+  if (diffDays === 1) return 'Вчера';
+  return d.toLocaleDateString('ru', { day: 'numeric', month: 'long', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+}
+
 function renderMessages() {
   const msgs = MESSAGES_DB[currentConvo] || [];
   const c = CONVOS.find(x => x.id === currentConvo);
   const el = document.getElementById('messages');
+
+  // Раньше переписка шла сплошным списком без разделения по дням —
+  // если диалог тянется несколько дней, было непонятно, где заканчивается
+  // "сегодня" и начинается "вчера" или более старая дата.
+  var lastDay = null;
   el.innerHTML = msgs.map(m => {
-    if (m.type === 'sys') return `<div class="sys-msg">${m.text}</div>`;
-    if (m.type === 'ai') return `
+    var separator = '';
+    if (m.date) {
+      var thisDay = new Date(m.date).toDateString();
+      if (thisDay !== lastDay) {
+        separator = `<div class="day-separator"><span>${dayLabel(m.date)}</span></div>`;
+        lastDay = thisDay;
+      }
+    }
+    if (m.type === 'sys') return separator + `<div class="sys-msg">${m.text}</div>`;
+    if (m.type === 'ai') return separator + `
       <div class="msg-group">
         <div class="ai-label">🤖 AI-ассистент Шабашки</div>
         <div class="msg-row">
@@ -643,7 +672,7 @@ function renderMessages() {
           <button onclick="deleteMsg(${m.id})" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#B91C1C;font-family:inherit">🗑 Удалить</button>
         </div>
       </div>` : '';
-    return `
+    return separator + `
       <div class="msg-group">
         <div class="${isMe ? 'sender-name me-name' : 'sender-name'}">${isMe ? 'Вы' : c.name}</div>
         <div class="msg-row ${isMe ? 'me' : ''}" data-msg-id="${m.id || ''}">
