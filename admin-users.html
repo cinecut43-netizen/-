@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Шабашка — Пользователи</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/favicon-192.png">
+<link rel="shortcut icon" href="/favicon.ico">
 <link rel="manifest" href="/admin-manifest.json">
 <meta name="theme-color" content="#185FA5">
 <link rel="apple-touch-icon" href="/admin-icon-192.png">
@@ -189,13 +193,27 @@ if (rendered) {
     Promise.all([
       A.getUserById(id),
       fetch('/api/db-reviews?target_id=' + id).then(function(r){ return r.json(); }).catch(function(){ return { reviews: [] }; }),
+      fetch('/api/admin-verifications?userId=' + id + '&status=all&adminToken=' + encodeURIComponent(A.getAdminToken()) + '&adminRole=' + encodeURIComponent(A.getAdminRole()))
+        .then(function(r){ return r.json(); }).catch(function(){ return { items: [] }; }),
     ]).then(function (results) {
       const u = results[0];
       const reviews = (results[1].reviews || []).slice(0, 3);
+      const docItems = results[2].items || [];
       if (!u) { document.getElementById('userModalBody').innerHTML = 'Пользователь не найден'; return; }
 
       document.getElementById('userModalName').textContent = u.name;
       const canChangeRole = A.canDo('user.changeRole');
+
+      // Документ верификации — виден в карточке только пока не истёк тот
+      // же срок хранения (48 часов), что и в основной очереди верификации.
+      // Специально не храним его дольше — минимизируем время жизни
+      // чувствительных персональных данных.
+      const docSection = docItems.length ? `
+        <div class="modal-section-title">Документ верификации <span style="font-weight:400;color:var(--gray);font-size:12px">(доступен 48 часов с момента загрузки)</span></div>
+        <div id="userDocWrap-${id}">
+          <button onclick="loadUserDocPhoto(${id}, '${docItems[0].docId}')" id="loadUserDocBtn-${id}" style="padding:8px 14px;background:var(--gray-light);border:none;border-radius:9px;font-size:13px;cursor:pointer">📄 Показать документ (статус: ${docItems[0].status === 'approved' ? 'одобрен' : docItems[0].status === 'rejected' ? 'отклонён' : 'на рассмотрении'})</button>
+        </div>
+      ` : '';
 
       document.getElementById('userModalBody').innerHTML = `
         <div class="detail-row"><span class="detail-label">Телефон</span><span class="detail-value">${u.phone}</span></div>
@@ -211,10 +229,38 @@ if (rendered) {
           </select>
         </div>
 
+        ${docSection}
+
         <div class="modal-section-title">Отзывы о пользователе</div>
         ${reviews.length ? reviews.map(r => `<div class="review-item">${'⭐'.repeat(r.rating)} «${r.text}»</div>`).join('') : '<div class="review-item" style="color:var(--gray)">Отзывов пока нет</div>'}
       `;
     });
+  };
+
+  window.loadUserDocPhoto = function(userId, docId) {
+    var btn = document.getElementById('loadUserDocBtn-' + userId);
+    if (btn) { btn.textContent = 'Загружаем…'; btn.disabled = true; }
+
+    fetch('/api/get-doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docId: docId, adminToken: A.getAdminToken(), adminRole: A.getAdminRole() }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var wrap = document.getElementById('userDocWrap-' + userId);
+        if (!wrap) return;
+        if (!data.ok) {
+          wrap.innerHTML = '<div style="color:var(--red);font-size:13px;padding:10px 0">' + (data.error || 'Срок хранения документа истёк') + '</div>';
+          return;
+        }
+        wrap.innerHTML = '<img src="' + data.photo + '" alt="Документ" style="width:100%;max-height:400px;object-fit:contain;background:#F4F3EF;border-radius:10px;border:1px solid var(--border);cursor:pointer;margin-bottom:6px" onclick="window.open(this.src,\'_blank\')">' +
+          '<div style="font-size:11px;color:var(--gray)">Нажмите для просмотра в полном размере · Доступ зафиксирован в журнале</div>';
+      })
+      .catch(function() {
+        var wrap = document.getElementById('userDocWrap-' + userId);
+        if (wrap) wrap.innerHTML = '<div style="color:var(--red);font-size:13px;padding:10px 0">Не удалось загрузить документ</div>';
+      });
   };
 
   window.changeRole = function (id, role) {
