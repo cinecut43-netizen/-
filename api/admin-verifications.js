@@ -50,8 +50,11 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const statusFilter = req.query.status || 'pending';
+      const userIdFilter = req.query.userId ? Number(req.query.userId) : null;
       const ids = Object.keys(docs).filter(function (id) {
-        return docs[id].type === 'passport' && (statusFilter === 'all' || docs[id].status === statusFilter);
+        if (docs[id].type !== 'passport') return false;
+        if (userIdFilter) return docs[id].userId === userIdFilter;
+        return statusFilter === 'all' || docs[id].status === statusFilter;
       });
 
       const userIds = ids.map(function (id) { return docs[id].userId; }).filter(Boolean);
