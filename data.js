@@ -128,6 +128,12 @@
 
     const savedUserId = localStorage.getItem('shabashka_user_id');
     DEFAULT_USER.id = savedUserId ? Number(savedUserId) : null;
+    // Раньше "Телефон подтверждён" никогда реально не проверялось —
+    // флаг просто всегда оставался false у всех, независимо от того,
+    // что регистрация вообще возможна только через настоящий Flash Call.
+    // Раз есть подтверждённый id из базы — телефон уже подтверждён по
+    // определению, это ровно то, что доказывает сам факт регистрации.
+    if (DEFAULT_USER.id) DEFAULT_USER.verified.phone = true;
 
     const savedName = localStorage.getItem('shabashka_name');
     if (savedName) {
@@ -328,6 +334,7 @@
           DEFAULT_USER.reviewsCount = Number(data.user.reviews_count) || 0;
           DEFAULT_USER.completedOrders = Number(data.user.jobs_done) || 0;
           DEFAULT_USER.verified.passport = !!data.user.verified;
+          DEFAULT_USER.verified.phone = true; // раз запись реально есть в базе — телефон подтверждён
           DEFAULT_USER.balance = Number(data.user.balance) || 0;
           return DEFAULT_USER;
         }

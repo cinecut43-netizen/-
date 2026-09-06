@@ -729,8 +729,12 @@ function renderVerification() {
     passportItem = `
       <div class="verify-item pending">
         <span class="verify-icon">🔍</span>
-        <span>Паспорт на проверке</span>
-        <span style="margin-left:auto;font-size:11px;background:#FFF8E6;color:#B07800;padding:2px 8px;border-radius:20px;font-weight:600">На проверке</span>
+        <div style="flex:1">
+          <div>Паспорт на проверке</div>
+          <div style="font-size:11.5px;color:var(--gray);margin-top:2px">Обычно занимает 1-2 дня</div>
+        </div>
+        <span style="margin-right:8px;font-size:11px;background:#FFF8E6;color:#B07800;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap">На проверке</span>
+        <button class="verify-action" onclick="openPassportModal()" style="white-space:nowrap">Отправить снова</button>
       </div>`;
   } else if (vsStatus === 'rejected') {
     passportItem = `
