@@ -255,7 +255,15 @@ let JOBS = Shabashka.JOBS.map(j => ({
   fetch('/api/db-jobs')
     .then(function(r){ return r.json(); })
     .then(function(data) {
-      if (!data.ok || !data.jobs || !data.jobs.length) return;
+      // Раньше здесь была проверка "!data.jobs.length" — если все заказы
+      // закрылись (стало 0), карта просто не обновлялась и продолжала
+      // показывать старые метки. И раньше локальные заказы браузера
+      // подмешивались к реальным из базы "на случай, если БД была
+      // недоступна при создании" — если такой заказ так и не подтвердился
+      // на сервере, его метка оставалась на карте навсегда, даже потеряв
+      // связь с реальным состоянием в базе. Теперь карта полностью
+      // доверяет базе данных.
+      if (!data.ok || !data.jobs) return;
       var dbJobs = data.jobs.filter(function(j){ return j.lat && j.lng; }).map(function(j) {
         return {
           id: j.id,
@@ -280,9 +288,7 @@ let JOBS = Shabashka.JOBS.map(j => ({
           colors: ['#E8510A','#185FA5','#1A7A4A'],
         };
       });
-      JOBS = dbJobs.concat(JOBS.filter(function(lj) {
-        return !dbJobs.find(function(dj){ return dj.id === lj.id; });
-      }));
+      JOBS = dbJobs;
       if (map) renderMarkers();
     })
     .catch(function(){ console.log('БД недоступна, используем локальные данные'); });
@@ -361,10 +367,15 @@ function renderMarkers() {
   markers = [];
 
   const jobs = getFiltered();
-  document.getElementById('countBadge').textContent = jobs.length + ' заказов рядом';
+  // Раньше здесь считались ВСЕ отфильтрованные заказы, включая те, для
+  // которых не удалось определить координаты (геокодирование не нашло
+  // точный адрес) — они не получают метку на карте, но всё равно
+  // попадали в счётчик "N заказов рядом", создавая расхождение с тем,
+  // что реально видно.
+  const jobsWithCoords = jobs.filter(function(j) { return j.lat && j.lng; });
+  document.getElementById('countBadge').textContent = jobsWithCoords.length + ' заказов рядом';
 
-  jobs.forEach(j => {
-    if (!j.lat || !j.lng) return; // пропускаем без координат
+  jobsWithCoords.forEach(j => {
     const price = j.pay.toLocaleString('ru') + ' ₽';
     const html = '<div class="job-pin' + (j.urgent ? ' urgent' : '') + '">' +
       '<div class="job-pin-bubble">' +
