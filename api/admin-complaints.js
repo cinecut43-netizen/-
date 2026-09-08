@@ -77,6 +77,37 @@ module.exports = async function handler(req, res) {
           `UPDATE jobs SET status=$1, updated_at=NOW() WHERE id=$2`,
           [decision === 'refunded' ? 'cancelled' : 'done', dispute.job_id]
         );
+
+        // Автоматическое снижение рейтинга при подтверждённой неявке —
+        // делаем это обычным отзывом (1 звезда) через тот же механизм,
+        // что и настоящие отзывы, а не отдельным хрупким числом в обход
+        // общей логики пересчёта рейтинга. Так исполнитель видит в своих
+        // отзывах, почему рейтинг упал, а не гадает.
+        if (decision === 'refunded' && dispute.reason_id === 'no_show') {
+          const jobRes = await pool.query('SELECT employer_id, selected_worker_id, title FROM jobs WHERE id=$1', [dispute.job_id]);
+          const job = jobRes.rows[0];
+          if (job && job.selected_worker_id && job.employer_id) {
+            const alreadyPenalized = await pool.query(
+              'SELECT id FROM reviews WHERE job_id=$1 AND reviewer_id=$2 AND target_id=$3',
+              [dispute.job_id, job.employer_id, job.selected_worker_id]
+            );
+            if (!alreadyPenalized.rows.length) {
+              await pool.query(
+                `INSERT INTO reviews (job_id, reviewer_id, target_id, rating, text, type)
+                 VALUES ($1,$2,$3,1,$4,'worker')`,
+                [dispute.job_id, job.employer_id, job.selected_worker_id,
+                 'Автоматически: подтверждённая неявка на заказ «' + job.title + '»']
+              );
+              await pool.query(
+                `UPDATE users SET
+                   rating = (SELECT ROUND(AVG(rating)::numeric, 2) FROM reviews WHERE target_id=$1),
+                   reviews_count = (SELECT COUNT(*) FROM reviews WHERE target_id=$1)
+                 WHERE id=$1`, [job.selected_worker_id]
+              );
+            }
+          }
+        }
+
         return res.json({ ok: true });
       }
 
