@@ -337,10 +337,19 @@ function markOnWay(jobId) {
 }
 
 function leaveReview(jobId) {
+  // Раньше заказ искался только через Shabashka.getAllJobs() — это
+  // чисто локальная функция браузера, которая не видит заказы, реально
+  // пришедшие из базы данных. Если заказ был найден с другого аккаунта
+  // (а именно так почти всегда и бывает), кнопка молча ничего не делала.
   var job = null;
-  var allJobs = Shabashka.getAllJobs ? Shabashka.getAllJobs() : [];
-  allJobs.forEach(function(j){ if(j.id === jobId) job = j; });
-  if (!job) return;
+  var fromDb = dbResponses.find(function(item){ return item.job && item.job.id === jobId; });
+  if (fromDb) {
+    job = fromDb.job;
+  } else {
+    var allJobs = Shabashka.getAllJobs ? Shabashka.getAllJobs() : [];
+    allJobs.forEach(function(j){ if(j.id === jobId) job = j; });
+  }
+  if (!job) { alert('Не удалось найти этот заказ. Попробуйте обновить страницу.'); return; }
 
   var rating = 0;
   var overlay = document.createElement('div');
@@ -387,18 +396,32 @@ function submitEmployerRating(jobId, btn) {
     return;
   }
   var text = document.getElementById('reviewText').value.trim() || 'Хороший работодатель, рекомендую.';
-  if (Shabashka.submitEmployerReview) {
-    Shabashka.submitEmployerReview(jobId, _reviewRating, text);
-  }
-  _reviewRating = 0;
-  btn.closest('div[style*="fixed"]').remove();
+  btn.disabled = true;
+  btn.textContent = 'Отправляем…';
 
-  var t = document.createElement('div');
-  t.textContent = '⭐ Отзыв отправлен, спасибо!';
-  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A7A4A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
-  document.body.appendChild(t);
-  setTimeout(function(){ t.remove(); }, 2500);
-  render();
+  var finish = function (result) {
+    _reviewRating = 0;
+    var overlayEl = btn.closest('div[style*="fixed"]');
+    if (overlayEl) overlayEl.remove();
+
+    var t = document.createElement('div');
+    if (result && result.ok) {
+      t.textContent = '⭐ Отзыв отправлен, спасибо!';
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A7A4A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
+    } else {
+      t.textContent = '⚠️ ' + ((result && result.error) || 'Не удалось отправить отзыв');
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#B91C1C;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis';
+    }
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3500);
+    render();
+  };
+
+  if (Shabashka.submitEmployerReview) {
+    Shabashka.submitEmployerReview(jobId, _reviewRating, text).then(finish);
+  } else {
+    finish({ ok: false, error: 'Функция недоступна' });
+  }
 }
 
 render();

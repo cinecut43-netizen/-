@@ -749,36 +749,40 @@
   function submitEmployerReview(jobId, rating, text) {
     rating = Math.round(Number(rating));
     if (!rating || rating < 1 || rating > 5) {
-      return { ok: false, error: 'Оценка должна быть от 1 до 5 звёзд' };
+      return Promise.resolve({ ok: false, error: 'Оценка должна быть от 1 до 5 звёзд' });
     }
     if (!text || !text.trim()) {
-      return { ok: false, error: 'Напишите текст отзыва' };
+      return Promise.resolve({ ok: false, error: 'Напишите текст отзыва' });
     }
     if (hasEmployerReview(jobId)) {
-      return { ok: false, error: 'Отзыв на этого работодателя уже оставлен' };
+      return Promise.resolve({ ok: false, error: 'Отзыв на этого работодателя уже оставлен' });
     }
-    var job = getJob(jobId);
-    if (!job) return { ok: false, error: 'Заказ не найден' };
 
-    var reviews = getAllEmployerReviews();
-    reviews.unshift({
-      jobId: Number(jobId),
-      companyName: job.company || 'Работодатель',
-      rating: rating,
-      text: text.trim(),
-      date: todayLabel(),
-      reviewerName: getUser().name || 'Исполнитель',
-    });
-    localStorage.setItem(EMPLOYER_REVIEWS_KEY, JSON.stringify(reviews));
+    // Раньше заказ искался только локально (getJob) — если заказ был
+    // только в базе (а после отклика/выполнения почти всегда так),
+    // функция обрывалась с "Заказ не найден" ещё до попытки реально
+    // отправить отзыв на сервер. Теперь всегда спрашиваем сервер.
+    return fetch('/api/db-jobs?action=get&id=' + jobId)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok || !data.job) return { ok: false, error: 'Заказ не найден' };
+        var job = data.job;
+        var targetId = job.employer_id;
+        if (!targetId) return { ok: false, error: 'Не удалось определить работодателя по этому заказу' };
 
-    // Синхронизируем с БД — пересчёт рейтинга работодателя происходит там же.
-    ensureDbUserId().then(function (reviewerId) {
-      if (!reviewerId) return;
-      fetch('/api/db-jobs?action=get&id=' + jobId)
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          var targetId = data.ok && data.job ? data.job.employer_id : null;
-          if (!targetId) return;
+        var reviews = getAllEmployerReviews();
+        reviews.unshift({
+          jobId: Number(jobId),
+          companyName: job.company || job.employer_name || 'Работодатель',
+          rating: rating,
+          text: text.trim(),
+          date: todayLabel(),
+          reviewerName: getUser().name || 'Исполнитель',
+        });
+        localStorage.setItem(EMPLOYER_REVIEWS_KEY, JSON.stringify(reviews));
+
+        return ensureDbUserId().then(function (reviewerId) {
+          if (!reviewerId) return { ok: false, error: 'Не удалось определить ваш аккаунт — отзыв сохранён только на этом устройстве' };
           return fetch('/api/db-reviews', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -786,12 +790,22 @@
               job_id: jobId, reviewer_id: reviewerId, target_id: targetId,
               rating: rating, text: text.trim(), type: 'employer',
             }),
-          });
-        })
-        .catch(function () { console.log('БД недоступна, отзыв сохранён только локально'); });
-    });
-
-    return { ok: true };
+          })
+            .then(function (r) { return r.json().then(function (d) { return { httpOk: r.ok, data: d }; }); })
+            .then(function (result) {
+              if (!result.httpOk || !result.data || !result.data.ok) {
+                return { ok: false, error: (result.data && result.data.error) || 'Сервер отклонил отзыв' };
+              }
+              return { ok: true };
+            })
+            .catch(function () {
+              return { ok: false, error: 'Нет связи с сервером — отзыв сохранён только на этом устройстве' };
+            });
+        });
+      })
+      .catch(function () {
+        return { ok: false, error: 'Нет связи с сервером, попробуйте ещё раз' };
+      });
   }
 
   /* ---------- СПОРЫ ----------

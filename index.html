@@ -1475,7 +1475,7 @@ function openEmployerReviewModal(jobId) {
       </div>
       <textarea id="erText" placeholder="Как прошёл заказ? Оплатили вовремя? Условия совпали с описанием?" style="width:100%;height:90px;padding:10px 12px;border:1px solid #E5E4E0;border-radius:9px;font-size:14px;font-family:inherit;resize:none;outline:none;margin-bottom:12px"></textarea>
       <div id="erError" style="color:#E8510A;font-size:12px;margin-bottom:8px;display:none"></div>
-      <button onclick="submitERating()" style="width:100%;padding:12px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Отправить отзыв</button>
+      <button id="erSubmitBtn" onclick="submitERating()" style="width:100%;padding:12px;background:#E8510A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Отправить отзыв</button>
     </div>
   `;
   document.body.appendChild(modal);
@@ -1493,19 +1493,24 @@ function setERating(n) {
 function submitERating() {
   var text = document.getElementById('erText').value;
   var errEl = document.getElementById('erError');
-  var result = Shabashka.submitEmployerReview(employerReviewJobId, employerReviewRating, text);
-  if (!result.ok) {
-    errEl.textContent = result.error;
-    errEl.style.display = 'block';
-    return;
-  }
-  document.getElementById('employerReviewOverlay').remove();
-  // Показываем уведомление
-  var toast = document.createElement('div');
-  toast.textContent = 'Спасибо за отзыв о работодателе!';
-  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
-  document.body.appendChild(toast);
-  setTimeout(function(){ toast.remove(); }, 2500);
+  var btn = document.getElementById('erSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем…'; }
+
+  Shabashka.submitEmployerReview(employerReviewJobId, employerReviewRating, text).then(function (result) {
+    if (!result.ok) {
+      errEl.textContent = result.error;
+      errEl.style.display = 'block';
+      if (btn) { btn.disabled = false; btn.textContent = 'Отправить отзыв'; }
+      return;
+    }
+    document.getElementById('employerReviewOverlay').remove();
+    // Показываем уведомление
+    var toast = document.createElement('div');
+    toast.textContent = 'Спасибо за отзыв о работодателе!';
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap';
+    document.body.appendChild(toast);
+    setTimeout(function(){ toast.remove(); }, 2500);
+  });
 }
 
 renderJobs();
