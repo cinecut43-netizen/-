@@ -73,10 +73,22 @@ module.exports = async function handler(req, res) {
         await pool.query('UPDATE disputes SET status=$1, resolved_at=NOW() WHERE id=$2', [decision, id]);
         // refunded — заказ отменяется (деньги возвращаются заказчику);
         // rejected — заказ считается выполненным, деньги идут исполнителю
+        const jobBefore = await pool.query('SELECT status, selected_worker_id FROM jobs WHERE id=$1', [dispute.job_id]);
+        const newJobStatus = decision === 'refunded' ? 'cancelled' : 'done';
         await pool.query(
           `UPDATE jobs SET status=$1, updated_at=NOW() WHERE id=$2`,
-          [decision === 'refunded' ? 'cancelled' : 'done', dispute.job_id]
+          [newJobStatus, dispute.job_id]
         );
+        // Тот же счётчик выполненных заказов, что и при обычном завершении
+        // заказа работодателем — заказ считается выполненным и через
+        // разрешение спора тоже, не только через прямое "Завершить заказ".
+        if (newJobStatus === 'done' && jobBefore.rows.length &&
+            jobBefore.rows[0].status !== 'done' && jobBefore.rows[0].selected_worker_id) {
+          await pool.query(
+            `UPDATE users SET jobs_done = jobs_done + 1 WHERE id=$1`,
+            [jobBefore.rows[0].selected_worker_id]
+          );
+        }
 
         // Автоматическое снижение рейтинга при подтверждённой неявке —
         // делаем это обычным отзывом (1 звезда) через тот же механизм,

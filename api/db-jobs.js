@@ -98,7 +98,7 @@ module.exports = async function handler(req, res) {
       if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
       const { id, status, worker_id } = req.body;
 
-      const jobCheck = await pool.query('SELECT employer_id, selected_worker_id FROM jobs WHERE id=$1', [id]);
+      const jobCheck = await pool.query('SELECT employer_id, selected_worker_id, status FROM jobs WHERE id=$1', [id]);
       if (!jobCheck.rows.length) return res.status(404).json({ error: 'Заказ не найден' });
       const job = jobCheck.rows[0];
       const isEmployer = job.employer_id === req.authUserId;
@@ -109,6 +109,20 @@ module.exports = async function handler(req, res) {
         `UPDATE jobs SET status=$1, selected_worker_id=COALESCE($2, selected_worker_id), updated_at=NOW() WHERE id=$3`,
         [status, worker_id || null, id]
       );
+
+      // Раньше jobs_done нигде не увеличивался — поле читалось везде
+      // (профиль, поиск исполнителей, статистика в админке), но
+      // оставалось нулём у абсолютно всех, сколько бы заказов реально
+      // ни было выполнено. Увеличиваем ровно один раз, при переходе
+      // именно в "done" — если заказ уже был done и его снова помечают
+      // done, счётчик второй раз не растёт.
+      if (status === 'done' && job.status !== 'done' && job.selected_worker_id) {
+        await pool.query(
+          `UPDATE users SET jobs_done = jobs_done + 1 WHERE id=$1`,
+          [job.selected_worker_id]
+        );
+      }
+
       return res.json({ ok: true });
     }
 
