@@ -553,22 +553,43 @@ function showProfileToast(msg) {
 }
 
 function renderHistory() {
-  if (!HISTORY.length) {
-    document.getElementById('historyList').innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--gray);font-size:13px">Пока нет выполненных заказов</div>';
-    return;
-  }
-  document.getElementById('historyList').innerHTML = HISTORY.map(h => `
+  document.getElementById('historyList').innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--gray);font-size:13px">Загрузка…</div>';
+
+  // Раньше HISTORY был навсегда пустым локальным массивом — сюда никогда
+  // ничего не добавлялось, поэтому "Последние заказы" были пустыми
+  // у абсолютно всех, даже с реально выполненными заказами.
+  Shabashka.ensureDbUserId().then(function (myId) {
+    if (!myId) {
+      document.getElementById('historyList').innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--gray);font-size:13px">Пока нет выполненных заказов</div>';
+      return;
+    }
+    fetch('/api/db-responses?worker_id=' + myId)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var items = (data.ok ? data.responses : []).filter(function (r) { return r.job_status === 'done'; });
+        if (!items.length) {
+          document.getElementById('historyList').innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--gray);font-size:13px">Пока нет выполненных заказов</div>';
+          return;
+        }
+        document.getElementById('historyList').innerHTML = items.map(function (h) {
+          return `
     <div class="history-item">
-      <div class="history-icon">${h.icon}</div>
+      <div class="history-icon">${h.emoji || '📦'}</div>
       <div class="history-info">
         <div class="history-title">${h.title}</div>
-        <div class="history-meta">${h.company} · ${h.date}</div>
+        <div class="history-meta">${h.employer_company || h.employer_name || 'Работодатель'} · ${new Date(h.updated_at || h.created_at).toLocaleDateString('ru')}</div>
       </div>
       <div class="history-pay">
-        <div class="history-amount">+${h.pay.toLocaleString('ru')} ₽</div>
+        <div class="history-amount">+${parseInt(h.pay).toLocaleString('ru')} ₽</div>
         <div class="history-status">✅ Выполнен</div>
       </div>
-    </div>`).join('');
+    </div>`;
+        }).join('');
+      })
+      .catch(function () {
+        document.getElementById('historyList').innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--gray);font-size:13px">Не удалось загрузить историю</div>';
+      });
+  });
 }
 
 function renderReviews() {
