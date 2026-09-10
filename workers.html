@@ -288,6 +288,7 @@ function mapDbWorker(u) {
     categories: Array.isArray(u.categories) ? u.categories : [],
     price: u.day_rate || null,
     verified: !!u.verified,
+    photo: u.avatar_url || null,
   };
 }
 
@@ -355,7 +356,7 @@ function workerCard(w) {
   var favIcon = Shabashka.isFavWorker(w.id) ? 'ph-heart-fill" style="color:#E8124A' : 'ph-heart" style="color:#9A9A96';
   return '<div class="worker-card" onclick="openProfile(' + w.id + ')">' +
     '<div class="worker-top">' +
-    '<div class="worker-avatar" style="background:' + w.color + '">' + w.name[0] + '</div>' +
+    '<div class="worker-avatar" style="' + (w.photo ? 'background-image:url(\'' + w.photo + '\');background-size:cover;background-position:center' : 'background:' + w.color) + '">' + (w.photo ? '' : w.name[0]) + '</div>' +
     '<div class="worker-info">' +
     '<div class="worker-name">' + w.name + verBadge + '</div>' +
     '<div class="worker-location"><i class="ph-bold ph-map-pin"></i>' + w.location + '</div>' +
@@ -388,7 +389,7 @@ function openProfile(id) {
     '<div></div>' +
     '<button class="modal-close" onclick="closeModal()"><i class="ph-bold ph-x"></i></button>' +
     '</div>' +
-    '<div class="modal-avatar" style="background:' + w.color + '">' + w.name[0] + '</div>' +
+    '<div class="modal-avatar" style="' + (w.photo ? 'background-image:url(\'' + w.photo + '\');background-size:cover;background-position:center' : 'background:' + w.color) + '">' + (w.photo ? '' : w.name[0]) + '</div>' +
     '<div class="modal-name">' + w.name + '</div>' +
     '<div class="modal-meta"><i class="ph-bold ph-map-pin" style="font-size:13px;vertical-align:-1px"></i> ' + w.location + ' · ' + verBadge + '</div>' +
     '<div class="modal-stats-row">' +

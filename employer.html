@@ -953,7 +953,11 @@ function saveCompanyInfo() {
   const city = document.getElementById('editCompanyCity').value.trim();
   const bio = document.getElementById('editCompanyBio').value.trim();
 
-  Shabashka.updateProfile({ company: name, city: city, bio: bio });
+  Shabashka.updateProfile({ company: name, city: city, bio: bio }).then(function (result) {
+    if (!result.ok) {
+      alert('⚠️ ' + result.error + '\nПопробуйте сохранить ещё раз.');
+    }
+  });
   document.getElementById('editCompanyModal').style.display = 'none';
   renderPage();
 }

@@ -176,7 +176,9 @@
     }).join('');
 
     const accountHtml = loggedIn
-      ? '<a class="sb-avatar" href="/profile" title="' + user.name + '">' + user.initials + '</a>'
+      ? '<a class="sb-avatar" href="/profile" title="' + user.name + '"' +
+        (user.photo ? ' style="background-image:url(\'' + user.photo + '\');background-size:cover;background-position:center;color:transparent"' : '') + '>' +
+        (user.photo ? '' : user.initials) + '</a>'
       : '<a class="sb-login-btn" href="/register">Войти</a>';
 
     container.innerHTML =
@@ -280,27 +282,38 @@
     if (bottom) { bottom.style.display = count > 0 ? 'inline-block' : 'none'; bottom.textContent = count > 9 ? '9+' : count; }
   }
 
+  var TOAST_PALETTE = ['#E8510A','#185FA5','#1A7A4A','#7C3AED','#DB2777','#0891B2'];
+  function toastColor(id) { return TOAST_PALETTE[(id || 0) % TOAST_PALETTE.length]; }
+
   function showNewMessageToast(items) {
     if (document.getElementById('sbNewMsgToast')) return;
+    if (!items || !items.length) return;
     var t = document.createElement('div');
     t.id = 'sbNewMsgToast';
 
-    // Раньше уведомление было безликим "Новое сообщение" — теперь
-    // показываем от кого именно и сколько, и ведёт сразу в нужный диалог.
-    var link = '/chat';
-    if (items && items.length === 1) {
+    // Раньше при сообщениях от нескольких человек уведомление писало
+    // просто "от 3 собеседников" — без единого имени, непонятно от кого
+    // именно. Теперь всегда показываем аватар-кружок с именем (именами).
+    var link, textHtml;
+    if (items.length === 1) {
       var it = items[0];
-      t.innerHTML = '💬 ' + it.senderName + (it.unreadCount > 1 ? ' (' + it.unreadCount + ')' : '') +
-        (it.jobTitle ? ' — «' + it.jobTitle + '»' : '');
       link = it.jobId ? ('/chat?job=' + it.jobId) : ('/chat?worker=' + it.senderId);
-    } else if (items && items.length > 1) {
-      var totalFrom = items.length;
-      t.innerHTML = '💬 Новые сообщения от ' + totalFrom + ' собеседников';
+      textHtml =
+        '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:' + toastColor(it.senderId) + ';color:#fff;font-size:11px;font-weight:700;flex-shrink:0">' + it.senderName[0] + '</span>' +
+        '<span>' + it.senderName + (it.unreadCount > 1 ? ' (' + it.unreadCount + ')' : '') + (it.jobTitle ? ' — «' + it.jobTitle + '»' : '') + '</span>';
     } else {
-      t.innerHTML = '💬 Новое сообщение';
+      link = '/chat';
+      var shown = items.slice(0, 2).map(function (it) { return it.senderName; });
+      var namesText = shown.join(', ') + (items.length > 2 ? ' и ещё ' + (items.length - 2) : '');
+      textHtml =
+        '<span style="display:inline-flex;margin-right:2px">' + items.slice(0, 2).map(function (it) {
+          return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:' + toastColor(it.senderId) + ';color:#fff;font-size:11px;font-weight:700;margin-left:-6px;border:2px solid #14151A">' + it.senderName[0] + '</span>';
+        }).join('') + '</span>' +
+        '<span>' + namesText + '</span>';
     }
 
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer;max-width:90vw;overflow:hidden;text-overflow:ellipsis';
+    t.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px">' + textHtml + '</span>';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#14151A;color:#fff;padding:9px 16px 9px 9px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer;max-width:90vw;overflow:hidden;text-overflow:ellipsis';
     t.onclick = function () { window.location.href = link; };
     document.body.appendChild(t);
     setTimeout(function () { t.remove(); }, 4500);

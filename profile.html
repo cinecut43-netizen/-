@@ -935,7 +935,11 @@ function saveProfile() {
     return;
   }
 
-  Shabashka.updateProfile({ name, age, city, bio, skills, dayRate, categories });
+  Shabashka.updateProfile({ name, age, city, bio, skills, dayRate, categories }).then(function (result) {
+    if (!result.ok) {
+      alert('⚠️ ' + result.error + '\nПопробуйте сохранить ещё раз, когда будет связь.');
+    }
+  });
   renderHero();
   closeEdit();
 }
@@ -958,7 +962,11 @@ document.getElementById('photoInput').addEventListener('change', function (e) {
 
   const reader = new FileReader();
   reader.onload = function (ev) {
-    Shabashka.updateProfile({ photo: ev.target.result });
+    Shabashka.updateProfile({ photo: ev.target.result }).then(function (result) {
+      if (!result.ok) {
+        alert('⚠️ Фото сохранено только на этом устройстве: ' + result.error);
+      }
+    });
     renderHero();
   };
   reader.onerror = function () {

@@ -204,28 +204,47 @@
     }
     if (fields.photo) localStorage.setItem('shabashka_photo', fields.photo);
 
-    // Синхронизируем с БД в фоне — чтобы новый город/навыки/ставка были
-    // видны другим пользователям в поиске (workers.html), а не только
-    // на этом устройстве.
-    if (fields.city || fields.company !== undefined || fields.bio !== undefined || fields.skills !== undefined || fields.dayRate !== undefined || fields.categories !== undefined) {
-      ensureDbUserId().then(function (id) {
-        if (!id) return;
-        fetch('/api/db-users?action=update', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: id,
-            name: fields.name || getUser().name,
-            company: fields.company !== undefined ? fields.company : getUser().company,
-            city: fields.city || null,
-            bio: fields.bio !== undefined ? fields.bio : null,
-            skills: fields.skills !== undefined ? fields.skills : null,
-            day_rate: fields.dayRate !== undefined && fields.dayRate !== '' ? Number(fields.dayRate) : null,
-            categories: fields.categories !== undefined ? fields.categories : null,
-          }),
-        }).catch(function () { /* офлайн — останется хотя бы локально */ });
-      });
-    }
+    // Синхронизируем с БД в фоне — чтобы новый город/навыки/ставка/фото
+    // были видны другим пользователям в поиске (workers.html), а не
+    // только на этом устройстве. Раньше фото (avatar_url) сюда вообще
+    // не попадало — сохранялось только локально, никто другой его не видел.
+    // И раньше ошибка синхронизации проходила тихо — теперь возвращаем
+    // настоящий результат, чтобы вызывающий код мог honestly предупредить,
+    // если не получилось.
+    const needsSync = fields.city || fields.company !== undefined || fields.bio !== undefined ||
+      fields.skills !== undefined || fields.dayRate !== undefined || fields.categories !== undefined ||
+      fields.photo !== undefined;
+
+    if (!needsSync) return Promise.resolve({ ok: true, synced: false });
+
+    return ensureDbUserId().then(function (id) {
+      if (!id) return { ok: false, error: 'Не удалось определить ваш аккаунт — изменения сохранены только на этом устройстве' };
+      return fetch('/api/db-users?action=update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: id,
+          name: fields.name || getUser().name,
+          company: fields.company !== undefined ? fields.company : getUser().company,
+          city: fields.city || null,
+          bio: fields.bio !== undefined ? fields.bio : null,
+          skills: fields.skills !== undefined ? fields.skills : null,
+          day_rate: fields.dayRate !== undefined && fields.dayRate !== '' ? Number(fields.dayRate) : null,
+          categories: fields.categories !== undefined ? fields.categories : null,
+          avatar_url: fields.photo !== undefined ? fields.photo : null,
+        }),
+      })
+        .then(function (r) { return r.json().then(function (data) { return { httpOk: r.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.httpOk || !result.data || !result.data.ok) {
+            return { ok: false, error: (result.data && result.data.error) || 'Сервер отклонил изменения' };
+          }
+          return { ok: true, synced: true };
+        })
+        .catch(function () {
+          return { ok: false, error: 'Нет связи с сервером — изменения сохранены только на этом устройстве' };
+        });
+    });
   }
 
   function initialsFromName(name) {
