@@ -240,18 +240,14 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
     </div>
 
     <!-- СТАТИСТИКА -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #F0EFE9;padding-top:14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #F0EFE9;padding-top:14px;margin-bottom:14px">
       <div style="text-align:center">
         <div id="mobileStatOrders" style="font-size:20px;font-weight:800;color:#14151A">0</div>
         <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">заказов</div>
       </div>
       <div style="text-align:center;border-left:1px solid #F0EFE9">
-        <div style="font-size:20px;font-weight:800;color:#14151A">0</div>
+        <div id="mobileStatRating" style="font-size:20px;font-weight:800;color:#14151A">—</div>
         <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">рейтинг</div>
-      </div>
-      <div style="text-align:center;border-left:1px solid #F0EFE9">
-        <div style="font-size:20px;font-weight:800;color:#14151A">0%</div>
-        <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">выполнено</div>
       </div>
       <div style="text-align:center;border-left:1px solid #F0EFE9">
         <div style="font-size:20px;font-weight:800;color:#14151A">&lt;1ч</div>
@@ -288,8 +284,6 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
       </div>
       <div class="hero-stats">
         <div class="stat"><div class="stat-num" id="statOrders">0</div><div class="stat-label">заказов</div></div>
-        <div class="stat-divider"></div>
-        <div class="stat"><div class="stat-num">0%</div><div class="stat-label">выполнено</div></div>
         <div class="stat-divider"></div>
         <div class="stat"><div class="stat-num">&lt;1ч</div><div class="stat-label">ответ</div></div>
       </div>
@@ -719,6 +713,8 @@ function renderHero() {
 
   const mobileStatOrders = document.getElementById('mobileStatOrders');
   if (mobileStatOrders) mobileStatOrders.textContent = u.completedOrders;
+  const mobileStatRating = document.getElementById('mobileStatRating');
+  if (mobileStatRating) mobileStatRating.textContent = u.reviewsCount > 0 ? Number(u.rating).toFixed(1) : '—';
 
   const mobileMeta = document.getElementById('mobileProfileMeta');
   if (mobileMeta) mobileMeta.textContent = `📍 ${u.city} · ${u.age ? "🎂 " + u.age + " лет" : ""}`;
