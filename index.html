@@ -724,7 +724,7 @@ if ('serviceWorker' in navigator) {
     <button class="nav-tab active" onclick="switchMode('find')">Найти работу</button>
     <button class="nav-tab" onclick="switchMode('hire')">Найти работника</button>
   </div>
-  <button class="nav-post" onclick="openPost()">+ Разместить заказ</button>
+  <button class="nav-post" onclick="Shabashka.setRole('employer'); window.location.href='/employer'">+ Разместить заказ</button>
 </nav>
 
 <div class="app">
@@ -1319,17 +1319,16 @@ function applyAndChat(jobId) {
 }
 
 function openPost() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('postDate').value = today;
-  document.getElementById('postModal').classList.add('open');
+  // Эта форма никогда не сохраняла заказ по-настоящему — просто
+  // показывала выдуманное "Первые отклики появятся через 15 минут" и
+  // закрывала окно. Ведём сразу на настоящий, рабочий путь.
+  Shabashka.setRole('employer');
+  window.location.href = '/employer';
 }
 
 function submitPost() {
-  const desc = document.getElementById('postDesc').value;
-  const pay = document.getElementById('postPay').value;
-  if (!desc || !pay) { alert('Заполните описание и оплату'); return; }
-  closeModal('postModal');
-  alert('Заказ размещён! Первые отклики появятся в течение 15 минут.');
+  Shabashka.setRole('employer');
+  window.location.href = '/employer';
 }
 
 function closeModal(id) {
