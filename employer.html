@@ -289,6 +289,7 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
 <link rel="apple-touch-icon" href="/favicon-192.png">
 <link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 </head>
 <body>
 
@@ -362,6 +363,12 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
       <input class="form-input" id="newAddr" placeholder="Москва, ул. Ленина, 5" autocomplete="off"
         oninput="onAddrInput()" onblur="setTimeout(hideAddrSuggestions, 200)">
       <div id="addrSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:100;max-height:220px;overflow-y:auto;margin-top:4px"></div>
+    </div>
+    <div class="form-group" id="addrMapWrap" style="display:none">
+      <div style="font-size:12px;color:var(--gray);margin-bottom:6px">
+        📍 Точка на карте — перетащите метку, если она стоит не там
+      </div>
+      <div id="addrPreviewMap" style="height:180px;border-radius:10px;overflow:hidden;border:1px solid var(--border)"></div>
     </div>
     <div class="form-group" style="display:none">
       <!-- сюда попадут реальные координаты выбранной подсказки, чтобы при
@@ -1328,7 +1335,9 @@ async function repeatOrder(id) {
   let lat = null, lng = null;
   if (addr) {
     try {
-      const query = encodeURIComponent(addr + ', Россия');
+      const myCity = (Shabashka.getUser().city || '').trim();
+      const cityPrefix = (myCity && addr.toLowerCase().indexOf(myCity.toLowerCase()) === -1) ? myCity + ', ' : '';
+      const query = encodeURIComponent(cityPrefix + addr + ', Россия');
       const res = await fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ru', {
         headers: { 'User-Agent': 'Shabashka/1.0' }
       });
@@ -1705,6 +1714,7 @@ function openPostModal() {
   document.getElementById('newAddrLat').value = '';
   document.getElementById('newAddrLng').value = '';
   hideAddrSuggestions();
+  hideAddrPreview();
   document.getElementById('postModal').classList.add('open');
 }
 
@@ -1731,6 +1741,7 @@ function onAddrInput() {
   // Текст поменяли руками — прошлая выбранная подсказка больше не актуальна
   document.getElementById('newAddrLat').value = '';
   document.getElementById('newAddrLng').value = '';
+  hideAddrPreview();
 
   clearTimeout(addrSuggestTimer);
   const query = input.value.trim();
@@ -1745,7 +1756,15 @@ function fetchAddrSuggestions(query) {
   if (addrSuggestController) addrSuggestController.abort();
   addrSuggestController = new AbortController();
 
-  const url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query + ', Россия') +
+  // Раньше запрос уходил без привязки к городу — короткий адрес вроде
+  // "Гагарина 78" геокодер мог найти в любом городе России, не
+  // обязательно в том, где вы работаете. Подмешиваем город из профиля,
+  // если человек ещё не упомянул его сам в самом запросе.
+  const myCity = (Shabashka.getUser().city || '').trim();
+  const queryLower = query.toLowerCase();
+  const cityPrefix = (myCity && queryLower.indexOf(myCity.toLowerCase()) === -1) ? myCity + ', ' : '';
+
+  const url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(cityPrefix + query + ', Россия') +
     '&format=json&limit=5&accept-language=ru&countrycodes=ru';
 
   fetch(url, { headers: { 'User-Agent': 'Shabashka/1.0' }, signal: addrSuggestController.signal })
@@ -1778,6 +1797,43 @@ function pickAddrSuggestion(i) {
   document.getElementById('newAddrLat').value = r.lat;
   document.getElementById('newAddrLng').value = r.lon;
   hideAddrSuggestions();
+  showAddrPreview(parseFloat(r.lat), parseFloat(r.lon));
+}
+
+// Раньше координаты просто доверялись геокодеру вслепую — узнать, что он
+// ошибся, можно было только потом, уже после публикации, на общей карте.
+// Теперь точка сразу видна в самой форме, и её можно перетащить руками,
+// если геокодер поставил её не туда (частый случай для новых домов,
+// нечётких/повторяющихся названий улиц и т.п.).
+let addrPreviewMapInstance = null;
+let addrPreviewMarker = null;
+
+function showAddrPreview(lat, lng) {
+  const wrap = document.getElementById('addrMapWrap');
+  wrap.style.display = 'block';
+
+  if (!addrPreviewMapInstance) {
+    addrPreviewMapInstance = L.map('addrPreviewMap', { zoomControl: false, attributionControl: false });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(addrPreviewMapInstance);
+  }
+  addrPreviewMapInstance.setView([lat, lng], 16);
+
+  if (addrPreviewMarker) addrPreviewMapInstance.removeLayer(addrPreviewMarker);
+  addrPreviewMarker = L.marker([lat, lng], { draggable: true }).addTo(addrPreviewMapInstance);
+  addrPreviewMarker.on('dragend', function () {
+    const pos = addrPreviewMarker.getLatLng();
+    document.getElementById('newAddrLat').value = pos.lat;
+    document.getElementById('newAddrLng').value = pos.lng;
+  });
+
+  // Карта в скрытом до этого момента блоке иногда отрисовывается с
+  // неправильным размером тайлов — принудительно пересчитываем после показа.
+  setTimeout(function () { if (addrPreviewMapInstance) addrPreviewMapInstance.invalidateSize(); }, 100);
+}
+
+function hideAddrPreview() {
+  const wrap = document.getElementById('addrMapWrap');
+  if (wrap) wrap.style.display = 'none';
 }
 
 function hideAddrSuggestions() {
@@ -1809,9 +1865,11 @@ async function submitOrder() {
     lng = parseFloat(pickedLng);
   } else if (addr) {
     // Подсказку не выбирали (напечатали вручную и не кликнули) —
-    // геокодируем как раньше.
+    // геокодируем как раньше, но с тем же учётом города, что и в подсказках.
     try {
-      const query = encodeURIComponent(addr + ', Россия');
+      const myCity = (Shabashka.getUser().city || '').trim();
+      const cityPrefix = (myCity && addr.toLowerCase().indexOf(myCity.toLowerCase()) === -1) ? myCity + ', ' : '';
+      const query = encodeURIComponent(cityPrefix + addr + ', Россия');
       const res = await fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ru', {
         headers: { 'User-Agent': 'Shabashka/1.0' }
       });
@@ -2087,5 +2145,6 @@ function syncEmployerNav(page) {
 <script src="/feedback.js"></script>
 <script src="/ai-agent.js"></script>
 <script src="/cookie-banner.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </body>
 </html>
