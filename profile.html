@@ -250,7 +250,7 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
         <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">рейтинг</div>
       </div>
       <div style="text-align:center;border-left:1px solid #F0EFE9">
-        <div style="font-size:20px;font-weight:800;color:#14151A">&lt;1ч</div>
+        <div id="mobileStatResponseTime" style="font-size:20px;font-weight:800;color:#14151A">&lt;1ч</div>
         <div style="font-size:10.5px;color:#6B6B67;margin-top:2px">ответ</div>
       </div>
     </div>
@@ -285,7 +285,7 @@ if (!localStorage.getItem('shabashka_access') && !localStorage.getItem('shabashk
       <div class="hero-stats">
         <div class="stat"><div class="stat-num" id="statOrders">0</div><div class="stat-label">заказов</div></div>
         <div class="stat-divider"></div>
-        <div class="stat"><div class="stat-num">&lt;1ч</div><div class="stat-label">ответ</div></div>
+        <div class="stat"><div class="stat-num" id="statResponseTime">&lt;1ч</div><div class="stat-label">ответ</div></div>
       </div>
     </div>
     <div class="hero-actions">
@@ -670,12 +670,26 @@ function renderReviewsList(allReviews) {
 }
 
 // Главный блок профиля: фото/инициалы, имя, возраст, город, дата регистрации, рейтинг
+// Переводим секунды из реального расчёта на сервере в понятную подпись —
+// раньше здесь всегда было зашитое "<1ч", независимо от того, отвечает
+// ли человек вообще.
+function formatResponseTime(seconds) {
+  if (seconds === null || seconds === undefined) return '—';
+  var s = Number(seconds);
+  if (s < 60) return '<1 мин';
+  if (s < 3600) return '~' + Math.round(s / 60) + ' мин';
+  if (s < 86400) return '~' + Math.round(s / 3600) + ' ч';
+  return '~' + Math.round(s / 86400) + ' дн';
+}
+
 function renderHero() {
   const u = Shabashka.getUser();
   const isPro = Shabashka.isPro();
 
   document.getElementById('profileName').textContent = u.name;
   document.getElementById('statOrders').textContent = u.completedOrders;
+  const statResponseTime = document.getElementById('statResponseTime');
+  if (statResponseTime) statResponseTime.textContent = formatResponseTime(u.avgResponseSeconds);
 
   const bigNum = document.getElementById('bigRatingNum');
   const bigStars = document.getElementById('bigRatingStars');
@@ -740,6 +754,8 @@ function renderHero() {
 
   const mobileStatOrders = document.getElementById('mobileStatOrders');
   if (mobileStatOrders) mobileStatOrders.textContent = u.completedOrders;
+  const mobileStatResponseTime = document.getElementById('mobileStatResponseTime');
+  if (mobileStatResponseTime) mobileStatResponseTime.textContent = formatResponseTime(u.avgResponseSeconds);
   const mobileStatRating = document.getElementById('mobileStatRating');
   if (mobileStatRating) mobileStatRating.textContent = u.reviewsCount > 0 ? Number(u.rating).toFixed(1) : '—';
 

@@ -355,6 +355,8 @@
           DEFAULT_USER.verified.passport = !!data.user.verified;
           DEFAULT_USER.verified.phone = true; // раз запись реально есть в базе — телефон подтверждён
           DEFAULT_USER.balance = Number(data.user.balance) || 0;
+          DEFAULT_USER.avgResponseSeconds = data.user.avg_response_seconds !== null && data.user.avg_response_seconds !== undefined
+            ? Number(data.user.avg_response_seconds) : null;
           return DEFAULT_USER;
         }
         return null;

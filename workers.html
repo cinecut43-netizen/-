@@ -274,6 +274,18 @@ function colorFromId(id) {
   return palette[id % palette.length];
 }
 
+// Переводим секунды из настоящего расчёта на сервере в понятную подпись.
+// null означает, что у человека пока нет ни одной переписки с ответом —
+// честно показываем "Нет данных", а не выдумываем число.
+function formatResponseTime(seconds) {
+  if (seconds === null || seconds === undefined) return 'Нет данных';
+  var s = Number(seconds);
+  if (s < 60) return '<1 мин';
+  if (s < 3600) return '~' + Math.round(s / 60) + ' мин';
+  if (s < 86400) return '~' + Math.round(s / 3600) + ' ч';
+  return '~' + Math.round(s / 86400) + ' дн';
+}
+
 function mapDbWorker(u) {
   return {
     id: u.id,
@@ -282,13 +294,13 @@ function mapDbWorker(u) {
     location: u.city || '—',
     rating: u.reviews_count > 0 ? Number(u.rating) : 0,
     orders: u.jobs_done || 0,
-    responseTime: '—',
     bio: u.bio || 'Профиль пока не заполнен',
     skills: Array.isArray(u.skills) ? u.skills : [],
     categories: Array.isArray(u.categories) ? u.categories : [],
     price: u.day_rate || null,
     verified: !!u.verified,
     photo: u.avatar_url || null,
+    responseTime: formatResponseTime(u.avg_response_seconds),
   };
 }
 
