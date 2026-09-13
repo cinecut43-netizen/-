@@ -1303,7 +1303,7 @@ function applyAndChat(jobId) {
   });
 
   // Уведомление в Telegram
-  const job = Shabashka.getJob(jobId);
+  const job = jobForMsg;
   if (job) {
     fetch('/api/telegram-notify', {
       method: 'POST',

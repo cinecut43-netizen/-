@@ -1033,8 +1033,9 @@ function handleQueryParams() {
       switchConvo(currentConvo);
       return;
     }
-    const job = Shabashka.getJob(jobId);
-    if (job) {
+    const localJob = Shabashka.getJob(jobId);
+
+    function buildJobConvo(job, employerId) {
       const newConvo = {
         id: 'job-' + job.id, // id диалога = id заказа в БД — без этого сообщения "терялись"
         jobId: job.id,
@@ -1043,12 +1044,12 @@ function handleQueryParams() {
         job: job.title,
         icon: job.emoji,
         pay: Shabashka.rub(job.pay),
-        date: job.date + ' · ' + job.location,
-        color: job.colors[0],
+        date: job.date + (job.location ? ' · ' + job.location : ''),
+        color: (job.colors && job.colors[0]) || colorFromId(job.id),
         unread: 0,
         time: 'сейчас',
         preview: 'Чат начат',
-        otherId: null,
+        otherId: employerId || null,
       };
       CONVOS.unshift(newConvo);
       MESSAGES_DB[newConvo.id] = [
@@ -1056,18 +1057,42 @@ function handleQueryParams() {
       ];
       currentConvo = newConvo.id;
       renderSidebar();
+      switchConvo(currentConvo);
+    }
 
+    if (localJob) {
+      buildJobConvo(localJob, null);
       // Локальный объект заказа не хранит employer_id — подтягиваем
       // из БД, иначе сообщение не будет знать, кому его доставить.
-      fetch('/api/db-jobs?action=get&id=' + job.id)
+      fetch('/api/db-jobs?action=get&id=' + localJob.id)
         .then(function(r){ return r.json(); })
         .then(function(data) {
-          if (data.ok && data.job) newConvo.otherId = data.job.employer_id;
+          if (data.ok && data.job) {
+            var c = CONVOS.find(function(x){ return x.id === 'job-' + localJob.id; });
+            if (c) c.otherId = data.job.employer_id;
+          }
         })
-        .catch(function(){})
-        .finally(function() { switchConvo(currentConvo); });
+        .catch(function(){});
       return;
     }
+
+    // Раньше если заказа не было в локальном хранилище браузера (а для
+    // заказов с других аккаунтов это всегда так) — чат по ссылке просто
+    // не открывался, без единой ошибки. Теперь при неудаче локального
+    // поиска сразу спрашиваем реальную базу данных.
+    fetch('/api/db-jobs?action=get&id=' + jobId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.job) {
+          var j = data.job;
+          buildJobConvo({
+            id: j.id, company: j.employer_name || j.company || 'Работодатель',
+            title: j.title, emoji: j.emoji || '📦', pay: parseInt(j.pay),
+            date: j.date || '', location: j.location || '',
+          }, j.employer_id);
+        }
+      })
+      .catch(function(){});
   }
 
   if (!currentConvo) {

@@ -1982,7 +1982,7 @@ function openReviewModal(jobId) {
   reviewRating = 5;
   reviewPhoto = null;
 
-  const job = Shabashka.getJob(jobId);
+  const job = ORDERS.find(function(o){ return o.id === jobId; }) || Shabashka.getJob(jobId);
   document.getElementById('reviewJobTitle').textContent = job ? job.title : '';
   document.getElementById('reviewText').value = '';
   document.getElementById('reviewError').style.display = 'none';
@@ -2041,7 +2041,7 @@ let disputeJobId = null;
 
 function openDisputeModal(jobId) {
   disputeJobId = jobId;
-  const job = Shabashka.getJob(jobId);
+  const job = ORDERS.find(function(o){ return o.id === jobId; }) || Shabashka.getJob(jobId);
   document.getElementById('disputeJobTitle').textContent = job ? job.title : '';
   document.getElementById('disputeReason').selectedIndex = 0;
   document.getElementById('disputeComment').value = '';

@@ -473,69 +473,96 @@ function renderBars() {
 }
 
 function renderActiveOrders() {
-  var allJobs = Shabashka.getAllJobs();
-  var active = allJobs.filter(function(j) {
-    return j.status === 'selected' || j.status === 'on_the_way' || j.status === 'in_progress';
-  });
-
   var card = document.getElementById('activeOrdersCard');
   var list = document.getElementById('activeOrdersList');
 
-  if (!active.length) {
-    card.style.display = 'none';
-    return;
-  }
+  // Раньше здесь смотрели только в локальные данные браузера — реальный
+  // активный заказ (принятый на другом устройстве/другим аккаунтом
+  // работодателя) почти никогда так не находился, и карточка оставалась
+  // скрытой, даже когда исполнитель реально сейчас на заказе.
+  Shabashka.ensureDbUserId().then(function (myId) {
+    if (!myId) { card.style.display = 'none'; return; }
+    fetch('/api/db-responses?worker_id=' + myId)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var active = (data.ok ? data.responses : []).filter(function (r) {
+          return r.status === 'accepted' &&
+            (r.job_status === 'selected' || r.job_status === 'on_the_way' || r.job_status === 'in_progress');
+        });
 
-  card.style.display = 'block';
-  list.innerHTML = active.map(function(j) {
-    var statusInfo = {
-      selected:   { label: 'Ожидает вас', color: '#B07800', bg: '#FFF8E6' },
-      on_the_way: { label: '🚶 Едете к заказчику', color: '#1A7A4A', bg: '#E8F5EE' },
-      in_progress:{ label: '🔨 В работе', color: '#185FA5', bg: '#E6F1FB' },
-    }[j.status] || { label: j.status, color: '#6B6B67', bg: '#F4F3EF' };
+        if (!active.length) { card.style.display = 'none'; return; }
 
-    var btnHtml = '';
-    if (j.status === 'selected') {
-      btnHtml = '<button onclick="markOnTheWay(' + j.id + ')" style="margin-top:10px;width:100%;padding:10px;background:#1A7A4A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🚶 Еду к вам</button>';
-    } else if (j.status === 'on_the_way') {
-      btnHtml = '<button onclick="markInProgress(' + j.id + ')" style="margin-top:10px;width:100%;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🔨 Начать работу</button>';
-    } else if (j.status === 'in_progress') {
-      btnHtml = '<button onclick="markDone(' + j.id + ')" style="margin-top:10px;width:100%;padding:10px;background:#E8510A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✅ Завершить</button>';
-    }
+        card.style.display = 'block';
+        list.innerHTML = active.map(function (j) {
+          var statusInfo = {
+            selected:   { label: 'Ожидает вас', color: '#B07800', bg: '#FFF8E6' },
+            on_the_way: { label: '🚶 Едете к заказчику', color: '#1A7A4A', bg: '#E8F5EE' },
+            in_progress:{ label: '🔨 В работе', color: '#185FA5', bg: '#E6F1FB' },
+          }[j.job_status] || { label: j.job_status, color: '#6B6B67', bg: '#F4F3EF' };
 
-    return '<div style="border:1px solid #E5E4E0;border-radius:12px;padding:14px 16px;margin-bottom:8px">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">' +
-      '<div style="font-size:20px">' + j.emoji + '</div>' +
-      '<div style="flex:1">' +
-      '<div style="font-size:14px;font-weight:700">' + j.title + '</div>' +
-      '<div style="font-size:12px;color:#6B6B67">' + j.company + ' · ' + j.date + '</div>' +
-      '</div>' +
-      '<div style="font-size:13px;font-weight:700;color:#14151A">' + j.pay.toLocaleString('ru') + ' ₽</div>' +
-      '</div>' +
-      '<span style="font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;background:' + statusInfo.bg + ';color:' + statusInfo.color + '">' + statusInfo.label + '</span>' +
-      btnHtml +
-      '</div>';
-  }).join('');
+          var btnHtml = '';
+          if (j.job_status === 'selected') {
+            btnHtml = '<button onclick="markOnTheWay(' + j.job_id + ')" style="margin-top:10px;width:100%;padding:10px;background:#1A7A4A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🚶 Еду к вам</button>';
+          } else if (j.job_status === 'on_the_way') {
+            btnHtml = '<button onclick="markInProgress(' + j.job_id + ')" style="margin-top:10px;width:100%;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🔨 Начать работу</button>';
+          } else if (j.job_status === 'in_progress') {
+            btnHtml = '<button onclick="markDone(' + j.job_id + ')" style="margin-top:10px;width:100%;padding:10px;background:#E8510A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✅ Завершить</button>';
+          }
+
+          return '<div style="border:1px solid #E5E4E0;border-radius:12px;padding:14px 16px;margin-bottom:8px">' +
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">' +
+            '<div style="font-size:20px">' + (j.emoji || '📦') + '</div>' +
+            '<div style="flex:1">' +
+            '<div style="font-size:14px;font-weight:700">' + j.title + '</div>' +
+            '<div style="font-size:12px;color:#6B6B67">' + (j.employer_company || j.employer_name || 'Работодатель') + '</div>' +
+            '</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#14151A">' + parseInt(j.pay).toLocaleString('ru') + ' ₽</div>' +
+            '</div>' +
+            '<span style="font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;background:' + statusInfo.bg + ';color:' + statusInfo.color + '">' + statusInfo.label + '</span>' +
+            btnHtml +
+            '</div>';
+        }).join('');
+      })
+      .catch(function () { card.style.display = 'none'; });
+  });
 }
 
 function markOnTheWay(jobId) {
   Shabashka.updateJobStatus(jobId, 'on_the_way');
-  renderActiveOrders();
-  showProfileToast('Работодатель получил уведомление — вы едете! 🚶');
+  Shabashka.syncJobStatusToDb(jobId, 'on_the_way').then(function (result) {
+    if (result.ok) {
+      showProfileToast('Работодатель получил уведомление — вы едете! 🚶');
+    } else {
+      showProfileToast('⚠️ Не удалось сохранить на сервере: ' + result.error);
+    }
+    renderActiveOrders();
+  });
 }
 
 function markInProgress(jobId) {
   Shabashka.updateJobStatus(jobId, 'in_progress');
-  renderActiveOrders();
-  showProfileToast('Работа начата! Удачи 💪');
+  Shabashka.syncJobStatusToDb(jobId, 'in_progress').then(function (result) {
+    if (result.ok) {
+      showProfileToast('Работа начата! Удачи 💪');
+    } else {
+      showProfileToast('⚠️ Не удалось сохранить на сервере: ' + result.error);
+    }
+    renderActiveOrders();
+  });
 }
 
 function markDone(jobId) {
   if (!confirm('Подтвердить завершение заказа?')) return;
   Shabashka.updateJobStatus(jobId, 'done');
-  renderActiveOrders();
-  renderHistory();
-  showProfileToast('Заказ завершён! Ждите оплату ✅');
+  Shabashka.syncJobStatusToDb(jobId, 'done').then(function (result) {
+    if (result.ok) {
+      showProfileToast('Заказ завершён! Ждите оплату ✅');
+    } else {
+      showProfileToast('⚠️ Не удалось сохранить на сервере: ' + result.error);
+    }
+    renderActiveOrders();
+    renderHistory();
+  });
 }
 
 function showProfileToast(msg) {
