@@ -64,16 +64,55 @@ module.exports = async function handler(req, res) {
 
     // GET /api/db-users?id=1 — найти по id (публичный просмотр профиля — не требует сессии)
     if (method === 'GET' && req.query.id) {
-      const result = await pool.query('SELECT * FROM users WHERE id=$1', [req.query.id]);
+      const result = await pool.query(
+        `SELECT u.*, rt.avg_response_seconds
+         FROM users u
+         LEFT JOIN LATERAL (
+           SELECT AVG(EXTRACT(EPOCH FROM (m.created_at - m.prev_time))) as avg_response_seconds
+           FROM (
+             SELECT sender_id, created_at,
+                    LAG(sender_id) OVER (PARTITION BY COALESCE(job_id::text, 'd-' || LEAST(sender_id,receiver_id) || '-' || GREATEST(sender_id,receiver_id)) ORDER BY created_at) as prev_sender,
+                    LAG(created_at) OVER (PARTITION BY COALESCE(job_id::text, 'd-' || LEAST(sender_id,receiver_id) || '-' || GREATEST(sender_id,receiver_id)) ORDER BY created_at) as prev_time
+             FROM messages
+             WHERE (sender_id = u.id OR receiver_id = u.id) AND deleted IS NOT TRUE AND created_at > NOW() - INTERVAL '30 days'
+           ) m
+           WHERE m.sender_id = u.id AND m.prev_sender IS NOT NULL AND m.prev_sender != u.id
+             AND m.created_at - m.prev_time < INTERVAL '24 hours'
+         ) rt ON true
+         WHERE u.id=$1`,
+        [req.query.id]
+      );
       if (!result.rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
       return res.json({ ok: true, user: result.rows[0] });
     }
 
     // GET /api/db-users — список исполнителей
-    if (method === 'GET') {
+    if (method === 'GET' && !req.query.id) {
       const { role = 'worker', limit = 50 } = req.query;
+      // Раньше "время ответа" было просто зашитым текстом "<1ч" — никто
+      // и никогда не измерял, как быстро человек реально отвечает.
+      // Теперь считаем честно: для каждого сообщения ЭТОГО пользователя
+      // смотрим, сколько прошло с предыдущего сообщения СОБЕСЕДНИКА в
+      // том же диалоге (если это было ответом, а не первым сообщением),
+      // и берём среднее по всем таким случаям за последние 30 дней.
+      // Разговоры без ответа дольше суток не учитываем — это, скорее
+      // всего, брошенный диалог, а не долгий ответ.
       const result = await pool.query(
-        `SELECT * FROM users WHERE role=$1 AND status='active' ORDER BY rating DESC, jobs_done DESC LIMIT $2`,
+        `SELECT u.*, rt.avg_response_seconds
+         FROM users u
+         LEFT JOIN LATERAL (
+           SELECT AVG(EXTRACT(EPOCH FROM (m.created_at - m.prev_time))) as avg_response_seconds
+           FROM (
+             SELECT sender_id, created_at,
+                    LAG(sender_id) OVER (PARTITION BY COALESCE(job_id::text, 'd-' || LEAST(sender_id,receiver_id) || '-' || GREATEST(sender_id,receiver_id)) ORDER BY created_at) as prev_sender,
+                    LAG(created_at) OVER (PARTITION BY COALESCE(job_id::text, 'd-' || LEAST(sender_id,receiver_id) || '-' || GREATEST(sender_id,receiver_id)) ORDER BY created_at) as prev_time
+             FROM messages
+             WHERE (sender_id = u.id OR receiver_id = u.id) AND deleted IS NOT TRUE AND created_at > NOW() - INTERVAL '30 days'
+           ) m
+           WHERE m.sender_id = u.id AND m.prev_sender IS NOT NULL AND m.prev_sender != u.id
+             AND m.created_at - m.prev_time < INTERVAL '24 hours'
+         ) rt ON true
+         WHERE u.role=$1 AND u.status='active' ORDER BY u.rating DESC, u.jobs_done DESC LIMIT $2`,
         [role, limit]
       );
       return res.json({ ok: true, users: result.rows });
