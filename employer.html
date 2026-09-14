@@ -542,7 +542,7 @@ let ORDERS = loadOrders();
 
 // Догружаем заказы этого работодателя из БД — без этого кабинет показывал
 // только то, что было создано в ЭТОМ браузере на ЭТОМ устройстве.
-(function loadOrdersFromDB() {
+function loadOrdersFromDB() {
   Shabashka.ensureDbUserId().then(function (employerId) {
     if (!employerId) return;
     fetch('/api/db-jobs?employer_id=' + employerId)
@@ -580,7 +580,18 @@ let ORDERS = loadOrders();
       })
       .catch(function(){ console.log('БД недоступна, показываем локальные заказы'); });
   });
-})();
+}
+loadOrdersFromDB();
+
+// Раньше список заказов в кабинете обновлялся только один раз при
+// открытии страницы — после публикации нового заказа (который сразу
+// перерисовывался через локальную loadOrders(), с её старыми "заказами-
+// призраками") приходилось ждать до следующего ручного обновления
+// страницы, чтобы увидеть настоящее, актуальное состояние. Теперь
+// список сам подтягивает свежие данные, пока страница открыта и видна.
+setInterval(function() {
+  if (document.visibilityState === 'visible') loadOrdersFromDB();
+}, 15000);
 
 let EMPLOYER_RESPONSES = []; // все отклики на заказы этого работодателя, из БД
 
@@ -1398,7 +1409,7 @@ async function repeatOrder(id) {
     requirements: o.requirements || '—',
   }, dbJobId ? { id: dbJobId } : {}));
 
-  ORDERS = loadOrders();
+  loadOrdersFromDB();
   renderPage();
 
   // Toast
@@ -1425,7 +1436,7 @@ function acceptResp(responseId) {
         if (!data.ok) { alert('Не удалось принять отклик'); return; }
         Shabashka.updateJobStatus(r.jobId, 'selected'); // держим локальную копию статуса в согласии с БД
         closeModal('detailModal');
-        ORDERS = loadOrders();
+        loadOrdersFromDB();
         renderPage();
       })
       .catch(function(){ alert('БД недоступна, попробуйте ещё раз'); });
@@ -1435,7 +1446,7 @@ function acceptResp(responseId) {
   const result = Shabashka.acceptResponse(responseId);
   if (!result.ok) { alert(result.error); return; }
   closeModal('detailModal');
-  ORDERS = loadOrders();
+  loadOrdersFromDB();
   renderPage();
 }
 
@@ -1590,7 +1601,7 @@ function advanceOrder(id, nextStatus) {
       alert('Не удалось сохранить новый статус на сервере: ' + result.error + '\nПопробуйте ещё раз — сейчас изменение видно только у вас в браузере.');
     }
   });
-  ORDERS = loadOrders();
+  loadOrdersFromDB();
   closeModal('detailModal');
   renderPage();
 
@@ -1688,7 +1699,7 @@ function cancelOrder(id) {
       alert('Не удалось отменить заказ на сервере: ' + result.error + '\nПопробуйте ещё раз — сейчас он может быть всё ещё виден другим.');
     }
   });
-  ORDERS = loadOrders();
+  loadOrdersFromDB();
   closeModal('detailModal');
   alert('Заказ снят с публикации');
   renderPage();
@@ -1956,7 +1967,6 @@ async function submitOrder() {
     });
   } catch(e) {}
 
-  ORDERS = loadOrders();
   closeModal('postModal');
 
   const mapHint = lat ? '' : ' Адрес не удалось определить на карте — уточните его точнее.';
@@ -1965,7 +1975,12 @@ async function submitOrder() {
   } else {
     alert('Заказ сохранён, но не удалось записать его в общую базу — пока его видите только вы на этом устройстве, другим пользователям (в том числе на телефоне) он не виден. Попробуйте ещё раз через минуту или проверьте соединение.' + mapHint);
   }
-  renderPage();
+  // Раньше здесь стояло "ORDERS = loadOrders()" — чисто локальная
+  // функция браузера, которая показывала вперемешку и настоящий новый
+  // заказ, и старые "заказы-призраки" из прошлых тестов, пока не
+  // сработает следующее автообновление или человек не обновит страницу
+  // руками. Теперь сразу спрашиваем реальное состояние у сервера.
+  loadOrdersFromDB();
 }
 
 ['postModal','detailModal','topUpModal','reviewModal','disputeModal'].forEach(id => {
@@ -2060,7 +2075,7 @@ function submitDisputeForm() {
     return;
   }
 
-  ORDERS = loadOrders();
+  loadOrdersFromDB();
   closeModal('disputeModal');
   alert('Спор открыт. Деньги по заказу заморожены до решения администрации.');
   renderPage();
