@@ -1029,7 +1029,7 @@ function renderJobs() {
         </div>
         <div class="m-job-footer">
           <div class="m-responses">
-            ${j.colors.slice(0,3).map((c,i) => `<div class="m-avatar" style="background:${c}">${String.fromCharCode(65+i)}</div>`).join('')}
+            ${j.colors.slice(0, Math.min(3, j.responses)).map((c,i) => `<div class="m-avatar" style="background:${c}">${String.fromCharCode(65+i)}</div>`).join('')}
             <span>${j.responses} откл.</span>
           </div>
           <div style="display:flex;gap:8px">
