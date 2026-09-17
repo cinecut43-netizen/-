@@ -30,7 +30,6 @@
 
   const WORKER_LINKS = [
     { page: 'index', href: '/', icon: 'search', label: 'Найти работу' },
-    { page: 'map', href: '/map', icon: 'map', label: 'Карта' },
     { page: 'chat', href: '/chat', icon: 'message-circle', label: 'Сообщения' },
     { page: 'favorites', href: '/favorites', icon: 'heart', label: 'Избранное' },
     { page: 'profile', href: '/profile', icon: 'user', label: 'Профиль' },
@@ -39,7 +38,6 @@
   // Пункты меню для роли "работодатель"
   const EMPLOYER_LINKS = [
     { page: 'employer', href: '/employer', icon: 'layout-dashboard', label: 'Кабинет' },
-    { page: 'map', href: '/map', icon: 'map', label: 'Карта' },
     { page: 'chat', href: '/chat', icon: 'message-circle', label: 'Сообщения' },
     { page: 'profile', href: '/profile', icon: 'user', label: 'Профиль' },
   ];
@@ -223,7 +221,6 @@
       // Навигация исполнителя
       var workerNav = [
         { href: '/',           icon: 'ph-house',            label: 'Главная',   page: 'index' },
-        { href: '/map',        icon: 'ph-map-pin',          label: 'Карта',     page: 'map' },
         { href: '/chat',       icon: 'ph-chat-circle-dots', label: 'Чат',       page: 'chat', badge: true },
         { href: '/favorites',  icon: 'ph-heart',            label: 'Избранное', page: 'favorites' },
         { href: '/profile',    icon: 'ph-user-circle',      label: 'Профиль',   page: 'profile' },
@@ -233,7 +230,6 @@
         { href: '/employer',   icon: 'ph-chart-bar',        label: 'Главная',   page: 'employer' },
         { href: '/workers',    icon: 'ph-users',            label: 'Исполн.',   page: 'workers' },
         { href: '/chat',       icon: 'ph-chat-circle-dots', label: 'Чат',       page: 'chat', badge: true },
-        { href: '/map',        icon: 'ph-map-pin',          label: 'Карта',     page: 'map' },
         { href: '/profile',    icon: 'ph-user-circle',      label: 'Профиль',   page: 'profile' },
       ];
 
