@@ -903,6 +903,7 @@ function loadJobsFromDB() {
             desc: j.description || '',
             status: j.status || 'new',
             responses: parseInt(j.responses_count) || 0,
+            responderNames: j.responder_names || [],
             colors: ['#E8510A','#185FA5','#1A7A4A'],
             requirements: '—',
             employerId: j.employer_id,
@@ -1029,7 +1030,7 @@ function renderJobs() {
         </div>
         <div class="m-job-footer">
           <div class="m-responses">
-            ${j.colors.slice(0, Math.min(3, j.responses)).map((c,i) => `<div class="m-avatar" style="background:${c}">${String.fromCharCode(65+i)}</div>`).join('')}
+            ${(j.responderNames || []).slice(0,3).map((name,i) => `<div class="m-avatar" style="background:${j.colors[i % j.colors.length]}">${(name || '?')[0].toUpperCase()}</div>`).join('')}
             <span>${j.responses} откл.</span>
           </div>
           <div style="display:flex;gap:8px">
