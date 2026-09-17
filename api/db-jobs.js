@@ -12,7 +12,13 @@ module.exports = async function handler(req, res) {
       let sql = `
         SELECT j.*, u.name as employer_name, u.rating as employer_rating,
                w.name as selected_worker_name, w.verified as selected_worker_verified,
-               COUNT(r.id) as responses_count
+               COUNT(r.id) as responses_count,
+               (SELECT array_agg(rn.name) FROM (
+                  SELECT ru.name FROM responses rr
+                  JOIN users ru ON rr.worker_id = ru.id
+                  WHERE rr.job_id = j.id
+                  ORDER BY rr.created_at ASC LIMIT 3
+                ) rn) as responder_names
         FROM jobs j
         LEFT JOIN users u ON j.employer_id = u.id
         LEFT JOIN users w ON j.selected_worker_id = w.id
