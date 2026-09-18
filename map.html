@@ -34,7 +34,6 @@
 <meta name="twitter:title" content="Карта заказов — Шабашка">
 <meta name="twitter:description" content="Найди заказы рядом с тобой на интерактивной карте Москвы и области.">
 <meta name="twitter:image" content="https://shabashka-lllll16.amvera.io/og-image.png">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -116,9 +115,9 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .dtag-gray { background: var(--gray-light); color: var(--gray); }
 
 /* CUSTOM MARKER */
-.leaflet-control-attribution { display: none !important; }
+
 /* Делаем OSM карту светлее и менее "зелёной" */
-.leaflet-tile-pane { filter: grayscale(30%) brightness(1.08) saturate(0.7); }
+
 
 /* ПИН ЗАКАЗА — пузырь с хвостиком вниз */
 .job-pin {
@@ -200,7 +199,7 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 </style>
 <meta name="color-scheme" content="light only">
 <style>:root { color-scheme: light only; }</style>
-<style>@media(max-width:600px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}}</style>
+<style>@media(max-width:600px){body{padding-bottom:calc(200px + env(safe-area-inset-bottom,0px))!important}}</style>
 </head>
 <body>
 
@@ -242,7 +241,6 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 Shabashka.renderNav('map', { compact: true });
 
@@ -331,42 +329,85 @@ function resolveCityCenter() {
   }
 
   const query = encodeURIComponent(city + ', Россия');
-  return fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ru', {
-    headers: { 'User-Agent': 'Shabashka/1.0' }
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (data && data.length > 0) {
-        MY_LAT = parseFloat(data[0].lat);
-        MY_LNG = parseFloat(data[0].lon);
-        localStorage.setItem(cacheKey, JSON.stringify({ lat: MY_LAT, lng: MY_LNG }));
-        return true;
-      }
-      return false;
-    })
-    .catch(function () { return false; });
+  return yandexMapsKeyPromise.then(function (key) {
+    if (!key) return false;
+    return fetch('https://geocode-maps.yandex.ru/v1/?apikey=' + encodeURIComponent(key) + '&geocode=' + query + '&format=json&results=1&lang=ru_RU')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        const members = (data.response && data.response.GeoObjectCollection && data.response.GeoObjectCollection.featureMember) || [];
+        if (members.length) {
+          const pos = members[0].GeoObject.Point.pos.split(' ');
+          MY_LNG = parseFloat(pos[0]);
+          MY_LAT = parseFloat(pos[1]);
+          localStorage.setItem(cacheKey, JSON.stringify({ lat: MY_LAT, lng: MY_LNG }));
+          return true;
+        }
+        return false;
+      })
+      .catch(function () { return false; });
+  });
 }
 
+let yandexMapsKey = null;
+let yandexMapsKeyPromise = fetch('/api/yandex-maps-key').then(function(r){ return r.json(); }).then(function(d){ yandexMapsKey = d.key || null; return yandexMapsKey; }).catch(function(){ return null; });
+
+let yandexScriptLoading = null;
+function loadYandexMapsScript() {
+  if (yandexScriptLoading) return yandexScriptLoading;
+  yandexScriptLoading = yandexMapsKeyPromise.then(function (key) {
+    return new Promise(function (resolve, reject) {
+      if (!key) { reject(new Error('no key')); return; }
+      if (window.ymaps) { resolve(window.ymaps); return; }
+      const script = document.createElement('script');
+      script.src = 'https://api-maps.yandex.ru/2.1/?apikey=' + encodeURIComponent(key) + '&lang=ru_RU';
+      script.onload = function () { window.ymaps.ready(function () { resolve(window.ymaps); }); };
+      script.onerror = function () { reject(new Error('failed to load ymaps')); };
+      document.head.appendChild(script);
+    });
+  });
+  return yandexScriptLoading;
+}
+
+let ymapsRef = null;
+let JobPinLayout = null;
+
 function initMap() {
-  map = L.map('map', { zoomControl: false, attributionControl: false }).setView([MY_LAT, MY_LNG], 13);
-  // OpenStreetMap — работает везде без ключа, русские названия
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    minZoom: 5,
-  }).addTo(map);
+  loadYandexMapsScript().then(function (ymaps) {
+    ymapsRef = ymaps;
 
-  L.control.zoom({ position: 'bottomright' }).addTo(map);
+    map = new ymaps.Map('map', {
+      center: [MY_LAT, MY_LNG], zoom: 13,
+    }, { suppressMapOpenBlock: true });
 
-  // Моя метка
-  const myIcon = L.divIcon({ className: '', html: '<div class="my-marker"></div>', iconSize: [16,16], iconAnchor: [8,8] });
-  myMarker = L.marker([MY_LAT, MY_LNG], { icon: myIcon }).addTo(map);
-  myMarker.bindPopup('<b>Вы здесь</b>');
+    // Кастомный внешний вид метки заказа — тот же дизайн (эмодзи + цена
+    // в пузыре), что был на прежней карте, просто на другом движке.
+    JobPinLayout = ymaps.templateLayoutFactory.createClass(
+      '<div class="job-pin $[properties.urgentClass]" style="position:relative">' +
+      '<div class="job-pin-bubble"><span class="job-pin-emoji">$[properties.emoji]</span><span class="job-pin-price">$[properties.price]</span></div>' +
+      '<div class="job-pin-dot"></div>' +
+      '</div>'
+    );
 
-  renderMarkers();
+    // Моя метка
+    const myPlacemark = new ymaps.Placemark([MY_LAT, MY_LNG], {}, {
+      iconLayout: ymaps.templateLayoutFactory.createClass('<div class="my-marker"></div>'),
+      iconShape: { type: 'Circle', coordinates: [8, 8], radius: 8 },
+      iconOffset: [-8, -8],
+      hasBalloon: false,
+    });
+    myMarker = myPlacemark;
+    map.geoObjects.add(myPlacemark);
+
+    renderMarkers();
+    map.events.add('click', () => document.getElementById('detailSheet').classList.remove('open'));
+  }).catch(function () {
+    document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--gray);font-size:13px;text-align:center;padding:20px">Не удалось загрузить карту.<br>Проверьте подключение Яндекс.Карт.</div>';
+  });
 }
 
 function renderMarkers() {
-  markers.forEach(m => map.removeLayer(m));
+  if (!map || !ymapsRef) return;
+  markers.forEach(m => map.geoObjects.remove(m));
   markers = [];
 
   const jobs = getFiltered();
@@ -380,17 +421,17 @@ function renderMarkers() {
 
   jobsWithCoords.forEach(j => {
     const price = j.pay.toLocaleString('ru') + ' ₽';
-    const html = '<div class="job-pin' + (j.urgent ? ' urgent' : '') + '">' +
-      '<div class="job-pin-bubble">' +
-      '<span class="job-pin-emoji">' + j.emoji + '</span>' +
-      '<span class="job-pin-price">' + price + '</span>' +
-      '</div>' +
-      '<div class="job-pin-dot"></div>' +
-      '</div>';
-    const icon = L.divIcon({ className: '', html: html, iconSize: [80, 40], iconAnchor: [40, 40] });
-    const m = L.marker([j.lat, j.lng], { icon }).addTo(map);
-    m.on('click', () => openDetail(j.id));
-    markers.push(m);
+    const placemark = new ymapsRef.Placemark([j.lat, j.lng], {
+      emoji: j.emoji, price: price, urgentClass: j.urgent ? 'urgent' : '',
+    }, {
+      iconLayout: JobPinLayout,
+      iconShape: { type: 'Rectangle', coordinates: [[-40, -40], [40, 0]] },
+      iconOffset: [-40, -40],
+      hasBalloon: false,
+    });
+    placemark.events.add('click', () => openDetail(j.id));
+    map.geoObjects.add(placemark);
+    markers.push(placemark);
   });
 }
 
@@ -469,7 +510,7 @@ function openDetail(id) {
       <button class="apply-main" onclick="applyJob(${j.id})">Откликнуться</button>
     </div>`;
   document.getElementById('detailSheet').classList.add('open');
-  map.setView([j.lat, j.lng], 14, { animate: true });
+  map.setCenter([j.lat, j.lng], 14);
 }
 
 function applyJob(id) {
@@ -493,15 +534,15 @@ function goToMyLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(pos => {
       const { latitude, longitude } = pos.coords;
-      map.setView([latitude, longitude], 13, { animate: true });
-      myMarker.setLatLng([latitude, longitude]);
+      map.setCenter([latitude, longitude], 13);
+      myMarker.geometry.setCoordinates([latitude, longitude]);
       showToast('📍 Местоположение обновлено');
     }, () => {
-      map.setView([MY_LAT, MY_LNG], 13, { animate: true });
+      map.setCenter([MY_LAT, MY_LNG], 13);
       showToast('📍 Показываю Москву');
     });
   } else {
-    map.setView([MY_LAT, MY_LNG], 13, { animate: true });
+    map.setCenter([MY_LAT, MY_LNG], 13);
   }
 }
 
@@ -515,7 +556,6 @@ function showToast(msg) {
 renderFilters();
 resolveCityCenter().finally(function () {
   initMap();
-  map.on('click', () => document.getElementById('detailSheet').classList.remove('open'));
 });
 </script>
 <script>(function(){ var n=document.getElementById('mobileNav'); if(!n) return; function c(){ n.style.display=window.innerWidth<=600?'flex':'none'; } c(); window.addEventListener('resize',c); })();</script>
