@@ -331,8 +331,29 @@
     });
   }
 
+  // Раньше шапка рисовалась один раз при загрузке страницы, ещё до того,
+  // как приходили свежие данные о пользователе с сервера — если фото
+  // обновилось на другом устройстве (или просто раньше localStorage не
+  // содержал его), кружок в шапке так и оставался с инициалами навсегда,
+  // пока не открыть сам профиль. Обновляем аватарку отдельно, как только
+  // реальные данные подтягиваются.
+  function refreshAvatar() {
+    if (!window.Shabashka || !window.Shabashka.refreshUserFromDb) return;
+    window.Shabashka.refreshUserFromDb().then(function (user) {
+      if (!user || !user.photo) return;
+      var avatarEl = document.querySelector('.sb-avatar');
+      if (avatarEl) {
+        avatarEl.style.backgroundImage = "url('" + user.photo + "')";
+        avatarEl.style.backgroundSize = 'cover';
+        avatarEl.style.backgroundPosition = 'center';
+        avatarEl.style.color = 'transparent';
+      }
+    });
+  }
+
   if (typeof window !== 'undefined') {
     pollUnreadBadge();
     setInterval(pollUnreadBadge, 20000);
+    refreshAvatar();
   }
 })();

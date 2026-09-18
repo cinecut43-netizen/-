@@ -357,6 +357,14 @@
           DEFAULT_USER.balance = Number(data.user.balance) || 0;
           DEFAULT_USER.avgResponseSeconds = data.user.avg_response_seconds !== null && data.user.avg_response_seconds !== undefined
             ? Number(data.user.avg_response_seconds) : null;
+          // Раньше фото сохранялось в базу при загрузке, но никогда не
+          // считывалось обратно — аватарку было видно только на том самом
+          // устройстве, где её загрузили. Теперь при каждом обновлении
+          // данных пользователя подтягиваем актуальное фото из базы.
+          if (data.user.avatar_url) {
+            DEFAULT_USER.photo = data.user.avatar_url;
+            localStorage.setItem('shabashka_photo', data.user.avatar_url);
+          }
           return DEFAULT_USER;
         }
         return null;
