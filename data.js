@@ -374,6 +374,37 @@
             DEFAULT_USER.photo = data.user.avatar_url;
             localStorage.setItem('shabashka_photo', data.user.avatar_url);
           }
+          // Тот же самый пробел был и с городом, «о себе», навыками,
+          // категориями, ставкой и названием компании — все они писались
+          // в базу при сохранении профиля, но обратно считывались только
+          // из localStorage ЭТОГО браузера. На другом устройстве того же
+          // аккаунта (например, на телефоне, если профиль редактировали
+          // с компьютера) эти поля оставались пустыми. Теперь подтягиваем
+          // их из базы точно так же, как фото.
+          if (data.user.city) {
+            DEFAULT_USER.city = data.user.city;
+            localStorage.setItem('shabashka_city', data.user.city);
+          }
+          if (data.user.bio) {
+            DEFAULT_USER.bio = data.user.bio;
+            localStorage.setItem('shabashka_bio', data.user.bio);
+          }
+          if (data.user.company) {
+            DEFAULT_USER.company = data.user.company;
+            localStorage.setItem('shabashka_company', data.user.company);
+          }
+          if (data.user.day_rate !== null && data.user.day_rate !== undefined) {
+            DEFAULT_USER.dayRate = Number(data.user.day_rate);
+            localStorage.setItem('shabashka_day_rate', String(data.user.day_rate));
+          }
+          if (data.user.skills) {
+            DEFAULT_USER.skills = data.user.skills;
+            localStorage.setItem('shabashka_skills', JSON.stringify(data.user.skills));
+          }
+          if (data.user.categories) {
+            DEFAULT_USER.categories = data.user.categories;
+            localStorage.setItem('shabashka_categories', JSON.stringify(data.user.categories));
+          }
           return DEFAULT_USER;
         }
         return null;
