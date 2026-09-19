@@ -219,20 +219,29 @@
 
     return ensureDbUserId().then(function (id) {
       if (!id) return { ok: false, error: 'Не удалось определить ваш аккаунт — изменения сохранены только на этом устройстве' };
+      // Раньше avatar_url всегда попадал в тело запроса, и когда фото не
+      // менялось (fields.photo === undefined), сюда честно уходил null —
+      // сервер воспринимал явный null как команду "очистить" и стирал уже
+      // загруженное фото в базе при КАЖДОМ обычном сохранении профиля
+      // (смена имени/города/о себе), даже если фото никто не трогал.
+      // Теперь ключ avatar_url добавляется в тело запроса, только когда
+      // пользователь реально загрузил новое фото.
+      const payload = {
+        id: id,
+        name: fields.name || getUser().name,
+        company: fields.company !== undefined ? fields.company : getUser().company,
+        city: fields.city || null,
+        bio: fields.bio !== undefined ? fields.bio : null,
+        skills: fields.skills !== undefined ? fields.skills : null,
+        day_rate: fields.dayRate !== undefined && fields.dayRate !== '' ? Number(fields.dayRate) : null,
+        categories: fields.categories !== undefined ? fields.categories : null,
+      };
+      if (fields.photo !== undefined) payload.avatar_url = fields.photo;
+
       return fetch('/api/db-users?action=update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: id,
-          name: fields.name || getUser().name,
-          company: fields.company !== undefined ? fields.company : getUser().company,
-          city: fields.city || null,
-          bio: fields.bio !== undefined ? fields.bio : null,
-          skills: fields.skills !== undefined ? fields.skills : null,
-          day_rate: fields.dayRate !== undefined && fields.dayRate !== '' ? Number(fields.dayRate) : null,
-          categories: fields.categories !== undefined ? fields.categories : null,
-          avatar_url: fields.photo !== undefined ? fields.photo : null,
-        }),
+        body: JSON.stringify(payload),
       })
         .then(function (r) { return r.json().then(function (data) { return { httpOk: r.ok, data: data }; }); })
         .then(function (result) {
