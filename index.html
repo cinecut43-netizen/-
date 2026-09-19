@@ -636,16 +636,11 @@ if ('serviceWorker' in navigator) {
 <!-- НАТИВНАЯ МОБИЛЬНАЯ ШАПКА (только на телефоне) -->
 <div id="mobileAppHeader" style="display:none">
   <div style="background:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:100;border-bottom:1px solid #F0EFE9">
-    <!-- Топ: лого + уведомления + аватар -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <!-- Топ: лого. Чат и профиль убрали отсюда — они дублировали нижнее
+         меню (вкладки «Чат» и «Профиль» там уже есть), а здесь только
+         занимали место и не показывали ничего, кроме инициалов. -->
+    <div style="display:flex;align-items:center;margin-bottom:12px">
       <div style="font-size:21px;font-weight:900;letter-spacing:-0.5px;color:#14151A">Шаба<span style="color:#E8510A">шка</span></div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <button onclick="window.location.href='/chat'" style="position:relative;width:36px;height:36px;border-radius:50%;background:#F4F3EF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
-          <i class="ph-bold ph-chat-circle-dots" style="font-size:18px;color:#6B6B67"></i>
-          <span id="mobileHeaderChatBadge" style="display:none;position:absolute;top:0;right:0;width:14px;height:14px;background:#E8510A;border-radius:50%;border:2px solid #fff"></span>
-        </button>
-        <button onclick="window.location.href='/profile'" style="width:36px;height:36px;border-radius:50%;background:#E8510A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff" id="mobileAvatar">ДК</button>
-      </div>
     </div>
     <!-- Поиск -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
