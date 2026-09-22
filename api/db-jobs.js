@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
   try {
     // GET /api/db-jobs — список заказов
     if (method === 'GET' && !action) {
-      const { cat, status, employer_id, limit = 50, offset = 0 } = req.query;
+      const { cat, city, status, employer_id, limit = 50, offset = 0 } = req.query;
       let sql = `
         SELECT j.*, u.name as employer_name, u.rating as employer_rating,
                w.name as selected_worker_name, w.verified as selected_worker_verified,
@@ -29,6 +29,10 @@ module.exports = async function handler(req, res) {
       if (cat && cat !== 'all') {
         params.push(cat);
         sql += ` AND j.category = $${params.length}`;
+      }
+      if (city && city !== 'all') {
+        params.push(city);
+        sql += ` AND j.city = $${params.length}`;
       }
       if (employer_id) {
         // Кабинет работодателя — показываем ВСЕ его заказы, любого статуса,
@@ -68,7 +72,7 @@ module.exports = async function handler(req, res) {
     if (method === 'POST' && !action) {
       if (!req.authUserId) return res.status(401).json({ error: 'Не авторизован' });
       const { title, description, category, emoji, pay, pay_label,
-              people, location, address, lat, lng, date, urgent, allow_bargain } = req.body;
+              people, location, address, city, lat, lng, date, urgent, allow_bargain } = req.body;
       const employer_id = req.authUserId;
 
       if (!title || !pay) {
@@ -77,11 +81,11 @@ module.exports = async function handler(req, res) {
 
       const result = await pool.query(
         `INSERT INTO jobs (employer_id, title, description, category, emoji, pay, pay_label,
-                          people, location, address, lat, lng, date, urgent, allow_bargain)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+                          people, location, address, city, lat, lng, date, urgent, allow_bargain)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
          RETURNING *`,
         [employer_id, title, description, category || 'other', emoji || '📦',
-         pay, pay_label || 'за день', people || 1, location, address,
+         pay, pay_label || 'за день', people || 1, location, address, city || null,
          lat, lng, date, urgent || false, allow_bargain || false]
       );
 
