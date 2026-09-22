@@ -31,21 +31,23 @@ module.exports = async function handler(req, res) {
         return res.json({ ok: true, count: parseInt(result.rows[0].count) });
       }
 
-      // Разбивка непрочитанных по каждому диалогу отдельно — сколько
-      // сообщений и от кого, а не только общее число.
+      // Разбивка непрочитанных — раньше группировалась по (отправитель, заказ),
+      // из-за чего один и тот же человек, писавший по нескольким заказам,
+      // давал несколько отдельных пунктов. Группируем только по человеку —
+      // так же, как теперь группируется весь список диалогов ниже.
       if (req.query.action === 'unread-breakdown') {
         const result = await pool.query(
           `SELECT
              m.sender_id,
-             m.job_id,
              su.name as sender_name,
-             j.title as job_title,
+             (array_agg(j.id ORDER BY m.created_at DESC))[1] as job_id,
+             (array_agg(j.title ORDER BY m.created_at DESC))[1] as job_title,
              COUNT(*) as unread_count
            FROM messages m
            LEFT JOIN users su ON m.sender_id = su.id
            LEFT JOIN jobs j ON m.job_id = j.id
            WHERE m.receiver_id=$1 AND m.is_read=false AND m.deleted IS NOT TRUE
-           GROUP BY m.sender_id, m.job_id, su.name, j.title
+           GROUP BY m.sender_id, su.name
            ORDER BY MAX(m.created_at) DESC`,
           [userId]
         );
@@ -56,24 +58,50 @@ module.exports = async function handler(req, res) {
             jobId: r.job_id,
             jobTitle: r.job_title,
             unreadCount: parseInt(r.unread_count),
-            convoId: r.job_id ? ('job-' + r.job_id) : ('direct-' + r.sender_id),
+            convoId: 'user-' + r.sender_id,
           };
         });
         return res.json({ ok: true, items: items });
       }
 
-      const { job_id, peer_id, limit = 50 } = req.query;
+      const { job_id, peer_id, with: withId, limit = 50 } = req.query;
 
-      if (job_id) {
-        // Сообщения по конкретному заказу — только если я одна из сторон переписки
+      // Раньше переписка по одному и тому же человеку разбивалась на
+      // отдельный диалог под КАЖДЫЙ заказ (job_id) — если работник
+      // откликался на 5 заказов одного работодателя, в списке появлялось
+      // 5 одинаковых на вид строк с одним и тем же именем. Теперь список
+      // и переписка группируются по собеседнику: with=<id другого человека>
+      // отдаёт ВСЮ историю с ним разом, независимо от того, по какому
+      // заказу было отправлено каждое сообщение.
+      if (withId) {
         const result = await pool.query(
-          `SELECT m.*, 
+          `SELECT m.*,
+                  su.name as sender_name,
+                  ru.name as receiver_name,
+                  j.title as job_title
+           FROM messages m
+           LEFT JOIN users su ON m.sender_id = su.id
+           LEFT JOIN users ru ON m.receiver_id = ru.id
+           LEFT JOIN jobs j ON m.job_id = j.id
+           WHERE (m.sender_id = $1 AND m.receiver_id = $2) OR (m.sender_id = $2 AND m.receiver_id = $1)
+           ORDER BY m.created_at ASC
+           LIMIT $3`,
+          [userId, withId, limit]
+        );
+        return res.json({ ok: true, messages: result.rows });
+      }
+
+      // Старые параметры оставлены для обратной совместимости (на случай,
+      // если что-то ещё их использует) — сам чат ими больше не пользуется.
+      if (job_id) {
+        const result = await pool.query(
+          `SELECT m.*,
                   su.name as sender_name,
                   ru.name as receiver_name
            FROM messages m
            LEFT JOIN users su ON m.sender_id = su.id
            LEFT JOIN users ru ON m.receiver_id = ru.id
-           WHERE m.job_id = $1 
+           WHERE m.job_id = $1
              AND (m.sender_id = $2 OR m.receiver_id = $2)
            ORDER BY m.created_at ASC
            LIMIT $3`,
@@ -83,7 +111,6 @@ module.exports = async function handler(req, res) {
       }
 
       if (peer_id) {
-        // Прямая переписка с конкретным человеком, без привязки к заказу
         const result = await pool.query(
           `SELECT m.*,
                   su.name as sender_name,
@@ -100,41 +127,28 @@ module.exports = async function handler(req, res) {
         return res.json({ ok: true, messages: result.rows });
       }
 
-      // Все диалоги ТЕКУЩЕГО пользователя — и по заказам, и прямые
-      const byJob = await pool.query(
-        `SELECT DISTINCT ON (j.id)
-                m.id, m.text, m.created_at, m.is_read, m.job_id, NULL::int as peer_id,
-                j.title as job_title, j.emoji,
-                CASE WHEN m.sender_id = $1 THEN ru.name ELSE su.name END as other_name,
-                CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id
-         FROM messages m
-         JOIN jobs j ON m.job_id = j.id
-         LEFT JOIN users su ON m.sender_id = su.id
-         LEFT JOIN users ru ON m.receiver_id = ru.id
-         WHERE (m.sender_id = $1 OR m.receiver_id = $1) AND m.job_id IS NOT NULL
-         ORDER BY j.id, m.created_at DESC`,
-        [userId]
-      );
-
-      const direct = await pool.query(
+      // Список диалогов ТЕКУЩЕГО пользователя — один диалог на человека,
+      // а не на заказ. Берём самое последнее сообщение с каждым
+      // собеседником, независимо от того, по какому заказу (или без заказа)
+      // оно было отправлено.
+      const conversations = await pool.query(
         `SELECT DISTINCT ON (other_id)
-                m.id, m.text, m.created_at, m.is_read, NULL::int as job_id, other_id as peer_id,
-                NULL as job_title, NULL as emoji,
-                ou.name as other_name, other_id as other_id
+                m.id, m.text, m.created_at, m.is_read, m.job_id,
+                j.title as job_title, j.emoji,
+                ou.name as other_name, other_id
          FROM (
            SELECT m.*, CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END as other_id
            FROM messages m
-           WHERE (m.sender_id = $1 OR m.receiver_id = $1) AND m.job_id IS NULL
+           WHERE m.sender_id = $1 OR m.receiver_id = $1
          ) m
+         LEFT JOIN jobs j ON m.job_id = j.id
          LEFT JOIN users ou ON ou.id = m.other_id
+         WHERE m.other_id IS NOT NULL
          ORDER BY other_id, m.created_at DESC`,
         [userId]
       );
 
-      const conversations = byJob.rows.concat(direct.rows)
-        .sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
-
-      return res.json({ ok: true, conversations: conversations });
+      return res.json({ ok: true, conversations: conversations.rows });
     }
 
     // POST — отправить сообщение (от лица залогиненного пользователя)
@@ -166,10 +180,10 @@ module.exports = async function handler(req, res) {
       return res.json({ ok: true, message: result.rows[0] });
     }
 
-    // PATCH — либо отметить прочитанным (job_id/peer_id без id), либо
+    // PATCH — либо отметить прочитанным (with/job_id/peer_id без id), либо
     // отредактировать своё сообщение (id + text).
     if (method === 'PATCH') {
-      const { id, text, job_id, peer_id } = req.body;
+      const { id, text, job_id, peer_id, with: withId } = req.body;
 
       if (id) {
         // Редактирование — только своё собственное сообщение
@@ -185,7 +199,14 @@ module.exports = async function handler(req, res) {
         return res.json({ ok: true, message: result.rows[0] });
       }
 
-      if (job_id) {
+      if (withId) {
+        // Помечаем прочитанным всё от этого человека сразу — по всем
+        // заказам и напрямую, а не только по одному job_id.
+        await pool.query(
+          `UPDATE messages SET is_read=true WHERE sender_id=$1 AND receiver_id=$2 AND is_read=false`,
+          [withId, userId]
+        );
+      } else if (job_id) {
         await pool.query(
           `UPDATE messages SET is_read=true WHERE job_id=$1 AND receiver_id=$2 AND is_read=false`,
           [job_id, userId]
