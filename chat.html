@@ -287,7 +287,6 @@ if ('serviceWorker' in navigator) {
     <div class="quick-replies" id="quickReplies"></div>
 
     <div class="input-area">
-      <button class="ai-btn" title="Спросить AI-ассистента" onclick="askAI()">🤖</button>
       <textarea class="chat-input" id="chatInput" placeholder="Написать сообщение..." rows="1"
         oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
       <button class="send-btn" id="sendBtn" onclick="sendMsg()">
@@ -882,54 +881,6 @@ function autoResize(el) {
 
 function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-}
-
-async function askAI() {
-  const input = document.getElementById('chatInput');
-  const userText = input.value.trim();
-  const c = CONVOS.find(x => x.id === currentConvo);
-  const msgs = MESSAGES_DB[currentConvo] || [];
-  const history = msgs.filter(m => m.type !== 'sys' && !m.isAI)
-    .map(m => `${m.type === 'me' ? 'Исполнитель' : 'Заказчик'}: ${m.text}`).join('\n');
-
-  const question = userText || 'Что мне стоит уточнить у заказчика?';
-  input.value = '';
-
-  showTyping();
-
-  const contextLine = c.isDirect
-    ? 'Это личная переписка, не привязанная к конкретному заказу.'
-    : `Заказ: "${c.job}", оплата: ${c.pay}, дата: ${c.date}.`;
-  const systemPrompt = `Ты AI-ассистент платформы "Шабашка" — маркетплейса разовых подработок. 
-Помогаешь исполнителям и заказчикам общаться эффективно. 
-${contextLine}
-Переписка:\n${history}
-Отвечай кратко, по-русски, практично. Не более 2-3 предложений.`;
-
-  try {
-    const res = await fetch('/api/ai-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, systemPrompt })
-    });
-    const data = await res.json();
-    hideTyping();
-
-    if (!res.ok) {
-      // Сервер вернул понятную ошибку (например, ключ не настроен)
-      MESSAGES_DB[currentConvo].push({ type:'ai', text: '⚠️ ' + (data.error || 'AI-помощник временно недоступен.'), time: nowTime(), isAI: true });
-      renderMessages();
-      return;
-    }
-
-    const text = data.text || 'Не удалось получить ответ.';
-    MESSAGES_DB[currentConvo].push({ type:'ai', text: '💡 ' + text, time: nowTime(), isAI: true });
-    renderMessages();
-  } catch(e) {
-    hideTyping();
-    MESSAGES_DB[currentConvo].push({ type:'ai', text: '⚠️ Не удалось связаться с AI-помощником. Проверьте подключение.', time: nowTime(), isAI: true });
-    renderMessages();
-  }
 }
 
 function nowTime() {
