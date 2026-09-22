@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
 <title>Найти исполнителя — Шабашка</title>
 <meta name="description" content="Поиск проверенных исполнителей в Москве. Грузчики, уборщицы, строители, промоутеры. Рейтинг, отзывы, быстрый отклик.">
 <style>
@@ -365,7 +366,8 @@ function workerCard(w) {
   var stars = '⭐ ' + w.rating.toFixed(1);
   var verBadge = w.verified ? '<span class="verified-badge"><i class="ph-bold ph-seal-check"></i>Проверен</span>' : '';
   var skills = w.skills.slice(0, 3).map(function(s){ return '<span class="skill-tag">' + s + '</span>'; }).join('');
-  var favIcon = Shabashka.isFavWorker(w.id) ? 'ph-heart-fill" style="color:#E8124A' : 'ph-heart" style="color:#9A9A96';
+  var isFavW = Shabashka.isFavWorker(w.id);
+  var favIcon = isFavW ? 'ph-fill" style="color:#E8124A' : 'ph-bold" style="color:#9A9A96';
   return '<div class="worker-card" onclick="openProfile(' + w.id + ')">' +
     '<div class="worker-top">' +
     '<div class="worker-avatar" style="' + (w.photo ? 'background-image:url(\'' + w.photo + '\');background-size:cover;background-position:center' : 'background:' + w.color) + '">' + (w.photo ? '' : w.name[0]) + '</div>' +
@@ -374,7 +376,7 @@ function workerCard(w) {
     '<div class="worker-location"><i class="ph-bold ph-map-pin"></i>' + w.location + '</div>' +
     '</div>' +
     '<button class="fav-btn" onclick="event.stopPropagation();favWorker(' + w.id + ',this)" style="flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E5E4E0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px">' +
-    '<i class="ph-bold ' + favIcon + '"></i></button>' +
+    '<i class="ph-heart ' + favIcon + '"></i></button>' +
     '</div>' +
     '<div class="worker-stats">' +
     '<div class="worker-stat"><i class="ph-bold ph-star"></i><strong>' + w.rating.toFixed(1) + '</strong></div>' +
@@ -427,7 +429,7 @@ function contactWorker(id) {
 function favWorker(id, btn) {
   var added = Shabashka.toggleFavWorker(id);
   var i = btn.querySelector('i');
-  i.className = 'ph-bold ' + (added ? 'ph-heart-fill' : 'ph-heart');
+  i.className = 'ph-heart ' + (added ? 'ph-fill' : 'ph-bold');
   i.style.color = added ? '#E8124A' : '#9A9A96';
 
   Shabashka.ensureDbUserId().then(function (userId) {
