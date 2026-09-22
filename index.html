@@ -674,6 +674,13 @@ if ('serviceWorker' in navigator) {
             style="flex:1;min-width:0;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A">
         </div>
       </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#6B6B67;margin-bottom:6px">Город</div>
+        <select id="mobileCityFilter" onchange="filterCity(this.value)"
+          style="width:100%;padding:9px 12px;border:1.5px solid #E2E1DB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#14151A;background:#fff">
+          <option value="all">Все города</option>
+        </select>
+      </div>
       <div style="display:flex;gap:6px">
         <button onclick="toggleUrgentFilter(this)" id="mobileUrgentBtn" style="padding:8px 14px;background:#F4F3EF;border:1.5px solid transparent;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:#6B6B67">🔥 Только срочные</button>
         <button onclick="toggleBargainFilter(this)" id="mobileBargainBtn" style="padding:8px 14px;background:#F4F3EF;border:1.5px solid transparent;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:#6B6B67">💬 С торгом</button>
@@ -755,6 +762,13 @@ if ('serviceWorker' in navigator) {
         <span class="cat-icon">⚡</span> Прочее
         <span class="category-count" id="cnt-other">0</span>
       </button>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Город</div>
+      <select class="form-select" id="cityFilter" onchange="filterCity(this.value)" style="width:100%;padding:9px 10px;border:1px solid var(--border,#E2E1DB);border-radius:8px;font-size:13px;font-family:inherit;color:var(--dark,#14151A);background:#fff">
+        <option value="all">Все города</option>
+      </select>
     </div>
 
     <div class="filter-section">
@@ -896,6 +910,7 @@ function loadJobsFromDB() {
             pay: parseInt(j.pay),
             payLabel: j.pay_label || 'за день',
             location: j.location || 'Москва',
+            city: j.city || null,
             date: j.date || 'Сегодня',
             urgent: j.urgent || false,
             allowBargain: j.allow_bargain || false,
@@ -918,6 +933,7 @@ function loadJobsFromDB() {
         // существует. Теперь общая лента заказов доверяет только базе
         // данных, без примеси локальных "заказов-призраков".
         JOBS = dbJobs;
+        populateCityFilter();
         // Раньше здесь был "filtered = JOBS" напрямую — это сбрасывало
         // активный поиск/фильтр по категории каждый раз, когда срабатывал
         // фоновый опрос. Теперь пересчитываем через applyFilters(), если
@@ -968,8 +984,41 @@ setInterval(function() {
 
 let filtered = [...JOBS];
 let currentCat = 'all';
+let currentCity = 'all';
 let searchQuery = '';
 let payMin = 0, payMax = Infinity;
+
+// Достаём "город" из свободного текста локации/адреса заказа —
+// у старых заказов нет отдельного поля city, только строка вида
+// "Казань, ул. Ленина 5", поэтому для них берём часть до первой запятой.
+function jobCity(j) {
+  if (j.city) return j.city;
+  var loc = j.location || '';
+  var part = loc.split(',')[0].trim();
+  return part || null;
+}
+
+// Заполняем список городов в фильтре на основе реально загруженных
+// заказов — а не жёстко заданного списка городов.
+function populateCityFilter() {
+  var cities = {};
+  JOBS.forEach(function(j) {
+    var c = jobCity(j);
+    if (c) cities[c] = true;
+  });
+  var list = Object.keys(cities).sort(function(a, b) { return a.localeCompare(b, 'ru'); });
+  var html = '<option value="all">Все города</option>';
+  list.forEach(function(c) {
+    html += '<option value="' + c.replace(/"/g, '&quot;') + '">' + c + '</option>';
+  });
+  ['cityFilter', 'mobileCityFilter'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var prev = sel.value || 'all';
+    sel.innerHTML = html;
+    if (list.indexOf(prev) !== -1 || prev === 'all') sel.value = prev;
+  });
+}
 
 function updateCategoryCounts() {
   var cats = ['all', 'move', 'build', 'clean', 'event', 'other'];
@@ -1388,7 +1437,7 @@ function toggleBargainFilter(btn) {
 }
 
 function updateFilterDot() {
-  var active = payMin > 0 || payMax < Infinity || mobileUrgentOnly || mobileBargainOnly;
+  var active = payMin > 0 || payMax < Infinity || mobileUrgentOnly || mobileBargainOnly || currentCity !== 'all';
   var dot = document.getElementById('mobileFilterDot');
   if (dot) dot.style.display = active ? 'block' : 'none';
 }
@@ -1396,10 +1445,15 @@ function updateFilterDot() {
 function resetMobileFilters() {
   payMin = 0; payMax = Infinity;
   mobileUrgentOnly = false; mobileBargainOnly = false;
+  currentCity = 'all';
   var mn = document.getElementById('mobilePayMin');
   var mx = document.getElementById('mobilePayMax');
   if (mn) mn.value = '';
   if (mx) mx.value = '';
+  var mc = document.getElementById('mobileCityFilter');
+  if (mc) mc.value = 'all';
+  var cf = document.getElementById('cityFilter');
+  if (cf) cf.value = 'all';
   var ub = document.getElementById('mobileUrgentBtn');
   var bb = document.getElementById('mobileBargainBtn');
   if (ub) { ub.style.background='#F4F3EF'; ub.style.borderColor='transparent'; ub.style.color='#6B6B67'; }
@@ -1416,6 +1470,16 @@ function filterSearch() {
 function filterPay() {
   payMin = parseInt(document.getElementById('payMin').value) || 0;
   payMax = parseInt(document.getElementById('payMax').value) || Infinity;
+  applyFilters();
+}
+
+function filterCity(city) {
+  currentCity = city || 'all';
+  ['cityFilter', 'mobileCityFilter'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (sel) sel.value = currentCity;
+  });
+  updateFilterDot();
   applyFilters();
 }
 
@@ -1439,6 +1503,7 @@ function applyFilters() {
     if (j.pay < payMin || j.pay > payMax) return false;
     if (mobileUrgentOnly && !j.urgent) return false;
     if (mobileBargainOnly && !j.allowBargain) return false;
+    if (currentCity !== 'all' && jobCity(j) !== currentCity) return false;
     if (searchQuery && !j.title.toLowerCase().includes(searchQuery) && !j.desc.toLowerCase().includes(searchQuery)) return false;
     return true;
   });

@@ -369,6 +369,10 @@ main { flex: 1; padding: 24px; overflow-y: auto; }
       </div>
     </div>
     <div class="form-group">
+      <label class="form-label">Город</label>
+      <input class="form-input" id="newCity" placeholder="Москва" autocomplete="off">
+    </div>
+    <div class="form-group">
       <label class="form-label">Адрес</label>
       <input class="form-input" id="newAddr" placeholder="Москва, ул. Ленина, 5" autocomplete="off">
     </div>
@@ -1704,6 +1708,10 @@ function openPostModal() {
   document.getElementById('newUrgent').checked = false;
   document.getElementById('newAllowBargain').checked = false;
   document.getElementById('newAddr').value = '';
+  // Подставляем город из профиля работодателя, если он уже его указал —
+  // чтобы не приходилось вводить один и тот же город при каждом заказе.
+  const user = Shabashka.getUser();
+  document.getElementById('newCity').value = (user && user.city) || '';
   document.getElementById('postModal').classList.add('open');
 }
 
@@ -1727,6 +1735,7 @@ async function submitOrder() {
   const catInfo = CAT_MAP[catIndex] || CAT_MAP[4];
   const user = Shabashka.getUser();
   const addr = document.getElementById('newAddr').value.trim();
+  const city = document.getElementById('newCity').value.trim();
 
   const submitBtn = document.querySelector('#postModal .modal-submit');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Размещаем…'; }
@@ -1760,6 +1769,7 @@ async function submitOrder() {
           people: parseInt(document.getElementById('newCount').value) || 1,
           location: addr || 'Адрес не указан',
           address: addr,
+          city: city || null,
           lat: lat,
           lng: lng,
           date: 'Сегодня',
@@ -1792,6 +1802,7 @@ async function submitOrder() {
     urgent: document.getElementById('newUrgent').checked,
     allowBargain: document.getElementById('newAllowBargain').checked,
     location: addr || 'Адрес не указан',
+    city: city || null,
     lat: lat,
     lng: lng,
     desc: document.getElementById('newDesc').value,
