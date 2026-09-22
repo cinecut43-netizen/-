@@ -12,4 +12,4 @@ Disallow: /admin-content
 Disallow: /admin-security
 Disallow: /api/
 
-Sitemap: https://shabashka-jade.vercel.app/sitemap.xml
+Sitemap: https://shabashka-llllll16.amvera.io/sitemap.xml
