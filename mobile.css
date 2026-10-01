@@ -10,10 +10,6 @@
   .sb-links { display: none !important; }
   .sb-burger { display: none !important; }
 
-  /* Футер скрываем на мобильном — занимает место и некрасиво */
-  .site-footer { display: none !important; }
-  footer.site-footer { display: none !important; }
-
   /* Кнопка Назад — скрываем, навигация через нижнюю панель */
   .back-btn { display: none !important; }
 
@@ -302,10 +298,7 @@
   /* Скрываем переключатель роли в шапке — он везде лишний на мобильном */
   .sb-role-toggle { display: none !important; }
 
-  /* Скрываем футер на мобильном — он не нужен при наличии нижней навигации */
-  .site-footer { display: none !important; }
-
-  /* Убираем лишний padding снизу который оставлял место под футер */
+  /* Футер на мобильном теперь виден — оставляем под него место снизу */
   body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important; }
 
   /* Карта — убираем кнопки переключения вид/список */
