@@ -1,7 +1,7 @@
 // /api/telegram-notify.js — отправка уведомлений в Telegram
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_ID;
-const SITE = 'https://shabashka-lllll16.amvera.io';
+const SITE = 'https://shabashka24.ru';
 
 async function sendTelegram(text) {
   if (!BOT_TOKEN || !ADMIN_CHAT_ID) return;

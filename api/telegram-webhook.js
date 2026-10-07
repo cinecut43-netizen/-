@@ -46,8 +46,8 @@ const MENU_TEXT = '👋 <b>Шабашка Админ</b>\n\nВыберите р�
 const MENU_KEYBOARD = [
   [{ text: '📊 Статистика', callback_data: 'stats' }, { text: '📋 Заказы', callback_data: 'jobs' }],
   [{ text: '👥 Пользователи', callback_data: 'users' }, { text: '💬 Отзывы', callback_data: 'feedbacks' }],
-  [{ text: '🌐 Открыть сайт', url: 'https://shabashka-lllll16.amvera.io' }],
-  [{ text: '🔧 Админка', url: 'https://shabashka-lllll16.amvera.io/admin' }],
+  [{ text: '🌐 Открыть сайт', url: 'https://shabashka24.ru' }],
+  [{ text: '🔧 Админка', url: 'https://shabashka24.ru/admin' }],
 ];
 // Кнопка возврата в меню — добавляется под каждым разделом, чтобы не
 // приходилось каждый раз печатать /menu заново руками.
@@ -79,26 +79,26 @@ module.exports = async function handler(req, res) {
   } else if (text === '/stats' || callbackData === 'stats') {
     await sendMessage(chatId,
       '📊 <b>Статистика Шабашки</b>\n\n' +
-      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-stats">Открыть статистику</a>\n\n' +
-      '📋 <a href="https://shabashka-lllll16.amvera.io/admin">Главная админки</a>',
+      '🔗 <a href="https://shabashka24.ru/admin-stats">Открыть статистику</a>\n\n' +
+      '📋 <a href="https://shabashka24.ru/admin">Главная админки</a>',
       BACK_TO_MENU
     );
   } else if (callbackData === 'jobs') {
     await sendMessage(chatId,
       '📋 <b>Управление заказами</b>\n\n' +
-      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-orders">Открыть заказы</a>',
+      '🔗 <a href="https://shabashka24.ru/admin-orders">Открыть заказы</a>',
       BACK_TO_MENU
     );
   } else if (callbackData === 'users') {
     await sendMessage(chatId,
       '👥 <b>Пользователи</b>\n\n' +
-      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-users">Открыть пользователей</a>',
+      '🔗 <a href="https://shabashka24.ru/admin-users">Открыть пользователей</a>',
       BACK_TO_MENU
     );
   } else if (callbackData === 'feedbacks') {
     await sendMessage(chatId,
       '💬 <b>Отзывы пользователей</b>\n\n' +
-      '🔗 <a href="https://shabashka-lllll16.amvera.io/admin-feedback">Открыть отзывы</a>',
+      '🔗 <a href="https://shabashka24.ru/admin-feedback">Открыть отзывы</a>',
       BACK_TO_MENU
     );
   } else {
