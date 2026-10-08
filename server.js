@@ -126,6 +126,14 @@ try {
 } catch(e) {
   console.log('БД не подключена:', e.message);
 }
+// Страницы городов (/rabota, /rabota/<город>) и динамическая карта сайта /sitemap.xml.
+// Регистрируются до статики, чтобы перекрыть старый файл sitemap.xml.
+try {
+  require(path.join(ROOT, 'city-pages'))(app, require(path.join(ROOT, 'db')).pool);
+  console.log('✅ Страницы городов подключены');
+} catch(e) {
+  console.log('Страницы городов не подключены:', e.message);
+}
 // Страницы — до статики!
 const pages = {
   '/profile': 'profile.html', '/chat': 'chat.html', '/map': 'map.html',
