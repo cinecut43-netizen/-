@@ -42,6 +42,21 @@ function findRoot() {
 const ROOT = findRoot();
 console.log('ROOT =', ROOT);
 
+// Редирект со старого технического адреса Amvera на новый домен.
+// Раньше оба адреса открывали один и тот же сайт параллельно — это
+// создавало отдельную сессию входа на каждом (куки привязаны к
+// конкретному домену), и пользователю приходилось заново "регистрироваться"
+// (на деле — просто заново входить) при переходе между адресами.
+// Теперь старый адрес навсегда перенаправляет на основной домен,
+// поэтому реально существует только один "вход" на сайт.
+app.use(function (req, res, next) {
+  var host = (req.headers.host || '').split(':')[0].toLowerCase();
+  if (/^shabashka-l+16\.amvera\.io$/.test(host)) {
+    return res.redirect(301, 'https://shabashka24.ru' + req.originalUrl);
+  }
+  next();
+});
+
 app.use(express.json({ limit: '10mb' }));
 
 const cookieParser = require('cookie-parser');
@@ -64,7 +79,10 @@ global.__shabashkaDocs  = global.__shabashkaDocs  || {};
 // API
 try { app.post('/api/send-code',     require(path.join(ROOT, 'api/send-code'))); } catch(e) { console.log('api/send-code не найден'); }
 try { app.post('/api/verify-code',   require(path.join(ROOT, 'api/verify-code'))); } catch(e) {}
-try { app.post('/api/upload-doc',    require(path.join(ROOT, 'api/upload-doc'))); } catch(e) {}
+// Приём фото документов отключён: платформа не собирает паспорта.
+app.all('/api/upload-doc', function (req, res) {
+  res.status(410).json({ error: 'Загрузка документов отключена' });
+});
 try { app.post('/api/get-doc',       require(path.join(ROOT, 'api/get-doc'))); } catch(e) {}
 try { app.all('/api/admin-verifications', require(path.join(ROOT, 'api/admin-verifications'))); } catch(e) {}
 try { app.all('/api/admin-users', require(path.join(ROOT, 'api/admin-users'))); } catch(e) {}
@@ -80,6 +98,7 @@ try { app.get('/api/payments-status', require(path.join(ROOT, 'api/payments-stat
 try { app.get('/api/payments-list', require(path.join(ROOT, 'api/payments-list'))); } catch(e) {}
 try { app.get('/api/check-new-jobs', require(path.join(ROOT, 'api/check-new-jobs'))); } catch(e) {}
 try { app.get('/api/vapid-public-key', require(path.join(ROOT, 'api/vapid-public-key'))); } catch(e) {}
+try { app.get('/api/yandex-maps-key', require(path.join(ROOT, 'api/yandex-maps-key'))); } catch(e) {}
 try { app.all('/api/push-subscribe', require(path.join(ROOT, 'api/push-subscribe'))); } catch(e) {}
 try { app.post('/api/admin-login',   require(path.join(ROOT, 'api/admin-login'))); } catch(e) {}
 try { app.post('/api/admin-verify',  require(path.join(ROOT, 'api/admin-verify'))); } catch(e) {}
