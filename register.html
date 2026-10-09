@@ -204,6 +204,7 @@ let state = {
   role: null,        // 'worker' | 'employer'
   name: '',
   company: '',
+  closed: false,     // регистрация новых пользователей закрыта (узнаём у сервера)
 };
 
 const STEP_COUNT = 3; // шагов в индикаторе (успех не считаем)
@@ -237,6 +238,8 @@ function renderPhoneStep() {
   const isLogin = state.mode === 'login';
   return `
     ${stepsHtml(1)}
+
+    ${state.closed ? '<div style="background:#FFF8E6;border:1px solid #F5A623;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13.5px;line-height:1.5">⏳ <b>Регистрация новых пользователей временно закрыта.</b> Мы готовим запуск. Если вы уже зарегистрированы, войдите по номеру телефона.</div>' : ''}
 
     <div style="display:flex;background:#F4F3EF;border-radius:12px;padding:4px;margin-bottom:20px">
       <button type="button" onclick="switchAuthMode('register')" style="flex:1;padding:10px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:${!isLogin ? '#fff' : 'transparent'};color:${!isLogin ? '#14151A' : '#6B6B67'};box-shadow:${!isLogin ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'}">Регистрация</button>
@@ -673,6 +676,16 @@ function startResendTimer() {
 }
 
 render();
+// Узнаём, открыта ли регистрация. Если закрыта — показываем уведомление и вкладку «Войти».
+fetch('/api/registration-status')
+  .then(function (r) { return r.json(); })
+  .then(function (d) {
+    if (d && d.closed) {
+      state.closed = true;
+      if (state.step === 1) { state.mode = 'login'; render(); }
+    }
+  })
+  .catch(function () { /* без ответа сервера страница работает как раньше */ });
 </script>
 <script src="/pwa.js"></script>
 

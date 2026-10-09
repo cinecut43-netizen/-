@@ -126,6 +126,12 @@ try {
 } catch(e) {
   console.log('БД не подключена:', e.message);
 }
+// Статус регистрации (сайт показывает по нему уведомление на странице входа)
+app.get('/api/registration-status', function (req, res) {
+  var registration = require(path.join(ROOT, 'db/registration'));
+  res.json({ closed: registration.isClosed(), message: registration.MESSAGE });
+});
+
 // Страницы городов (/rabota, /rabota/<город>) и динамическая карта сайта /sitemap.xml.
 // Регистрируются до статики, чтобы перекрыть старый файл sitemap.xml.
 try {
