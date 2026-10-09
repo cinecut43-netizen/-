@@ -21,6 +21,11 @@ module.exports = async function handler(req, res) {
         );
         user = result.rows[0];
       } else {
+        // Регистрация закрыта: нового пользователя не создаём (даже если обошли форму).
+        const registration = require('../db/registration');
+        if (registration.isClosed()) {
+          return res.status(403).json({ ok: false, error: registration.MESSAGE, code: 'registration_closed' });
+        }
         // Фиксируем факт согласия на обработку ПДн (152-ФЗ): дата/время и
         // точный текст, который видел пользователь в момент регистрации.
         const result = await pool.query(

@@ -14,6 +14,23 @@ module.exports = async function handler(req, res) {
 
   const cleanPhone = phone.replace(/\D/g, '');
 
+  // Регистрация закрыта: звоним только тем, кто уже есть в базе (вход).
+  const registration = require('../db/registration');
+  if (registration.isClosed()) {
+    try {
+      const { pool } = require('../db');
+      const found = await pool.query(
+        "SELECT 1 FROM users WHERE regexp_replace(phone, '\\D', '', 'g') = $1 LIMIT 1", [cleanPhone]
+      );
+      if (!found.rows.length) {
+        return res.status(403).json({ error: registration.MESSAGE, code: 'registration_closed' });
+      }
+    } catch (e) {
+      console.error('send-code registration check error:', e.message);
+      return res.status(503).json({ error: 'Сервис временно недоступен. Попробуйте позже.' });
+    }
+  }
+
   try {
     const url = `https://zvonok.com/manager/cabapi_external/api/v1/phones/flashcall/` +
       `?public_key=${publicKey}&campaign_id=${campaignId}&phone=${cleanPhone}`;
