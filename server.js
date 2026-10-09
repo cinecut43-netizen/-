@@ -57,6 +57,18 @@ app.use(function (req, res, next) {
   next();
 });
 
+// Пароль на вход на сайт. Включается переменной SITE_PASSWORD в настройках Амверы
+// (подробности в site-gate.js). Если пароль задан, но модуль не загрузился —
+// сайт закрывается целиком, а не остаётся открытым.
+try {
+  require(path.join(ROOT, 'site-gate'))(app);
+} catch (e) {
+  console.error('site-gate не загружен:', e.message);
+  if (process.env.SITE_PASSWORD) {
+    app.use(function (req, res) { res.status(503).send('Сайт временно закрыт'); });
+  }
+}
+
 app.use(express.json({ limit: '10mb' }));
 
 const cookieParser = require('cookie-parser');
