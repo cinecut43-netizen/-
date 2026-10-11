@@ -185,17 +185,21 @@ Object.entries(pages).forEach(function([route, file]) {
 // Явные роуты для HTML страниц (до статики)
 app.get('/', function(req, res) { res.sendFile(path.join(ROOT, 'index.html')); });
 
-// Диагностика
-app.get('/debug', function(req, res) {
-  res.json({
-    ROOT: ROOT,
-    exists: fs.existsSync(ROOT),
-    adminExists: fs.existsSync(path.join(ROOT, 'admin.html')),
-    files: fs.readdirSync(ROOT).slice(0, 20),
-  });
-});
 app.get('/admin', function(req, res) { res.sendFile('/app/admin.html'); });
 app.get('/debug', function(req, res) { res.send('OK'); });
+// Закрываем серверные файлы: исходный код, схема базы, настройки НЕ должны скачиваться как обычные файлы
+app.use(function (req, res, next) {
+  var p;
+  try { p = decodeURIComponent(req.path || '/').toLowerCase(); } catch (e) { return res.status(400).send('Bad request'); }
+  var secret =
+    /^\/(api|db|node_modules|\.git)(\/|$)/.test(p) ||
+    /^\/(server|site-gate|city-pages|db-jobs|telegram-webhook)\.js$/.test(p) ||
+    /^\/package(-lock)?\.json$/.test(p) ||
+    /\.(sql|yml|yaml|md|log|env|map)$/.test(p) ||
+    /(^|\/)\./.test(p) && p.indexOf('/.well-known/') !== 0;
+  if (secret) return res.status(404).send('404 - страница не найдена');
+  next();
+});
 // Статика
 app.use(express.static(ROOT));
 
