@@ -14,7 +14,7 @@ const PRECACHE = [
   '/icons.js',
   '/icon-512.png',
   '/favicon-192.png',
-  'https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css',
+  '/vendor/phosphor/bold/style.css',
 ];
 
 // ===== УСТАНОВКА =====

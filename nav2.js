@@ -50,7 +50,7 @@
     var link = document.createElement('link');
     link.id = 'phosphor-css';
     link.rel = 'stylesheet';
-    link.href = 'https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css';
+    link.href = '/vendor/phosphor/bold/style.css';
     document.head.appendChild(link);
   }
 

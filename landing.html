@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="/vendor/phosphor/bold/style.css">
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,14 +17,14 @@
 <link rel="apple-touch-icon" href="/favicon-192.png">
 <link rel="shortcut icon" href="/favicon.ico">
 <title>Шабашка — подработка без лишних слов</title>
-<meta name="description" content="Биржа разовых подработок. Найди заказ за 2 минуты или исполнителя за 1 час. 2400+ исполнителей, 14 800+ заказов выполнено. Оплата под защитой платформы.">
+<meta name="description" content="Биржа разовых подработок. Размещайте заказы и находите исполнителей рядом с домом.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://shabashka24.ru/landing">
 <!-- Open Graph / Telegram / WhatsApp -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://shabashka24.ru/landing">
 <meta property="og:title" content="Шабашка — подработка без лишних слов">
-<meta property="og:description" content="Биржа разовых подработок. Найди заказ за 2 минуты или исполнителя за 1 час. 2400+ исполнителей, 14 800+ заказов выполнено. Оплата под защитой платформы.">
+<meta property="og:description" content="Биржа разовых подработок. Размещайте заказы и находите исполнителей рядом с домом.">
 <meta property="og:image" content="https://shabashka24.ru/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -33,7 +33,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Шабашка — подработка без лишних слов">
-<meta name="twitter:description" content="Биржа разовых подработок. Найди заказ за 2 минуты или исполнителя за 1 час. 2400+ исполнителей, 14 800+ заказов выполнено. Оплата под защитой платформы.">
+<meta name="twitter:description" content="Биржа разовых подработок. Размещайте заказы и находите исполнителей рядом с домом.">
 <meta name="twitter:image" content="https://shabashka24.ru/og-image.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -331,20 +331,16 @@ footer {
   </div>
   <div class="hero-stats">
     <div class="hero-stat">
-      <div class="hero-stat-num"><span id="cntWorkers">2 400</span>+</div>
-      <div class="hero-stat-label">исполнителей в базе</div>
+      <div class="hero-stat-num">0 ₽</div>
+      <div class="hero-stat-label">комиссия на период запуска</div>
     </div>
     <div class="hero-stat">
-      <div class="hero-stat-num"><span id="cntOrders">14 800</span>+</div>
-      <div class="hero-stat-label">заказов выполнено</div>
+      <div class="hero-stat-num">2 мин</div>
+      <div class="hero-stat-label">на регистрацию по телефону</div>
     </div>
     <div class="hero-stat">
-      <div class="hero-stat-num"><span id="cntRating">4.<span style="color:var(--orange)">9</span></span></div>
-      <div class="hero-stat-label">средний рейтинг</div>
-    </div>
-    <div class="hero-stat">
-      <div class="hero-stat-num"><span id="cntTime">47</span> мин</div>
-      <div class="hero-stat-label">среднее время до отклика</div>
+      <div class="hero-stat-num">Рядом</div>
+      <div class="hero-stat-label">заказы по городу и району</div>
     </div>
   </div>
 </section>
@@ -387,11 +383,11 @@ footer {
       <div class="for-card for-card-worker">
         <div class="for-card-tag">Исполнитель</div>
         <div class="for-card-title">Подрабатывай<br>когда удобно</div>
-        <div class="for-card-sub">Выбирай заказы сам, работай в свободное время, получай деньги сразу после выполнения.</div>
+        <div class="for-card-sub">Выбирай заказы сам и работай в свободное время. Об оплате вы договариваетесь с заказчиком напрямую.</div>
         <ul class="for-list">
-          <li>Сотни заказов каждый день</li>
+          <li>Заказы в твоём городе и районе</li>
           <li>Торгуйся по цене</li>
-          <li>Защита от неоплаты</li>
+          <li>Свободный выбор заказов и цены</li>
           <li>Рейтинг и отзывы — твоё портфолио</li>
           <li>Подтверждённый телефон и отзывы = больше доверия</li>
         </ul>
@@ -400,7 +396,7 @@ footer {
       <div class="for-card for-card-employer">
         <div class="for-card-tag">Работодатель</div>
         <div class="for-card-title">Найди людей<br>за час</div>
-        <div class="for-card-sub">Размести заказ за 2 минуты и получи отклики от проверенных исполнителей в течение часа.</div>
+        <div class="for-card-sub">Размести заказ и получай отклики от исполнителей.</div>
         <ul class="for-list">
           <li>Отклики через 47 минут в среднем</li>
           <li>Рейтинги и портфолио исполнителей</li>
@@ -455,9 +451,6 @@ var animated = false;
 window.addEventListener('scroll', function() {
   if (!animated && window.scrollY < 300) {
     animated = true;
-    animateCount(document.getElementById('cntWorkers'), 2400);
-    animateCount(document.getElementById('cntOrders'), 14800);
-    animateCount(document.getElementById('cntTime'), 47);
   }
 }, { passive: true });
 
@@ -465,9 +458,6 @@ window.addEventListener('scroll', function() {
 setTimeout(function() {
   if (!animated) {
     animated = true;
-    animateCount(document.getElementById('cntWorkers'), 2400);
-    animateCount(document.getElementById('cntOrders'), 14800);
-    animateCount(document.getElementById('cntTime'), 47);
   }
 }, 800);
 </script>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="/vendor/phosphor/bold/style.css">
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1143,7 +1143,7 @@ function getPaymentsPage() {
   </div>
   <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
     <div class="stat-card"><div class="stat-card-label">Баланс</div><div class="stat-card-num" style="color:var(--green)" id="employerBalanceNum">${Shabashka.getEmployerBalance().toLocaleString('ru')} ₽</div></div>
-    <div class="stat-card"><div class="stat-card-label">Резерв (эскроу)</div><div class="stat-card-num" style="color:var(--amber)">${reserved.toLocaleString('ru')} ₽</div></div>
+    <div class="stat-card"><div class="stat-card-label">Зарезервировано</div><div class="stat-card-num" style="color:var(--amber)">${reserved.toLocaleString('ru')} ₽</div></div>
     <div class="stat-card"><div class="stat-card-label">Всего оплачено исполнителям</div><div class="stat-card-num">${spent.toLocaleString('ru')} ₽</div></div>
   </div>
   <div class="orders-card" id="employerTxList">
