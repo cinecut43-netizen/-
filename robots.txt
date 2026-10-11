@@ -12,4 +12,4 @@ Disallow: /admin-content
 Disallow: /admin-security
 Disallow: /api/
 
-Sitemap: https://shabashka-llllll16.amvera.io/sitemap.xml
+Sitemap: https://shabashka24.ru/sitemap.xml
